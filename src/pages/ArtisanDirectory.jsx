@@ -1,0 +1,231 @@
+import React, { useState, useEffect, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { ShopContext } from '../context/ShopContext'
+import Title from '../components/Title'
+
+const ArtisanDirectory = () => {
+  const navigate = useNavigate()
+  const { products } = useContext(ShopContext)
+  const [sellers, setSellers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedType, setSelectedType] = useState(null)
+  const [artisanTypes, setArtisanTypes] = useState([])
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+  const resolveAvatarUrl = (url) => {
+    if (!url) return ''
+    if (url.startsWith('http')) return url
+    return `${apiUrl}${url}`
+  }
+
+  useEffect(() => {
+    fetchArtisanTypes()
+    fetchSellers()
+  }, [])
+
+  const fetchArtisanTypes = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/api/sellers/types`)
+      setArtisanTypes(res.data?.artisanTypes || [])
+    } catch (error) {
+      console.error('Error fetching artisan types:', error)
+    }
+  }
+
+  const fetchSellers = async () => {
+    try {
+      setLoading(true)
+      const res = await axios.get(`${apiUrl}/api/sellers/all`)
+      const sellersData = res.data || []
+      setSellers(sellersData)
+
+      // Include artisan types typed by sellers so they appear in customer filters.
+      const dynamicTypes = Array.from(
+        new Set(
+          sellersData
+            .map((s) => String(s.artisanType || '').trim())
+            .filter(Boolean)
+        )
+      )
+
+      setArtisanTypes((prev) => {
+        const merged = [...prev]
+        for (const type of dynamicTypes) {
+          if (!merged.some((t) => normalizeType(t) === normalizeType(type))) {
+            merged.push(type)
+          }
+        }
+        return merged
+      })
+    } catch (error) {
+      console.error('Error fetching sellers:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const normalizeType = (value) => String(value || '').trim().toLowerCase()
+
+  const getSellerProductCount = (sellerId) => {
+    return products.filter(p => {
+      const pid = p.sellerId || p.id
+      return Number(pid) === Number(sellerId)
+    }).length
+  }
+
+  const filteredSellers = selectedType
+    ? sellers.filter(s => normalizeType(s.artisanType) === normalizeType(selectedType))
+    : sellers
+
+  return (
+    <div className='border-t'>
+      {/* Hero Section */}
+      <div className='bg-gradient-to-r from-gray-900 to-black py-12 sm:py-16'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='text-center text-white mb-8'>
+            <h1 className='text-4xl sm:text-5xl font-bold mb-3'>Discover Artisans</h1>
+            <p className='text-gray-300 text-lg'>Connect with passionate craftspeople creating handmade treasures</p>
+          </div>
+
+          {/* Filter Buttons */}
+          <div className='bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-6'>
+            <p className='text-white text-sm font-medium mb-4'>Filter by Craft Type:</p>
+            <div className='flex flex-wrap gap-2'>
+              <button
+                onClick={() => setSelectedType(null)}
+                className={`px-4 py-2.5 rounded-full text-sm font-medium transition ${
+                  selectedType === null
+                    ? 'bg-white text-black shadow-lg'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
+              >
+                All Artisans ({sellers.length})
+              </button>
+              {artisanTypes.map(type => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-4 py-2.5 rounded-full text-sm font-medium transition ${
+                    selectedType === type
+                      ? 'bg-white text-black shadow-lg'
+                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                  }`}
+                >
+                  {type} ({sellers.filter(s => normalizeType(s.artisanType) === normalizeType(type)).length})
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16'>
+        {/* Loading State */}
+        {loading ? (
+          <div className='text-center py-20'>
+            <p className='text-gray-500 text-lg'>Loading artisans...</p>
+          </div>
+        ) : filteredSellers.length === 0 ? (
+          <div className='text-center py-20'>
+            <p className='text-gray-500 text-lg'>No artisans found in this category</p>
+            <button
+              onClick={() => setSelectedType(null)}
+              className='mt-4 text-black hover:underline font-medium'
+            >
+              View all artisans
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Results Summary */}
+            <div className='mb-8'>
+              <p className='text-gray-600 text-sm'>
+                Showing <span className='font-bold text-gray-900'>{filteredSellers.length}</span> {selectedType ? `${selectedType} artisans` : 'artisans'}
+              </p>
+            </div>
+
+            {/* Artisans Grid */}
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {filteredSellers.map(seller => (
+                <div
+                  key={seller.id}
+                  onClick={() => navigate(`/artisan/${seller.id}`)}
+                  className='group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-300 cursor-pointer'
+                >
+                  {/* Card Header with Avatar */}
+                  <div className='bg-gradient-to-r from-gray-100 to-gray-50 p-6 border-b border-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition'>
+                    {seller.avatar ? (
+                      <img
+                        src={resolveAvatarUrl(seller.avatar)}
+                        alt={seller.storeName}
+                        className='w-16 h-16 rounded-full object-cover mb-4 border-2 border-white shadow-md'
+                      />
+                    ) : (
+                      <div className='w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-bold text-xl mb-4 border-2 border-white shadow-md'>
+                        {seller.storeName?.charAt(0) || 'A'}
+                      </div>
+                    )}
+
+                    <h3 className='text-lg font-bold text-gray-900'>{seller.storeName}</h3>
+                    <p className='text-sm text-gray-600'>{seller.name}</p>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className='p-6'>
+                    {/* Craft Type Badge */}
+                    {seller.artisanType && (
+                      <div className='mb-4'>
+                        <span className='inline-block bg-black text-white text-xs px-3 py-1.5 rounded-full font-semibold'>
+                          {seller.artisanType}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Bio */}
+                    <p className='text-sm text-gray-700 mb-4 line-clamp-2 leading-relaxed'>
+                      {seller.bio || seller.description || 'Talented artisan creating beautiful handmade items'}
+                    </p>
+
+                    {/* Expertise Tags */}
+                    {seller.expertise && seller.expertise.length > 0 && (
+                      <div className='mb-4 flex flex-wrap gap-1.5'>
+                        {seller.expertise.slice(0, 3).map(tag => (
+                          <span
+                            key={tag}
+                            className='text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full border border-gray-200'
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {seller.expertise.length > 3 && (
+                          <span className='text-xs text-gray-500 px-2.5 py-1'>
+                            +{seller.expertise.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Product Count */}
+                    <div className='flex items-center justify-between text-sm text-gray-600 border-t pt-4'>
+                      <div>
+                        <span className='font-bold text-gray-900'>{getSellerProductCount(seller.id)}</span>
+                        <span className='text-gray-600 ml-1'>
+                          {getSellerProductCount(seller.id) === 1 ? 'product' : 'products'}
+                        </span>
+                      </div>
+                      <div className='text-black font-bold group-hover:translate-x-1 transition'>→</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default ArtisanDirectory

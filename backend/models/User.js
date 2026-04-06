@@ -1,58 +1,81 @@
-import { DataTypes } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import bcryptjs from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const User = sequelize.define('User', {
   id: {
-    type: DataTypes.INTEGER,
+    type: Sequelize.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
   name: {
-    type: DataTypes.STRING,
+    type: Sequelize.STRING,
     allowNull: false,
   },
   email: {
-    type: DataTypes.STRING,
+    type: Sequelize.STRING,
     allowNull: false,
     unique: true,
   },
   password: {
-    type: DataTypes.STRING,
+    type: Sequelize.STRING,
     allowNull: false,
   },
-  phone: {
-    type: DataTypes.STRING,
+  street: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
   },
-  street: DataTypes.STRING,
-  city: DataTypes.STRING,
-  state: DataTypes.STRING,
-  zipcode: DataTypes.STRING,
-  country: DataTypes.STRING,
+  city: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
+  },
+  state: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
+  },
+  zipcode: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
+  },
+  country: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
+  },
+  phone: {
+    type: Sequelize.STRING,
+    allowNull: true,
+    defaultValue: '',
+  },
   isAdmin: {
-    type: DataTypes.BOOLEAN,
+    type: Sequelize.BOOLEAN,
     defaultValue: false,
   },
 }, {
-  timestamps: true,
+  paranoid: true,
+  deletedAt: 'deletedAt',
 });
 
-// Hash password before saving
 User.beforeCreate(async (user) => {
-  const salt = await bcryptjs.genSalt(10);
-  user.password = await bcryptjs.hash(user.password, salt);
+  if (user.password) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+  }
 });
 
 User.beforeUpdate(async (user) => {
   if (user.changed('password')) {
-    const salt = await bcryptjs.genSalt(10);
-    user.password = await bcryptjs.hash(user.password, salt);
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
   }
 });
 
-// Method to compare passwords
-User.prototype.comparePassword = async function(enteredPassword) {
-  return await bcryptjs.compare(enteredPassword, this.password);
+User.prototype.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 export default User;

@@ -1,28 +1,73 @@
-import React, { useContext, useState } from 'react' 
+import React, { useContext, useEffect, useState } from 'react' 
 import {assets} from '../assets/assets'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
+import CartSlideout from './CartSlideout';
 
 const Navbar = () => {
 
     const [visible,setVisible] = useState(false);
+    const [cartOpen, setCartOpen] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const navigate = useNavigate();
     const sellerToken = localStorage.getItem('sellerToken');
     const sellerRaw = localStorage.getItem('seller')
     let sellerObj = null
-    try { sellerObj = sellerRaw ? JSON.parse(sellerRaw) : null } catch (e) { sellerObj = null }
-    const sellerLabel = sellerObj?.storeName || 'Aninaya.co'
+    try { sellerObj = sellerRaw && sellerToken ? JSON.parse(sellerRaw) : null } catch (e) { sellerObj = null }
+    // Auto-clean orphaned seller data (no token but object lingers)
+    if (!sellerToken && sellerRaw) localStorage.removeItem('seller')
+    const sellerLabel = sellerObj?.storeName || 'ARTISTRY'
 
+    const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
+    const adminToken = localStorage.getItem('adminToken');
     const userRaw = localStorage.getItem('user')
     let userObj = null
-    try { userObj = userRaw ? JSON.parse(userRaw) : null } catch (e) { userObj = null }
+    try { userObj = userRaw && userToken ? JSON.parse(userRaw) : null } catch (e) { userObj = null }
+    // Auto-clean orphaned user data
+    if (!userToken && userRaw) localStorage.removeItem('user')
 
-    const {setShowSearch , getCartCount} = useContext(ShopContext); 
-    const navigate = (path) => window.location.href = path;
+    const {setShowSearch , getCartCount} = useContext(ShopContext);
+    const handleSupportClick = () => {
+      if (adminToken) {
+        navigate('/admin/dashboard?tab=support');
+      } else if (sellerToken) {
+        navigate('/support', { state: { role: 'seller' } });
+      } else {
+        navigate('/support');
+      }
+    }
+
+  useEffect(() => {
+    const fetchUnreadNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('userToken')
+        if (!token) {
+          setUnreadNotifications(0)
+          return
+        }
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+        const res = await fetch(`${apiUrl}/api/notifications/my`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        const unread = Array.isArray(data) ? data.filter(n => !n.read).length : 0
+        setUnreadNotifications(unread)
+      } catch {
+        // ignore notification polling errors
+      }
+    }
+
+    fetchUnreadNotifications()
+    const id = setInterval(fetchUnreadNotifications, 10000)
+    return () => clearInterval(id)
+  }, [userToken])
 
   return (
-    <div className='flex items-center justify-between py-5 font-medium'>
+    <>
+    <div className='flex items-center justify-between py-4 sm:py-5 px-2 sm:px-0 font-medium'>
 
-        <Link to='/'><img src={assets.logo} className='w-36' alt="" /></Link>
+        <Link to='/' className='text-2xl sm:text-3xl font-bold text-gray-900'>ARTISTRY</Link>
       
       <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
 
@@ -31,67 +76,105 @@ const Navbar = () => {
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </NavLink>
         <NavLink to='/collection'className='flex flex-col items-center gap-1'>
-            <p>COLLECTION</p>
+          <p>PRODUCTS</p>
+            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+        </NavLink>
+        <NavLink to='/artisans'className='flex flex-col items-center gap-1'>
+            <p>ARTISANS</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </NavLink>
         <NavLink to='/about'className='flex flex-col items-center gap-1'>
-          <p>ABOUT</p>
+          <p>ABOUT US</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </NavLink>
-        <NavLink to='/contact'className='flex flex-col items-center gap-1'>
-          <p>CONTACT</p>
+        <button onClick={handleSupportClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
+          <p>SUPPORT</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </NavLink>
+        </button>
       </ul>
-      <div className='flex items-center gap-6'>
-        <img onClick ={()=>setShowSearch(true)}src={assets.search_icon} className='w-5 cursor-pointer' alt="" loading="lazy" />
+      <div className='flex items-center gap-3 sm:gap-6'>
+        <img onClick ={()=>setShowSearch(true)}src={assets.search_icon} className='w-6 sm:w-5 cursor-pointer' alt="" loading="lazy" />
 
-            <Link to='/cart' className='relative'>
-                <img src={assets.cart_icon} className='w-5 min-w-5' alt="" loading="lazy" />
-                <p className='absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]'>{getCartCount()}</p>
+            <button onClick={() => setCartOpen(true)} className='relative p-1'>
+                <img src={assets.cart_icon} className='w-6 sm:w-5 min-w-5' alt="" loading="lazy" />
+                <p className='absolute right-[-2px] bottom-[-2px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px]'>{getCartCount()}</p>
+            </button>
+
+            <Link to='/chat' className='relative p-1' aria-label='Chat'>
+                <svg className='w-6 sm:w-5 h-6 sm:h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z' />
+                </svg>
             </Link>
 
-            {/* Chat moved into page content (Home) below; link removed */}
-
-            {sellerToken && sellerObj && (
-              <Link to='/seller/profile' className='text-sm text-gray-700 hover:text-black'>
-                {sellerLabel}
+            {userObj && (
+              <Link to='/notifications' className='relative p-1' aria-label='Notifications'>
+                <svg className='w-6 sm:w-5 h-6 sm:h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0' />
+                </svg>
+                {unreadNotifications > 0 && (
+                  <p className='absolute right-[-2px] bottom-[-2px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-red-600 text-white rounded-full text-[10px] sm:text-[8px]'>
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </p>
+                )}
               </Link>
             )}
 
             {userObj ? (
               <>
-                <Link to='/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black' aria-label='Profile'>
-                  <img src={assets.profile_icon} alt='Profile' className='w-5 h-5 rounded-full object-contain bg-gray-100 p-0.5' />
+                <Link to='/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Profile'>
+                  <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
+                  </svg>
                 </Link>
-                {/* Admin removed; sellers act as admins now */}
                 {/* Logout moved to Profile page */}
               </>
+            ) : sellerObj ? (
+              <>
+                <Link to='/seller/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Seller Profile'>
+                  <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
+                  </svg>
+                </Link>
+              </>
             ) : (
-              <Link to='/login' className='text-sm text-gray-700 hover:text-black'>Login</Link>
+              <Link to='/login' className='flex items-center text-sm text-gray-700 hover:text-black p-1' aria-label='Login'>
+                <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
+                </svg>
+                <span className='hidden sm:inline ml-1'>Login</span>
+              </Link>
             )}
 
-            <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden' alt="" loading="lazy" />
+            <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-6 cursor-pointer sm:hidden p-1' alt="" loading="lazy" />
       </div>
 
         {/* sidebar menu for a much smaller devices */}
 
-        <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'}`}>
-            <div className='flex flex-col text-gray-600'>
-                <div onClick={()=>setVisible(false)} className='flex items-center gap-4 p-3'>
-                     <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="" />
-                     <p>Back</p>
-                </div>
-                <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/'>HOME</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/collection'>COLLECTION</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/about'>ABOUT</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/contact'>CONTACT</NavLink>
-                {/* Admin link removed from global nav; Admin UI is inside SellerDashboard */}
+        {/* Mobile menu backdrop */}
+        {visible && (
+          <div className='fixed inset-0 bg-black bg-opacity-50 z-40' onClick={()=>setVisible(false)} />
+        )}
 
+        {/* Mobile sidebar */}
+        <div className={`fixed top-0 right-0 bottom-0 w-[75%] max-w-[300px] bg-white z-50 transform transition-transform duration-300 ease-in-out shadow-xl ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className='flex flex-col text-gray-600 h-full'>
+                <div onClick={()=>setVisible(false)} className='flex items-center gap-4 p-4 border-b'>
+                     <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="" />
+                     <p className='font-medium'>Back</p>
+                </div>
+                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/'>HOME</NavLink>
+                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/collection'>PRODUCTS</NavLink>
+                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/artisans'>ARTISANS</NavLink>
+                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/about'>ABOUT US</NavLink>
+                <button onClick={() => { setVisible(false); handleSupportClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SUPPORT</button>
             </div>
         </div>
 
     </div>
+    
+    {/* Cart Slideout */}
+    <CartSlideout isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
   )
 }
 

@@ -1,11 +1,37 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const ProductItem = ({id, image, name, price}) => {
+const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}) => {
 
+    const navigate = useNavigate()
     const { currency } = useShop();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const [sellerData, setSellerData] = useState(null)
+    const [loadingSeller, setLoadingSeller] = useState(false)
+
+    useEffect(() => {
+      if (sellerId && !sellerName) {
+        fetchSellerData()
+      } else if (sellerName) {
+        setSellerData({ storeName: sellerName, artisanType, id: sellerId })
+      }
+    }, [sellerId, sellerName, artisanType])
+
+    const fetchSellerData = async () => {
+      try {
+        setLoadingSeller(true)
+        const res = await fetch(`${apiUrl}/api/sellers/${sellerId}`)
+        if (res.ok) {
+          const seller = await res.json()
+          setSellerData(seller)
+        }
+      } catch (e) {
+        console.error('Failed to fetch seller data:', e)
+      } finally {
+        setLoadingSeller(false)
+      }
+    }
 
     // Handle both array of strings and array of objects for images
     let imageUrl = '/path/to/placeholder.jpg';
@@ -31,16 +57,41 @@ const ProductItem = ({id, image, name, price}) => {
       }
     }
 
-    console.log('ProductItem - id:', id, 'imageUrl:', imageUrl); // Debug log
-
   return (
-    <Link className='text-gray cursor-pointer' to={`/product/${id}`}>
-        <div className='overflow-hidden w-full h-64 flex items-center justify-center bg-gray-100'>
-            <img className='w-full h-full object-cover hover:scale-110 transition ease-in-out' src={imageUrl} alt={name} />
+    <div className='text-gray cursor-pointer block h-full group'>
+      <Link to={`/product/${id}`} className='block'>
+        <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
+          <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center'>
+            <img
+              className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out'
+              src={imageUrl}
+              alt={name}
+              loading='lazy'
+            />
+          </div>
+          <div className='pt-2 flex flex-col gap-0.5 text-center'>
+            <p className='text-sm font-medium text-gray-800 line-clamp-1'>{name}</p>
+            <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
+          </div>
         </div>
-      <p className='pt-3 pb-1 text-sm'>{name}</p>
-      <p className='text-sm font-medium'>{currency}{price}</p>
-    </Link>
+      </Link>
+
+      {/* Seller Info */}
+      {sellerData && (
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            navigate(`/artisan/${sellerData.id}`)
+          }}
+          className='mt-2 w-full text-left p-2 bg-gray-50 rounded border border-gray-200 hover:border-black hover:bg-white transition text-xs'
+        >
+          <p className='font-bold text-gray-900 line-clamp-1'>{sellerData.storeName}</p>
+          {sellerData.artisanType && (
+            <p className='text-[11px] text-gray-600 mt-0.5'>{sellerData.artisanType}</p>
+          )}
+        </button>
+      )}
+    </div>
   )
 }
 

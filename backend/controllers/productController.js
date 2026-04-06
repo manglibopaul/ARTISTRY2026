@@ -52,6 +52,21 @@ export const createProduct = async (req, res) => {
     const sellerId = req.seller?.id; // From auth middleware
     const productData = { ...req.body, sellerId: sellerId || null };
 
+    // Handle colors (comma-separated string or JSON array)
+    if (req.body.colors) {
+      let colors = req.body.colors;
+      if (typeof colors === 'string') {
+        try {
+          colors = JSON.parse(colors);
+        } catch (e) {
+          colors = colors.split(',').map(c => c.trim()).filter(Boolean);
+        }
+      }
+      if (Array.isArray(colors)) {
+        productData.colors = colors.filter(Boolean);
+      }
+    }
+
     // Handle file uploads
     if (req.files) {
       // Handle multiple images
@@ -63,10 +78,16 @@ export const createProduct = async (req, res) => {
         }));
       }
 
-      // Handle model file
+      // Handle model file (GLB)
       const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
         productData.modelUrl = `/uploads/models/${modelFile.filename}`;
+      }
+
+      // Handle iOS model file (USDZ)
+      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
+      if (iosModelFile) {
+        productData.iosModel = `/uploads/models/${iosModelFile.filename}`;
       }
     }
 
@@ -92,31 +113,67 @@ export const updateProduct = async (req, res) => {
 
     const updateData = { ...req.body };
 
+    // Handle colors (comma-separated string or JSON array)
+    if (req.body.colors) {
+      let colors = req.body.colors;
+      if (typeof colors === 'string') {
+        try {
+          colors = JSON.parse(colors);
+        } catch (e) {
+          colors = colors.split(',').map(c => c.trim()).filter(Boolean);
+        }
+      }
+      if (Array.isArray(colors)) {
+        updateData.colors = colors.filter(Boolean);
+      }
+    }
+
+    // Handle existing images passed from frontend (for removal/reordering)
+    let existingImages = [];
+    if (updateData.existingImages) {
+      try {
+        existingImages = typeof updateData.existingImages === 'string' 
+          ? JSON.parse(updateData.existingImages) 
+          : updateData.existingImages;
+      } catch (e) {
+        existingImages = [];
+      }
+      delete updateData.existingImages; // Remove from updateData
+    } else {
+      // Keep all existing images if not specified
+      existingImages = Array.isArray(product.image) ? product.image : [];
+    }
+
     // Handle file uploads
     if (req.files && req.files.length > 0) {
-      // Handle multiple images - only update if new images are provided
+      // Handle multiple images - append new images to existing ones
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
       if (imageFiles.length > 0) {
-        updateData.image = imageFiles.map(f => ({
+        const newImages = imageFiles.map(f => ({
           url: `/uploads/images/${f.filename}`,
           filename: f.filename,
         }));
-      }
-      // If no new images, keep existing images
-      else if (!updateData.image) {
-        updateData.image = product.image;
+        // Merge existing images with new images
+        updateData.image = [...existingImages, ...newImages];
+      } else {
+        // No new images, just use existing
+        updateData.image = existingImages;
       }
 
-      // Handle model file
+      // Handle model file (GLB)
       const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
         updateData.modelUrl = `/uploads/models/${modelFile.filename}`;
       }
-    } else {
-      // If no files uploaded, keep existing images and model
-      if (!updateData.image) {
-        updateData.image = product.image;
+
+      // Handle iOS model file (USDZ)
+      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
+      if (iosModelFile) {
+        updateData.iosModel = `/uploads/models/${iosModelFile.filename}`;
       }
+    } else {
+      // If no files uploaded, use existing images
+      updateData.image = existingImages;
     }
 
     await product.update(updateData);

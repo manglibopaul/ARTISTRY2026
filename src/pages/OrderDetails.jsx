@@ -10,51 +10,69 @@ const OrderDetails = () => {
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [reviewForms, setReviewForms] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
+  const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
+
+  const openInfoModal = (title, message) => {
+    setInfoModal({ open: true, title, message });
+  };
+
+  const closeInfoModal = () => {
+    setInfoModal({ open: false, title: '', message: '' });
+  };
+
+  const openConfirmModal = (title, message, onConfirm, confirmText = 'Confirm') => {
+    setConfirmModal({ open: true, title, message, onConfirm, confirmText });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
+  };
 
   const cancelOrder = async () => {
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
     if (!token) return navigate('/login');
-    if (!confirm('Are you sure you want to cancel this order?')) return;
-    try {
-      const res = await fetch(`/api/orders/${id}/cancel`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        alert(txt || 'Failed to cancel order');
-        return;
+    openConfirmModal('Cancel Order', 'Are you sure you want to cancel this order?', async () => {
+      try {
+        const res = await fetch(`/api/orders/${id}/cancel`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          openInfoModal('Cancel Failed', txt || 'Failed to cancel order');
+          return;
+        }
+        const data = await res.json();
+        setOrder(data);
+        navigate('/orders');
+      } catch (err) {
+        openInfoModal('Cancel Failed', err.message || 'Failed to cancel order');
       }
-      const data = await res.json();
-      setOrder(data);
-      alert('Order cancelled');
-      navigate('/orders');
-    } catch (err) {
-      alert(err.message || 'Failed to cancel order');
-    }
+    }, 'Yes, Cancel');
   }
 
   const markAsReceived = async () => {
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
     if (!token) return navigate('/login');
-    if (!confirm('Confirm you have received this order?')) return;
-    try {
-      const res = await fetch(`/api/orders/${id}/received`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        alert(txt || 'Failed to mark as received');
-        return;
+    openConfirmModal('Mark as Received', 'Confirm you have received this order?', async () => {
+      try {
+        const res = await fetch(`/api/orders/${id}/received`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          openInfoModal('Action Failed', txt || 'Failed to mark as received');
+          return;
+        }
+        const data = await res.json();
+        setOrder(data);
+        navigate('/orders');
+      } catch (err) {
+        openInfoModal('Action Failed', err.message || 'Failed to mark as received');
       }
-      const data = await res.json();
-      setOrder(data);
-      alert('Order marked as received');
-      navigate('/orders');
-    } catch (err) {
-      alert(err.message || 'Failed to mark as received');
-    }
+    }, 'Yes, Confirm');
   }
 
   useEffect(() => {
@@ -206,17 +224,27 @@ const OrderDetails = () => {
     if (!token) return navigate('/login');
     const form = reviewForms[productId];
     if (!form) return;
-    if (!form.comment || !form.rating) return alert('Please provide a rating and comment');
+    if (!form.comment || !form.rating) {
+      openInfoModal('Incomplete Review', 'Please provide a rating and comment');
+      return;
+    }
     try {
       setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: true } }));
+      const formData = new FormData();
+      formData.append('productId', productId);
+      formData.append('rating', String(form.rating));
+      if (form.title) formData.append('title', form.title);
+      formData.append('comment', form.comment);
+      if (form.imageFile) formData.append('image', form.imageFile);
+
       const res = await fetch(`${apiUrl}/api/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ productId, rating: form.rating, title: form.title, comment: form.comment }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       if (!res.ok) {
         const txt = await res.text();
-        alert(txt || 'Failed to submit review');
+        openInfoModal('Review Failed', txt || 'Failed to submit review');
         setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
         return;
       }
@@ -233,44 +261,45 @@ const OrderDetails = () => {
         }) : prev.items;
         return { ...prev, items };
       });
-      alert('Review submitted');
+      openInfoModal('Review Submitted', 'Your review was submitted successfully.');
     } catch (err) {
-      alert(err.message || 'Failed to submit review');
+      openInfoModal('Review Failed', err.message || 'Failed to submit review');
     } finally {
       setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
     }
   };
 
   const deleteReview = async (productId, reviewId) => {
-    if (!confirm('Delete this review?')) return;
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
     if (!token) return navigate('/login');
-    try {
-      const res = await fetch(`${apiUrl}/api/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        alert(txt || 'Failed to delete review');
-        return;
+    openConfirmModal('Delete Review', 'Delete this review?', async () => {
+      try {
+        const res = await fetch(`${apiUrl}/api/reviews/${reviewId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          openInfoModal('Delete Failed', txt || 'Failed to delete review');
+          return;
+        }
+        // Remove review from local order state
+        setOrder(prev => {
+          const items = Array.isArray(prev.items) ? prev.items.map(it => {
+            const pid = it.productId || it.id || it._id;
+            if (Number(pid) === Number(productId)) {
+              const revs = Array.isArray(it.reviews) ? it.reviews.filter(r => Number(r.id) !== Number(reviewId)) : [];
+              return { ...it, reviews: revs };
+            }
+            return it;
+          }) : prev.items;
+          return { ...prev, items };
+        });
+        openInfoModal('Review Deleted', 'Your review has been deleted.');
+      } catch (err) {
+        openInfoModal('Delete Failed', err.message || 'Failed to delete review');
       }
-      // Remove review from local order state
-      setOrder(prev => {
-        const items = Array.isArray(prev.items) ? prev.items.map(it => {
-          const pid = it.productId || it.id || it._id;
-          if (Number(pid) === Number(productId)) {
-            const revs = Array.isArray(it.reviews) ? it.reviews.filter(r => Number(r.id) !== Number(reviewId)) : [];
-            return { ...it, reviews: revs };
-          }
-          return it;
-        }) : prev.items;
-        return { ...prev, items };
-      });
-      alert('Review deleted');
-    } catch (err) {
-      alert(err.message || 'Failed to delete review');
-    }
+    }, 'Delete');
   };
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -289,15 +318,30 @@ const OrderDetails = () => {
     return imageUrl;
   }
 
+  const resolveUploadImage = (url) => {
+    if (!url) return '';
+    if (String(url).startsWith('http')) return url;
+    return `${apiUrl}${url}`;
+  }
+
+  const renderStars = (rating = 0) => {
+    const safe = Math.max(1, Math.min(5, Number(rating) || 0));
+    return (
+      <span className='text-amber-500'>
+        {'★'.repeat(safe)}{'☆'.repeat(5 - safe)}
+      </span>
+    );
+  }
+
   if (loading) return <div className='pt-16'><p className='text-sm text-gray-500'>Loading order…</p></div>
   if (error) return <div className='pt-16'><p className='text-sm text-red-500'>{error}</p></div>
   if (!order) return <div className='pt-16'><p className='text-sm text-gray-500'>No order selected.</p></div>
 
   return (
-    <div className='border-t pt-16'>
+    <div className='border-t pt-8 sm:pt-16 px-2 sm:px-0'>
       {/* debug panel removed */}
       
-      <div className='text-2xl mb-4'>
+      <div className='text-xl sm:text-2xl mb-4'>
         <Title text1={'ORDER'} text2={`#${order.id}`} />
       </div>
 
@@ -313,17 +357,51 @@ const OrderDetails = () => {
           </div>
         </div>
 
-        <div className='border p-4 rounded'>
-          <h3 className='font-medium mb-2'>Shipping Address</h3>
-          <p>{order.firstName} {order.lastName}</p>
-          <p>{order.street}</p>
-          <p>{order.city}, {order.state} {order.zipcode}</p>
-          <p>{order.country}</p>
-          <p className='text-sm text-gray-500'>Email: {order.email}</p>
-          <p className='text-sm text-gray-500'>Phone: {order.phone}</p>
+        <div className='border p-3 sm:p-4 rounded'>
+          <h3 className='font-medium mb-2'>{order.paymentMethod === 'pickup' ? 'Pickup Details' : 'Shipping Address'}</h3>
+          {order.paymentMethod === 'pickup' ? (
+            <div>
+              <p className='font-medium text-green-700'>📦 Pickup Order</p>
+              <p className='text-sm mt-2'>Pickup Location: {order.pickupLocation || 'N/A'}</p>
+              {order.reservationDateTime && (
+                <p className='text-sm'>Reservation: {new Date(order.reservationDateTime).toLocaleString()}</p>
+              )}
+              {order.reservationNote && (
+                <p className='text-sm text-gray-600'>Note: {order.reservationNote}</p>
+              )}
+              {order.estimatedReadyDate ? (
+                <div className='mt-3 p-3 bg-blue-50 border border-blue-200 rounded'>
+                  <p className='text-sm font-medium text-blue-800'>Ready for Pickup</p>
+                  <p className='text-sm text-blue-700'>
+                    Ready Date: {new Date(order.estimatedReadyDate).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <div className='mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded'>
+                  <p className='text-sm text-yellow-800'>
+                    ⏳ The seller will set your pickup ready date after confirming the order.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <p>{order.firstName} {order.lastName}</p>
+              <p>{order.street}</p>
+              <p>{order.city}, {order.state} {order.zipcode}</p>
+              <p>{order.country}</p>
+              <p className='text-sm text-gray-500'>Email: {order.email}</p>
+              <p className='text-sm text-gray-500'>Phone: {order.phone}</p>
+            </div>
+          )}
         </div>
 
-        <div className='border p-4 rounded'>
+        <div className='border p-3 sm:p-4 rounded'>
           <h3 className='font-medium mb-2'>Items</h3>
           <div className='space-y-3'>
             {Array.isArray(order.items) && order.items.map((item, i) => (
@@ -337,20 +415,42 @@ const OrderDetails = () => {
                 <div>
                   <p className='font-medium'>{item.name || item.title || 'Product'}</p>
                   <p className='text-sm text-gray-600'>Price: ₱{item.price} • Qty: {item.quantity || item.qty || 1}</p>
+                  {item.color && <p className='text-sm text-gray-600'>Color: {item.color}</p>}
+                  {order.paymentMethod === 'pickup' && item.pickupLocation && (
+                    <p className='text-sm text-gray-600'>Pickup Location: {item.pickupLocation}</p>
+                  )}
                     {item.canReview ? (
                     <div id={`review-form-${item.productId || item.id || item._id}`} className='mt-2 border rounded p-3 bg-white'>
                       <p className='text-sm font-medium mb-2'>Leave a review</p>
-                      <div className='flex gap-2 items-center mb-2'>
-                        <label className='text-sm'>Rating</label>
-                        <select value={reviewForms[item.productId || item.id || item._id]?.rating || 5} onChange={e => handleReviewChange(item.productId || item.id || item._id, 'rating', Number(e.target.value))} className='border px-2 py-1 text-sm'>
-                          <option value={5}>5</option>
-                          <option value={4}>4</option>
-                          <option value={3}>3</option>
-                          <option value={2}>2</option>
-                          <option value={1}>1</option>
-                        </select>
+                      <div className='mb-2'>
+                        <label className='text-sm block mb-1'>Rating</label>
+                        <div className='flex gap-1'>
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const current = reviewForms[item.productId || item.id || item._id]?.rating || 5
+                            return (
+                              <button
+                                key={star}
+                                type='button'
+                                onClick={() => handleReviewChange(item.productId || item.id || item._id, 'rating', star)}
+                                className={`text-lg ${star <= current ? 'text-amber-500' : 'text-gray-300'}`}
+                                aria-label={`Set rating ${star}`}
+                              >
+                                ★
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                       <textarea placeholder='Write your review' value={reviewForms[item.productId || item.id || item._id]?.comment || ''} onChange={e => handleReviewChange(item.productId || item.id || item._id, 'comment', e.target.value)} className='w-full border px-2 py-1 mb-2 text-sm' rows={3} />
+                      <input
+                        type='file'
+                        accept='image/*'
+                        onChange={e => handleReviewChange(item.productId || item.id || item._id, 'imageFile', e.target.files?.[0] || null)}
+                        className='w-full border px-2 py-1 mb-2 text-sm'
+                      />
+                      {reviewForms[item.productId || item.id || item._id]?.imageFile && (
+                        <p className='text-xs text-gray-600 mb-2'>Photo: {reviewForms[item.productId || item.id || item._id]?.imageFile?.name}</p>
+                      )}
                         <div className='text-right'>
                           <button onClick={() => submitReview(item.productId || item.id || item._id)} className='bg-black text-white px-3 py-1 text-sm rounded'>Submit Review</button>
                         </div>
@@ -377,9 +477,16 @@ const OrderDetails = () => {
                           <div key={idx} className='p-3 border rounded bg-gray-50'>
                             <div className='flex items-center justify-between'>
                               <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
-                              <div className='text-sm text-gray-600'>Rating: {r.rating}</div>
+                              <div className='text-sm'>{renderStars(r.rating)}</div>
                             </div>
                             <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
+                            {r.imageUrl && (
+                              <img
+                                src={resolveUploadImage(r.imageUrl)}
+                                alt='Review attachment'
+                                className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
+                              />
+                            )}
                             <div className='flex items-center justify-between mt-2'>
                               <div className='text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
                               {currentUser && Number(r.userId) === Number(currentUser.id) && (
@@ -396,31 +503,77 @@ const OrderDetails = () => {
           </div>
         </div>
 
-        <div className='flex justify-end gap-6'>
+        <div className='flex flex-wrap justify-end gap-4 sm:gap-6'>
           <div className='text-right'>
-            <p className='text-sm text-gray-500'>Subtotal</p>
-            <p>₱{order.subtotal}</p>
+            <p className='text-xs sm:text-sm text-gray-500'>Subtotal</p>
+            <p className='text-sm sm:text-base'>₱{order.subtotal}</p>
           </div>
+          {order.paymentMethod !== 'pickup' && (
+            <div className='text-right'>
+              <p className='text-xs sm:text-sm text-gray-500'>Shipping</p>
+              <p className='text-sm sm:text-base'>₱{order.shippingFee}</p>
+            </div>
+          )}
           <div className='text-right'>
-            <p className='text-sm text-gray-500'>Shipping</p>
-            <p>₱{order.shippingFee}</p>
-          </div>
-          <div className='text-right'>
-            <p className='text-sm text-gray-500'>Total</p>
-            <p className='font-medium'>₱{order.total}</p>
+            <p className='text-xs sm:text-sm text-gray-500'>Total</p>
+            <p className='font-medium text-sm sm:text-base'>₱{order.total}</p>
           </div>
         </div>
 
-        <div className='flex gap-3'>
-          <button onClick={() => navigate(-1)} className='border px-4 py-2 text-sm'>Back</button>
+        <div className='flex flex-wrap gap-2 sm:gap-3'>
+          <button onClick={() => navigate(-1)} className='border px-4 py-2.5 text-sm rounded'>Back</button>
           {order && order.orderStatus !== 'cancelled' && order.orderStatus !== 'completed' && (
-            <button onClick={cancelOrder} className='bg-red-500 text-white px-4 py-2 rounded'>Cancel Order</button>
+            <button onClick={cancelOrder} className='bg-red-500 text-white px-4 py-2.5 rounded text-sm'>Cancel Order</button>
           )}
           {order && order.orderStatus === 'shipped' && (
-            <button onClick={markAsReceived} className='bg-green-600 text-white px-4 py-2 rounded'>Mark as Received</button>
+            <button onClick={markAsReceived} className='bg-green-600 text-white px-4 py-2.5 rounded text-sm'>Mark as Received</button>
           )}
         </div>
       </div>
+
+      {confirmModal.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-md p-5'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{confirmModal.title}</h3>
+            <p className='text-sm text-gray-700 whitespace-pre-line mb-5'>{confirmModal.message}</p>
+            <div className='flex justify-end gap-2'>
+              <button
+                onClick={closeConfirmModal}
+                className='px-4 py-2 rounded bg-gray-100 text-gray-700 text-sm hover:bg-gray-200'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const action = confirmModal.onConfirm
+                  closeConfirmModal()
+                  if (typeof action === 'function') await action()
+                }}
+                className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {infoModal.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-md p-5'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{infoModal.title}</h3>
+            <p className='text-sm text-gray-700 whitespace-pre-line mb-5'>{infoModal.message}</p>
+            <div className='flex justify-end'>
+              <button
+                onClick={closeInfoModal}
+                className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -5,19 +5,33 @@ import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 
+const parseCartKey = (key) => {
+  if (typeof key !== 'string') return { id: key, color: null };
+  if (key.includes('::')) {
+    const [id, ...rest] = key.split('::');
+    return { id, color: rest.join('::') || null };
+  }
+  const dashIndex = key.indexOf('-');
+  if (dashIndex > 0 && /^\d+$/.test(key.slice(0, dashIndex))) {
+    return { id: key.slice(0, dashIndex), color: key.slice(dashIndex + 1) || null };
+  }
+  return { id: key, color: null };
+}
+
 // Helper to build items from cart
 const buildItemsFromCart = (cartsItems, products) => {
   const items = [];
   for (const key in cartsItems) {
     const qty = cartsItems[key];
     if (!qty || qty <= 0) continue;
+    const { id, color } = parseCartKey(key);
     // key may be string id; match product by id or _id
-    const prod = products.find(p => (p._id ? String(p._id) === String(key) : String(p.id) === String(key)));
+    const prod = products.find(p => (p._id ? String(p._id) === String(id) : String(p.id) === String(id)));
     if (prod) {
-      items.push({ productId: prod.id || prod._id, name: prod.name, price: prod.price, quantity: qty, sellerId: prod.sellerId || prod.sellerId || null });
+      items.push({ productId: prod.id || prod._id, name: prod.name, price: prod.price, quantity: qty, color: color || null, sellerId: prod.sellerId || prod.sellerId || null });
     } else {
       // fallback, include id only
-      items.push({ productId: Number(key), quantity: qty });
+      items.push({ productId: Number(id), quantity: qty, color: color || null });
     }
   }
   return items;
@@ -28,120 +42,539 @@ const PlaceOrder = () => {
   const [method,setMethod] = useState('cod')
 
   const {navigate} = useContext(ShopContext);
-  const { products, cartsItems, refreshProducts } = useContext(ShopContext);
+  const { products, cartsItems, refreshProducts, getCartAmount, currency, clearCart } = useContext(ShopContext);
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [province, setProvince] = useState('');
-  const [zipcode, setZipcode] = useState('');
-  const [country, setCountry] = useState('');
+  const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [regionProvinceCityBarangay, setRegionProvinceCityBarangay] = useState('');
+  const [zipcode, setZipcode] = useState('');
+  const [street, setStreet] = useState('');
+  const [email, setEmail] = useState('');
+  const [country, setCountry] = useState('Philippines');
   const [placing, setPlacing] = useState(false);
+  const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
+  const [sellerPickupLocations, setSellerPickupLocations] = useState([])
+  const [reservationDateTime, setReservationDateTime] = useState('')
+  const [reservationNote, setReservationNote] = useState('')
+  const [discountCode, setDiscountCode] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState(0)
+  const [discountMsg, setDiscountMsg] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [cartData, setCartData] = React.useState([])
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
+  const [shippingRates, setShippingRates] = React.useState([])
+  const [selectedShippingRate, setSelectedShippingRate] = React.useState(null)
+  const [sellerShippingInfo, setSellerShippingInfo] = React.useState({})
+  const [modalState, setModalState] = React.useState({
+    open: false,
+    title: '',
+    message: '',
+  })
+
+  const openModal = (title, message) => {
+    setModalState({ open: true, title, message })
+  }
+
+  const closeModal = () => {
+    setModalState({ open: false, title: '', message: '' })
+  }
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token')
+    setIsLoggedIn(!!token)
+  }, [])
+
+  // Fetch pickup locations and shipping settings from sellers in cart
+  React.useEffect(() => {
+    const fetchSellerData = async () => {
+      // Gather unique sellerIds from cart products
+      const sellerIds = new Set()
+      for (const key in cartsItems) {
+        if (!cartsItems[key] || cartsItems[key] <= 0) continue
+        const { id } = parseCartKey(key)
+        const prod = (products || []).find(p => String(p._id || p.id) === String(id))
+        if (prod?.sellerId) sellerIds.add(prod.sellerId)
+      }
+      if (sellerIds.size === 0) { setSellerPickupLocations([]); setShippingRates([]); return }
+
+      const allLocations = []
+      const allRates = []
+      const shippingInfo = {}
+      for (const sid of sellerIds) {
+        try {
+          const res = await fetch(`${apiUrl}/api/sellers/${sid}`)
+          if (res.ok) {
+            const seller = await res.json()
+            // Pickup locations
+            const locs = Array.isArray(seller.pickupLocations) ? seller.pickupLocations : []
+            locs.forEach(loc => {
+              if (!allLocations.some(l => l.location === loc && l.sellerId === sid)) {
+                allLocations.push({ location: loc, sellerId: sid, storeName: seller.storeName || 'Seller' })
+              }
+            })
+            // Shipping settings
+            const settings = seller.shippingSettings || {}
+            const rates = Array.isArray(settings.shippingRates) ? settings.shippingRates : []
+            if (rates.length > 0) {
+              rates.forEach(r => {
+                if (r.name && !allRates.some(ar => ar.name === r.name && ar.price === r.price)) {
+                  allRates.push({ name: r.name, price: Number(r.price) || 0, estimatedDays: r.estimatedDays || '' })
+                }
+              })
+            }
+            shippingInfo[sid] = {
+              rates,
+              freeShippingMinimum: Number(settings.freeShippingMinimum) || 0,
+              storeName: seller.storeName || 'Seller',
+            }
+          }
+        } catch (e) { console.error('Failed to fetch seller data', e) }
+      }
+      setSellerPickupLocations(allLocations)
+      if (allLocations.length > 0) {
+        setPickupLocationsBySeller((prev) => {
+          const next = { ...prev }
+          for (const loc of allLocations) {
+            const sid = String(loc.sellerId)
+            if (!next[sid]) next[sid] = loc.location
+          }
+          return next
+        })
+      }
+      // Set shipping rates — if sellers have custom rates use them, otherwise default
+      if (allRates.length > 0) {
+        setShippingRates(allRates)
+        if (!selectedShippingRate) setSelectedShippingRate(allRates[0])
+      } else {
+        const defaultRates = [{ name: 'Standard Shipping', price: 40, estimatedDays: '5-7 business days' }]
+        setShippingRates(defaultRates)
+        if (!selectedShippingRate) setSelectedShippingRate(defaultRates[0])
+      }
+      setSellerShippingInfo(shippingInfo)
+    }
+    fetchSellerData()
+  }, [cartsItems, products, apiUrl])
+
+  const pickupLocationsGrouped = React.useMemo(() => {
+    const grouped = {}
+    for (const loc of sellerPickupLocations) {
+      const sid = String(loc.sellerId)
+      if (!grouped[sid]) {
+        grouped[sid] = { sellerId: sid, storeName: loc.storeName || 'Seller', locations: [] }
+      }
+      if (!grouped[sid].locations.includes(loc.location)) {
+        grouped[sid].locations.push(loc.location)
+      }
+    }
+    return Object.values(grouped)
+  }, [sellerPickupLocations])
+
+  React.useEffect(() => {
+    const tempData = []
+    for (const items in cartsItems) {
+      if (cartsItems[items] > 0) {
+        const { id, color } = parseCartKey(items)
+        tempData.push({
+          _id: items,
+          productId: id,
+          color: color || null,
+          quantity: cartsItems[items]
+        })
+      }
+    }
+    setCartData(tempData)
+  }, [cartsItems])
+
+  const subtotal = getCartAmount ? getCartAmount() : 0
+
+  const computedShippingFee = React.useMemo(() => {
+    if (method === 'pickup') return 0
+
+    const sellerSubtotals = {}
+    const sellerIds = new Set()
+    for (const key in cartsItems) {
+      const qty = Number(cartsItems[key]) || 0
+      if (qty <= 0) continue
+      const { id } = parseCartKey(key)
+      const prod = (products || []).find(p => String(p._id || p.id) === String(id))
+      const sid = Number(prod?.sellerId)
+      if (!Number.isFinite(sid) || sid <= 0) continue
+      sellerIds.add(sid)
+      const line = (Number(prod?.price) || 0) * qty
+      sellerSubtotals[sid] = (sellerSubtotals[sid] || 0) + line
+    }
+
+    let totalShipping = 0
+    const selectedMethodName = selectedShippingRate?.name || 'Standard Shipping'
+    sellerIds.forEach((sid) => {
+      const info = sellerShippingInfo[sid] || {}
+      const rates = Array.isArray(info.rates) ? info.rates : []
+      const matched = rates.find(r => r?.name === selectedMethodName)
+      const fallback = rates[0]
+      const baseRate = Number((matched || fallback)?.price)
+      let sellerFee = Number.isFinite(baseRate) ? baseRate : 40
+
+      const freeMin = Number(info.freeShippingMinimum) || 0
+      if (freeMin > 0 && (sellerSubtotals[sid] || 0) >= freeMin) {
+        sellerFee = 0
+      }
+
+      totalShipping += sellerFee
+    })
+
+    if (sellerIds.size === 0) return 40
+    return totalShipping
+  }, [method, cartsItems, products, sellerShippingInfo, selectedShippingRate])
 
   return (
-    <div className='flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t'>
-      {/* ----------------Left side ------------------ */}
-      <div className='flex flex-col gap-4 w-full sm:max-w-[480px]'>
+    <div className='min-h-screen bg-white pt-6 sm:pt-8 pb-12 sm:pb-20 px-4 sm:px-0'>
+      <div className='max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12'>
+        {/* ----------------Left side - Form-------------- */}
+        <div className='space-y-6 sm:space-y-8'>
+          
+          {/* Contact Section */}
+          {/* Contact Section removed */}
 
-        <div className='text-xl sm:text-2xl my-3'>
-          <Title text1={'DELIVERY'} text2={'INFORMATION'}/>
-        </div>
+          {/* Delivery Section */}
           {method !== 'pickup' ? (
-            <>
-              <div className='flex gap-3'>
-                <input value={firstName} onChange={e=>setFirstName(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='First name' />
-                <input value={lastName} onChange={e=>setLastName(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Last name' />
-              </div>
-              <input value={email} onChange={e=>setEmail(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="email" placeholder='Email address' />
-              <input value={street} onChange={e=>setStreet(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Street' />
-              <div className='flex gap-3'>
-                <input value={city} onChange={e=>setCity(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='City' />
-                <input value={province} onChange={e=>setProvince(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Province' />
-              </div>
-              <div className='flex gap-3'>
-                <input value={zipcode} onChange={e=>setZipcode(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="number" placeholder='Zipcode' />
-                <input value={country} onChange={e=>setCountry(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Country' />
-              </div>
-              <input value={phone} onChange={e=>setPhone(e.target.value)} className='border border-pink-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Phone' />
-            </>
+            <div>
+              <h2 className='text-xl sm:text-2xl font-bold mb-3 sm:mb-4'>Delivery</h2>
+              
+              {/* Country Select */}
+              <select 
+                value={country} 
+                onChange={e=>setCountry(e.target.value)}
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black bg-white text-sm sm:text-base'
+              >
+                <option value='Philippines'>Philippines</option>
+              </select>
+
+              {/* Full Name */}
+              <input 
+                value={fullName} 
+                onChange={e=>setFullName(e.target.value)} 
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                type="text" 
+                placeholder='Full name' 
+              />
+
+              {/* Phone Number */}
+              <input 
+                value={phone} 
+                onChange={e=>setPhone(e.target.value)} 
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                type="text" 
+                placeholder='Phone number' 
+              />
+
+              {/* Region/Province/City/Barangay */}
+              <input 
+                value={regionProvinceCityBarangay} 
+                onChange={e=>setRegionProvinceCityBarangay(e.target.value)} 
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                type="text" 
+                placeholder='Region/Province/City/Barangay' 
+              />
+
+              {/* Postal code */}
+              <input 
+                value={zipcode} 
+                onChange={e=>setZipcode(e.target.value)} 
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                type="text" 
+                placeholder='Postal code' 
+              />
+
+              {/* Street name, building, house no. */}
+              <input 
+                value={street} 
+                onChange={e=>setStreet(e.target.value)} 
+                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                type="text" 
+                placeholder='Street name, building, house no.' 
+              />
+
+              {/* Shipping Rate Selection */}
+              {shippingRates.length > 0 && (
+                <div className='mt-2'>
+                  <h3 className='text-sm font-semibold mb-2 text-gray-700'>Payment Methods</h3>
+                  <div className='space-y-2'>
+                    {shippingRates.map((rate, idx) => (
+                      <label key={idx} className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                        selectedShippingRate?.name === rate.name && selectedShippingRate?.price === rate.price
+                          ? 'border-black bg-gray-50' : 'border-gray-300 hover:bg-gray-50'
+                      }`}>
+                        <div className='flex items-center gap-3'>
+                          <input
+                            type='radio'
+                            name='shippingRate'
+                            checked={selectedShippingRate?.name === rate.name && selectedShippingRate?.price === rate.price}
+                            onChange={() => setSelectedShippingRate(rate)}
+                            className='w-4 h-4'
+                          />
+                          <div>
+                            <span className='text-sm font-medium'>{rate.name}</span>
+                            {rate.estimatedDays && <span className='text-xs text-gray-500 ml-2'>({rate.estimatedDays})</span>}
+                          </div>
+                        </div>
+                        <span className='text-sm font-medium'>
+                          ₱{rate.price.toFixed(2)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className='text-xs text-gray-500 mt-2'>
+                    Delivery fee is calculated per seller in your cart.
+                  </p>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className='p-4 border rounded bg-yellow-50 text-sm text-gray-700'>
-              You selected <strong>Pick Up</strong>. No shipping address is required — your order will be held for pickup. We'll contact your email/phone when the order is ready.
+            <div className='p-3 sm:p-4 border rounded bg-yellow-50'>
+              <div className='text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4'>
+                You selected <strong>Pick Up</strong>. No shipping address is required — your order will be held for pickup.
+              </div>
+              <div className='mb-3 sm:mb-4 p-3 bg-blue-50 border border-blue-200 rounded'>
+                <p className='text-xs sm:text-sm text-blue-800'>
+                  <strong>📋 Important:</strong> The seller will provide the number of working days needed to prepare your custom product. You will be notified of the estimated ready date for pickup.
+                </p>
+              </div>
+              <div>
+                <label className='block text-xs sm:text-sm font-medium mb-2'>Pickup location per seller</label>
+                {pickupLocationsGrouped.length > 0 ? (
+                  <div className='space-y-3'>
+                    {pickupLocationsGrouped.map((seller) => (
+                      <div key={seller.sellerId} className='border rounded p-3 bg-white'>
+                        <p className='text-xs sm:text-sm font-medium text-gray-700 mb-2'>{seller.storeName}</p>
+                        <select
+                          value={pickupLocationsBySeller[seller.sellerId] || ''}
+                          onChange={(e) => setPickupLocationsBySeller(prev => ({ ...prev, [seller.sellerId]: e.target.value }))}
+                          className='w-full border px-3 py-2.5 rounded text-sm sm:text-base'
+                        >
+                          <option value=''>Select pickup location</option>
+                          {seller.locations.map((loc, idx) => (
+                            <option key={idx} value={loc}>{loc}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className='text-sm text-gray-500'>No pickup locations available. The sellers in your cart have not set pickup locations yet.</p>
+                )}
+              </div>
             </div>
           )}
+        </div>
 
-      </div>
+        {/* ----------------Right side - Order Summary-------------- */}
+        <div>
+          {/* Cart Items */}
+          <div className='space-y-3 sm:space-y-4 mb-6 sm:mb-8'>
+            {cartData.map((item, index) => {
+              const productData = products.find((product) => {
+                if (product._id && String(product._id) === String(item.productId)) return true
+                if (product.id && String(product.id) === String(item.productId)) return true
+                return false
+              })
 
-        {/* ---------------- Right side---------------- */}
-        <div className='mt-3'>
-          
-          <div className='mt-6 min-w-80'>
-            <CartTotal />
+              if (!productData) return null
+
+              const firstImg = Array.isArray(productData.image) && productData.image.length > 0 ? productData.image[0] : null
+              let imgSrc = '/path/to/placeholder.jpg'
+              if (firstImg) {
+                if (typeof firstImg === 'object' && firstImg.url) {
+                  imgSrc = firstImg.url.startsWith('http') ? firstImg.url : `${apiUrl}${firstImg.url}`
+                } else if (typeof firstImg === 'string') {
+                  imgSrc = firstImg.startsWith('http') ? firstImg : `${apiUrl}${firstImg}`
+                }
+              }
+
+              return (
+                <div key={index} className='flex gap-3 sm:gap-4'>
+                  <div className='relative'>
+                    <img src={imgSrc} alt={productData.name} className='w-16 h-16 sm:w-24 sm:h-24 object-cover rounded' />
+                    <span className='absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium'>
+                      {item.quantity}
+                    </span>
+                  </div>
+                  <div className='flex-1'>
+                    <h3 className='font-medium text-sm sm:text-base'>{productData.name}</h3>
+                    {productData.size && <p className='text-xs sm:text-sm text-gray-600'>Size: {productData.size}</p>}
+                    {item.color && <p className='text-xs sm:text-sm text-gray-600'>Color: {item.color}</p>}
+                    <p className='text-xs sm:text-sm text-gray-600 mt-1'>{currency}{productData.price}</p>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
-                <div className='mt-8'>
-              <Title text1={'PAYMENT'} text2={'METHOD'}/>
-              {/* ---------Payment Method Selection------------------ */}
-              <div className='Flex gap-3 flex-col lg:flex-row'>
-                <div onClick={()=>setMethod('pickup')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer border-pink-300'>
-                  <p className={`min-w-3.5 h-3.5 border rounded-full border-black ${method === 'pickup' ? 'bg-green-400' : ''}`}></p>
-                  <p className='text-gray-500 text-sm font-medium mx-9'>PICK UP</p>
-                </div>
-                <div onClick={()=>setMethod('cod')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer border-pink-300'>
-                  <p className={`min-w-3.5 h-3.5 border rounded-full border-black ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
-                  <p className='text-gray-500 text-sm font-medium mx-9'>CASH ON DELIVERY</p>
-                </div>
-              </div>
 
-              <div className='w-full text-end mt-8'>
-                <button onClick={async ()=>{
-                    // Build order payload and submit
-                    const token = localStorage.getItem('token');
-                    if (!token) {
-                      alert('Please login to place order');
-                      navigate('/login');
-                      return;
-                    }
-                    const items = buildItemsFromCart(cartsItems, products || []);
-                    if (items.length === 0) {
-                      alert('Your cart is empty');
-                      return;
-                    }
 
-                    // compute subtotal
-                    const subtotal = items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
-                    const address = method === 'pickup' ? {} : { firstName, lastName, email, street, city, state: province, zipcode, country, phone };
+          {/* Order Summary */}
+          <div className='border-t space-y-3 pt-4'>
 
-                    try {
-                      setPlacing(true);
-                      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
-                        items,
-                        address,
-                        paymentMethod: method,
-                        subtotal,
-                        commission: 0,
-                      }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      // on success
-                      refreshProducts && refreshProducts();
-                      navigate('/orders');
-                    } catch (err) {
-                      console.error('Place order error', err);
-                      alert(err.response?.data?.message || 'Failed to place order');
-                    } finally {
-                      setPlacing(false);
-                    }
-                  }} className='bg-black text-white px-20 py-3 text-sm'>
-                  {placing ? 'Placing…' : 'CHECKOUT ORDER'}
-                </button>
-              </div>
+            <div className='flex justify-between text-sm'>
+              <span className='text-gray-600'>Subtotal • {cartData.length} items</span>
+              <span className='font-medium'>{currency}{subtotal.toFixed(2)}</span>
             </div>
 
+            {appliedDiscount > 0 && (
+              <div className='flex justify-between text-sm text-green-600'>
+                <span>Discount ({appliedCoupon})</span>
+                <span className='font-medium'>-{currency}{appliedDiscount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {method !== 'pickup' && (
+              <div className='flex justify-between text-sm'>
+                <span className='text-gray-600'>Shipping{selectedShippingRate ? ` (${selectedShippingRate.name})` : ''}</span>
+                <span className='font-medium'>
+                  {computedShippingFee === 0 ? (
+                    <span className='text-green-600'>FREE</span>
+                  ) : (
+                    `${currency}${computedShippingFee.toFixed(2)}`
+                  )}
+                </span>
+              </div>
+            )}
+
+            <div className='flex justify-between text-lg border-t pt-4'>
+              <div>
+                <span className='text-gray-600 text-sm mr-2'>Total</span>
+                <span className='text-xs text-gray-500'>PHP</span>
+              </div>
+              <span className='font-bold'>{currency}{(Math.max(0, subtotal - appliedDiscount + computedShippingFee)).toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Payment Method */}
+          <div className='mt-6 sm:mt-8'>
+            <h3 className='font-bold mb-3 sm:mb-4 text-base sm:text-lg'>Mode of Delivery</h3>
+            <div className='space-y-2 sm:space-y-3'>
+              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('pickup')}>
+                <input type="radio" name="payment" checked={method === 'pickup'} onChange={() => setMethod('pickup')} className='w-4 h-4' />
+                <span className='font-medium text-sm sm:text-base'>Pick Up</span>
+              </label>
+              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('cod')}>
+                <input type="radio" name="payment" checked={method === 'cod'} onChange={() => setMethod('cod')} className='w-4 h-4' />
+                <span className='font-medium text-sm sm:text-base'>Delivery</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Checkout Button */}
+          <button 
+            onClick={async ()=>{
+              const token = localStorage.getItem('token');
+              if (!token) {
+                openModal('Login Required', 'Please login to place order.')
+                navigate('/login');
+                return;
+              }
+              const items = buildItemsFromCart(cartsItems, products || []);
+              if (items.length === 0) {
+                openModal('Cart is Empty', 'Your cart is empty. Add at least one product before checkout.')
+                return;
+              }
+
+              const sellerIdsInCart = [...new Set(items.map(it => String(it.sellerId || '')).filter(Boolean))]
+
+              if (method === 'pickup') {
+                const missingSellerPickup = sellerIdsInCart.filter((sid) => !pickupLocationsBySeller[sid])
+                if (missingSellerPickup.length > 0) {
+                  openModal('Pickup Location Required', 'Please select a pickup location for every seller in your order.')
+                  return
+                }
+              }
+
+              const itemsWithPickup = method === 'pickup'
+                ? items.map((it) => ({
+                    ...it,
+                    pickupLocation: pickupLocationsBySeller[String(it.sellerId)] || null,
+                  }))
+                : items
+
+              if (method !== 'pickup') {
+                const missingFields = []
+                if (!fullName.trim()) missingFields.push('Full name')
+                if (!phone.trim()) missingFields.push('Phone number')
+                if (!regionProvinceCityBarangay.trim()) missingFields.push('Region/Province/City/Barangay')
+                if (!zipcode.trim()) missingFields.push('Postal code')
+                if (!street.trim()) missingFields.push('Street address')
+
+                if (missingFields.length > 0) {
+                  openModal(
+                    'Incomplete Delivery Address',
+                    `Please complete your delivery address:\n- ${missingFields.join('\n- ')}`
+                  )
+                  return
+                }
+              }
+
+              // Split fullName into firstName and lastName
+              let firstName = '';
+              let lastName = '';
+              if (fullName && fullName.trim().length > 0) {
+                const parts = fullName.trim().split(' ');
+                firstName = parts[0];
+                lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+              }
+              const address = method === 'pickup' ? {} : { firstName, lastName, phone, regionProvinceCityBarangay, zipcode, street, email, country };
+              const pickupInfo = method === 'pickup' ? { reservationDateTime: reservationDateTime || null, reservationNote: reservationNote || null } : undefined;
+
+              try {
+                setPlacing(true);
+                const res = await axios.post(`${apiUrl}/api/orders`, {
+                  items: itemsWithPickup,
+                  address,
+                  paymentMethod: method,
+                  subtotal,
+                  shippingFee: computedShippingFee,
+                  shippingMethod: selectedShippingRate?.name || 'Standard Shipping',
+                  commission: 0,
+                  discount: appliedDiscount,
+                  couponCode: appliedCoupon || null,
+                  pickupLocationsBySeller: method === 'pickup' ? pickupLocationsBySeller : null,
+                  reservationDateTime: pickupInfo?.reservationDateTime || null,
+                  reservationNote: pickupInfo?.reservationNote || null,
+                }, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                refreshProducts && refreshProducts();
+                clearCart && clearCart();
+                navigate('/orders');
+              } catch (err) {
+                console.error('Place order error', err);
+                openModal('Order Failed', err.response?.data?.message || 'Failed to place order')
+              } finally {
+                setPlacing(false);
+              }
+            }}
+            className='w-full bg-black text-white py-3 sm:py-4 rounded mt-6 sm:mt-8 font-medium hover:bg-gray-800 transition-colors text-sm sm:text-base'
+          >
+            {placing ? 'Placing order...' : 'Complete purchase'}
+          </button>
         </div>
+      </div>
+
+      {modalState.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-md p-5'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{modalState.title}</h3>
+            <p className='text-sm text-gray-700 whitespace-pre-line mb-5'>{modalState.message}</p>
+            <div className='flex justify-end'>
+              <button
+                onClick={closeModal}
+                className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

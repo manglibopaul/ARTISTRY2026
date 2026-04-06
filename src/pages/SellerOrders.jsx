@@ -6,7 +6,7 @@ const SellerOrders = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('sellerToken');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -27,8 +27,8 @@ const SellerOrders = () => {
   }, []);
 
   return (
-    <div className='my-6'>
-      <h2 className='text-2xl font-semibold mb-4'>Seller — Orders</h2>
+    <div className='my-6 px-3 sm:px-4'>
+      <h2 className='text-xl sm:text-2xl font-semibold mb-4'>Seller — Orders</h2>
       {loading && <p>Loading orders…</p>}
       {error && <p className='text-red-600'>{error}</p>}
       {!loading && orders.length === 0 && <p>No orders for your products yet.</p>}

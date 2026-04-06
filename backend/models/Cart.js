@@ -19,7 +19,7 @@ const Cart = sequelize.define('Cart', {
   },
   items: {
     type: DataTypes.JSON,
-    defaultValue: [],
+    defaultValue: {},
   },
   totalPrice: {
     type: DataTypes.FLOAT,

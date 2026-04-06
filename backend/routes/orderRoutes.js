@@ -29,9 +29,6 @@ router.get('/:id', verifyUser, getOrder);
 router.put('/:id/cancel', verifyUser, cancelOrder);
 router.put('/:id/received', verifyUser, markOrderReceived);
 
-// Seller routes
-router.get('/seller/my-orders', verifySeller, getSellerOrders);
-
 // Admin routes (protected)
 router.get('/', verifyAdmin, getAllOrders);
 router.put('/:id/status', verifyAdmin, updateOrderStatus);

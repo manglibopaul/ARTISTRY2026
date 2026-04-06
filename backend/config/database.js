@@ -1,11 +1,16 @@
-import { Sequelize } from 'sequelize';
+import Sequelize from 'sequelize';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dbPath = path.join(__dirname, '../aninaya.db');
+
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: './aninaya.db',
+  storage: dbPath,
   logging: false,
   pool: {
     max: 5,
@@ -15,25 +20,65 @@ const sequelize = new Sequelize({
   }
 });
 
+const User = sequelize.define('User', {
+  id: {
+    type: Sequelize.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+  email: {
+    type: Sequelize.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  password: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+  isAdmin: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false,
+  },
+});
+
 let dbConnected = false;
+
+const ensureUsersDeletedAtColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Users');
+  if (!table.deletedAt) {
+    await qi.addColumn('Users', 'deletedAt', {
+      type: Sequelize.DATE,
+      allowNull: true,
+    });
+  }
+};
+
+const ensureReviewsImageUrlColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Reviews');
+  if (!table.imageUrl) {
+    await qi.addColumn('Reviews', 'imageUrl', {
+      type: Sequelize.STRING,
+      allowNull: true,
+    });
+  }
+};
 
 const connectDB = async () => {
   if (dbConnected) return;
-  
+
   try {
     await sequelize.authenticate();
-    await sequelize.query('PRAGMA foreign_keys = OFF');
-    // Some SQLite ALTER operations create a temporary backup table (e.g. Reviews_backup)
-    // If a previous alter attempt left a backup table around, it can cause UNIQUE constraint errors
-    // when trying to copy rows into it. Drop such leftover backup table(s) before syncing.
-    try {
-      await sequelize.query('DROP TABLE IF EXISTS `Reviews_backup`');
-    } catch (e) {
-      // ignore drop errors and continue
-    }
-    // Use `alter: true` to update existing tables to match models (adds missing columns safely)
-    await sequelize.sync({ force: false, alter: true });
-    await sequelize.query('PRAGMA foreign_keys = ON');
+    await sequelize.sync({ force: false });
+    await ensureUsersDeletedAtColumn();
+    await ensureReviewsImageUrlColumn();
+    console.log('✅ Database synchronized successfully');
+
     dbConnected = true;
     console.log('✅ SQLite database connected successfully');
   } catch (error) {
@@ -43,4 +88,4 @@ const connectDB = async () => {
   }
 };
 
-export { sequelize, connectDB };
+export { sequelize, connectDB, User };

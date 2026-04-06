@@ -9,7 +9,7 @@ export const verifySeller = (req, res, next) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.seller = decoded;
     next();
   } catch (error) {
@@ -19,7 +19,7 @@ export const verifySeller = (req, res, next) => {
 
 // Generate JWT token
 export const generateSellerToken = (sellerId) => {
-  return jwt.sign({ id: sellerId }, process.env.JWT_SECRET || 'your-secret-key', {
+  return jwt.sign({ id: sellerId }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 };

@@ -13,6 +13,9 @@ import Review from './models/Review.js';
 import Cart from './models/Cart.js';
 import Seller from './models/Seller.js';
 import ChatMessage from './models/ChatMessage.js';
+import Coupon from './models/Coupon.js';
+import ReturnRequest from './models/ReturnRequest.js';
+import Notification from './models/Notification.js';
 
 import { connectDB } from './config/database.js';
 import productRoutes from './routes/productRoutes.js';
@@ -21,6 +24,10 @@ import orderRoutes from './routes/orderRoutes.js';
 import sellerRoutes from './routes/sellerRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import returnRoutes from './routes/returnRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 dotenv.config();
 
@@ -37,24 +44,31 @@ const allowedOrigins = [
   'http://localhost:5175',
   'http://192.168.254.104:5173',
   'http://192.168.254.104:5174',
+  // Current LAN IPs used for mobile testing (update as your IP changes)
+  'http://192.168.68.126:5173',
+  'http://192.168.68.126:5174',
+  'http://192.168.68.126:5175',
   process.env.FRONTEND_URL || 'http://localhost:5173',
 ];
 
 app.use(compression());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else if (process.env.NODE_ENV === 'production') {
-      // In production, allow any Netlify domain
-      if (origin && origin.includes('netlify.app')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    } else {
-      callback(null, true);
+    // In development, allow all origins to avoid mobile LAN issues
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
     }
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Production: allow Netlify domains
+    if (origin && origin.includes('netlify.app')) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
@@ -71,6 +85,10 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/sellers', sellerRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/returns', returnRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

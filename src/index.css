@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Prata&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Prata&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,7 +10,41 @@ a.active hr{
 }
 
 *{
-    font-family: Outfit;
+    font-family: 'Poppins', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+    body {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Prevent horizontal overflow */
+#root {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 640px) {
+    button, a, select, input[type="checkbox"], input[type="radio"] {
+        min-height: 40px;
+    }
+    
+    input, textarea, select {
+        font-size: 16px !important; /* Prevent iOS zoom on focus */
+    }
 }
 
 .prata-regular {
@@ -22,6 +56,21 @@ a.active hr{
  ::-webkit-scrollbar{
     display: none;
  }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
 
 @media (max-width:640px) {
     a.active{

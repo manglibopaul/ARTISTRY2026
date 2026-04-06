@@ -6,14 +6,15 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [cancelConfirm, setCancelConfirm] = useState({ open: false, orderId: null });
+  const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
   const navigate = useNavigate();
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const cancelOrder = async (orderId) => {
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-    if (!token) return window.location.href = '/login';
-    if (!confirm('Are you sure you want to cancel this order?')) return;
+    if (!token) return navigate('/login');
     try {
       const res = await fetch(`/api/orders/${orderId}/cancel`, {
         method: 'PUT',
@@ -21,12 +22,13 @@ const Orders = () => {
       });
       if (!res.ok) {
         const txt = await res.text();
-        alert(txt || 'Failed to cancel order');
+        setInfoModal({ open: true, title: 'Cancel Failed', message: txt || 'Failed to cancel order' });
         return;
       }
-      window.location.reload();
+      setOrders((prev) => prev.map((o) => (Number(o.id) === Number(orderId) ? { ...o, orderStatus: 'cancelled' } : o)));
+      setInfoModal({ open: true, title: 'Order Cancelled', message: 'Your order has been cancelled.' });
     } catch (err) {
-      alert(err.message || 'Failed to cancel order');
+      setInfoModal({ open: true, title: 'Cancel Failed', message: err.message || 'Failed to cancel order' });
     }
   }
 
@@ -97,7 +99,7 @@ const Orders = () => {
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
     if (!token) {
       // redirect to login if not authenticated
-      window.location.href = '/login';
+      navigate('/login');
       return;
     }
     fetchOrders();
@@ -119,8 +121,25 @@ const Orders = () => {
   }
 
   return (
-    <div className='border-t pt-16'>
-      <div className='text-2xl'>
+    <div className='border-t pt-8 sm:pt-16 px-2 sm:px-0'>
+      <div className='flex items-center gap-2 mb-4 max-w-md'>
+        <button
+          type='button'
+          onClick={() => navigate('/profile')}
+          className='px-4 py-2 bg-black text-white rounded text-sm sm:text-base'
+        >
+          My Profile
+        </button>
+        <button
+          type='button'
+          onClick={() => navigate('/orders')}
+          className='px-4 py-2 bg-gray-700 text-white rounded text-sm sm:text-base'
+        >
+          View My Orders
+        </button>
+      </div>
+
+      <div className='text-xl sm:text-2xl'>
         <Title text1={'MY'} text2={'ORDERS'} />
       </div>
 
@@ -133,14 +152,14 @@ const Orders = () => {
         )}
 
         {!loading && orders.map((order) => (
-          <div key={order.id} className='py-4 border-t border-b text-gray-700 flex flex-col gap-4'>
-            <div className='flex justify-between items-start'>
+          <div key={order.id} className='py-4 border-t border-b text-gray-700 flex flex-col gap-3 sm:gap-4'>
+            <div className='flex flex-col sm:flex-row justify-between items-start gap-1'>
               <div>
                 <p className='text-sm text-gray-500'>Order</p>
-                <p className='text-sm text-gray-500'>Date: {new Date(order.createdAt).toLocaleString()}</p>
+                <p className='text-xs sm:text-sm text-gray-500'>Date: {new Date(order.createdAt).toLocaleString()}</p>
               </div>
-              <div className='text-right'>
-                <p className='font-medium'>{order.orderStatus || 'pending'}</p>
+              <div className='sm:text-right'>
+                <p className='font-medium text-sm sm:text-base'>{order.orderStatus || 'pending'}</p>
                 <p className='text-sm text-gray-500'>Total: ₱{order.total}</p>
               </div>
             </div>
@@ -159,16 +178,49 @@ const Orders = () => {
                     <p className='text-gray-600'>Price: ₱{item.price}</p>
                     <p className='text-gray-600'>Quantity: {item.quantity || item.qty || 1}</p>
                     {item.size && <p className='text-gray-600'>Size: {item.size}</p>}
+                    {item.color && <p className='text-gray-600'>Color: {item.color}</p>}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className='flex items-center justify-between'>
+            {/* Working Days Info for Pickup Orders */}
+            {order.paymentMethod === 'pickup' && order.workingDays && (
+              <div className='p-3 bg-blue-50 border border-blue-200 rounded'>
+                <div className='text-sm font-medium text-blue-800'>
+                  📦 Pickup Order - Product Preparation
+                </div>
+                <div className='text-sm text-blue-700 mt-1'>
+                  Working Days: {order.workingDays} business days
+                </div>
+                {order.estimatedReadyDate && (
+                  <div className='text-sm text-blue-700'>
+                    Estimated Ready Date: {new Date(order.estimatedReadyDate).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </div>
+                )}
+                {order.pickupLocation && (
+                  <div className='text-sm text-blue-700 mt-1'>
+                    Pickup Location: {order.pickupLocation}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2'>
               <div className='text-sm text-gray-500'>Payment: {order.paymentMethod || 'N/A'}</div>
-              <div className='flex items-center gap-2'>
+              <div className='flex flex-wrap items-center gap-2 w-full sm:w-auto'>
                 {order.orderStatus !== 'cancelled' && order.orderStatus !== 'completed' && (
-                  <button onClick={() => cancelOrder(order.id)} className='bg-red-500 text-white px-3 py-1 rounded text-sm'>Cancel</button>
+                  <button
+                    onClick={() => setCancelConfirm({ open: true, orderId: order.id })}
+                    className='bg-red-500 text-white px-3 py-1 rounded text-sm'
+                  >
+                    Cancel
+                  </button>
                 )}
                 <Link to={`/orders/${order.id}`} className='border px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-100 duration-200'>
                   View Order
@@ -186,7 +238,7 @@ const Orders = () => {
                         const firstItem = Array.isArray(order.items) && order.items.length ? order.items[0] : null;
                         const pid = firstItem ? (firstItem.productId || firstItem.id || firstItem._id) : null;
                         const hash = pid ? `#review-form-${pid}` : '';
-                        window.location.href = `/orders/${order.id}?focusReview=1${hash}`;
+                        navigate(`/orders/${order.id}?focusReview=1${hash}`);
                       }
                     }}
                     className='border px-4 py-2 text-sm font-medium rounded-sm hover:bg-gray-100 duration-200'
@@ -199,6 +251,50 @@ const Orders = () => {
           </div>
         ))}
       </div>
+
+      {cancelConfirm.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-md p-5'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>Cancel Order</h3>
+            <p className='text-sm text-gray-700 mb-5'>Are you sure you want to cancel this order?</p>
+            <div className='flex justify-end gap-2'>
+              <button
+                onClick={() => setCancelConfirm({ open: false, orderId: null })}
+                className='px-4 py-2 rounded bg-gray-100 text-gray-700 text-sm hover:bg-gray-200'
+              >
+                No
+              </button>
+              <button
+                onClick={async () => {
+                  const orderId = cancelConfirm.orderId
+                  setCancelConfirm({ open: false, orderId: null })
+                  await cancelOrder(orderId)
+                }}
+                className='px-4 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700'
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {infoModal.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-md p-5'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{infoModal.title}</h3>
+            <p className='text-sm text-gray-700 whitespace-pre-line mb-5'>{infoModal.message}</p>
+            <div className='flex justify-end'>
+              <button
+                onClick={() => setInfoModal({ open: false, title: '', message: '' })}
+                className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

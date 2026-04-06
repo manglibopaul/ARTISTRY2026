@@ -39,8 +39,80 @@ const Seller = sequelize.define('Seller', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  artisanType: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'e.g., Crochet, Woodwork, Painting, Jewelry, Weaving, Pottery, etc.',
+  },
+  expertise: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of expertise tags (e.g., ["hand-dyed", "eco-friendly", "custom-orders"])',
+  },
+  certifications: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of certification objects with name, issuer, date',
+  },
+  bio: {
+    type: DataTypes.TEXT,
+    defaultValue: '',
+    comment: 'Detailed artisan bio/story',
+  },
+  avatar: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Profile photo URL',
+  },
+  portfolioImages: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of portfolio/gallery image URLs',
+  },
+  pickupLocations: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of pickup location strings set by the seller',
+  },
+  proofOfArtisan: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'URL of uploaded proof of artisan image (shop photo, etc.)',
+  },
+  resetToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  resetTokenExpiry: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  shippingSettings: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      freeShippingMinimum: 0,
+      shippingRates: [
+        { name: 'Standard Shipping', price: 40, estimatedDays: '5-7 business days' },
+      ],
+      processingTime: '1-3 business days',
+      shipsFrom: '',
+    },
+    comment: 'Seller shipping configuration: rates, free shipping threshold, processing time',
+  },
+  returnPolicy: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      acceptsReturns: true,
+      returnWindow: 7,
+      conditions: 'Item must be unused and in original packaging.',
+      refundMethod: 'Original payment method',
+    },
+    comment: 'Seller return/refund policy settings',
+  },
 }, {
   timestamps: true,
+  paranoid: true, // enables soft delete (deletedAt)
+  deletedAt: 'deletedAt',
   hooks: {
     beforeCreate: async (seller) => {
       if (seller.password) {

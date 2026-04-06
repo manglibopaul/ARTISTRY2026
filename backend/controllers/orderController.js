@@ -1,13 +1,49 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import Seller from '../models/Seller.js';
+import Notification from '../models/Notification.js';
+import { useCoupon } from './couponController.js';
+import { sendEmail } from '../utils/email.js';
+
+const createNotificationSafe = async (payload) => {
+  try {
+    await Notification.create(payload);
+  } catch (err) {
+    console.error('Failed to create notification:', err.message);
+  }
+};
 
 // Create order
 export const createOrder = async (req, res) => {
   try {
     const { items, address, paymentMethod, subtotal, commission } = req.body;
+    const couponCode = req.body.couponCode || null;
+    const discount = Number(req.body.discount) || 0;
+    const isPickup = paymentMethod === 'pickup';
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Cannot place order with empty cart' });
+    }
+
+    if (!isPickup) {
+      const missing = [];
+      if (!String(address?.firstName || '').trim()) missing.push('firstName');
+      if (!String(address?.phone || '').trim()) missing.push('phone');
+      if (!String(address?.street || '').trim()) missing.push('street');
+      if (!String(address?.zipcode || '').trim()) missing.push('zipcode');
+
+      const cityLike = String(address?.regionProvinceCityBarangay || address?.city || '').trim();
+      if (!cityLike) missing.push('regionProvinceCityBarangay');
+
+      if (missing.length) {
+        return res.status(400).json({
+          message: `Delivery address is incomplete. Missing: ${missing.join(', ')}`,
+        });
+      }
+    }
 
     // Ensure each item includes sellerId; if missing, look up from Product table
-    const normalizedItems = await Promise.all(
+    let normalizedItems = await Promise.all(
       (items || []).map(async (it) => {
         try {
           const prodId = it.productId || it.id || it._id;
@@ -23,7 +59,23 @@ export const createOrder = async (req, res) => {
             if (!newItem.name && product.name) newItem.name = product.name;
             if (!newItem.price && typeof product.price !== 'undefined') newItem.price = product.price;
           }
-
+          // Add seller/store name for admin display
+          if (!newItem.sellerStoreName || !newItem.sellerName) {
+            // Fetch seller if needed
+            let seller = null;
+            if (product.sellerId) {
+              const SellerModel = (await import('../models/Seller.js')).default;
+              seller = await SellerModel.findByPk(product.sellerId);
+            }
+            if (seller) {
+              newItem.sellerStoreName = seller.storeName || '';
+              newItem.sellerName = seller.name || '';
+            }
+          }
+          // Add delivery mode for admin display
+          if (!newItem.deliveryMode) {
+            newItem.deliveryMode = req.body.paymentMethod === 'pickup' ? 'pickup' : 'delivery';
+          }
           return newItem;
         } catch (err) {
           // ignore lookup errors and return original item
@@ -32,31 +84,220 @@ export const createOrder = async (req, res) => {
       })
     );
 
-    // Determine shipping fee and initial status for pickup vs delivery
-    const isPickup = paymentMethod === 'pickup';
-    const shippingFee = isPickup ? 0 : 40;
-    const initialStatus = isPickup ? 'ready for pickup' : 'processing';
+    // Determine shipping fee and initial status for pickup vs delivery.
+    // Delivery shipping is summed per seller in the cart.
+    let shippingFee = 0;
+    const shippingMethod = req.body.shippingMethod || 'Standard Shipping';
+    const initialStatus = 'pending';
+
+    if (!isPickup) {
+      const sellerIds = [...new Set(
+        normalizedItems
+          .map((it) => Number(it.sellerId))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      )];
+
+      // Calculate each seller subtotal to support seller-level free shipping thresholds.
+      const sellerSubtotals = normalizedItems.reduce((acc, it) => {
+        const sid = Number(it.sellerId);
+        if (!Number.isFinite(sid) || sid <= 0) return acc;
+        const line = (Number(it.price) || 0) * (Number(it.quantity) || 1);
+        acc[sid] = (acc[sid] || 0) + line;
+        return acc;
+      }, {});
+
+      for (const sid of sellerIds) {
+        const seller = await Seller.findByPk(sid);
+        const settings = seller?.shippingSettings || {};
+        const rates = Array.isArray(settings.shippingRates) ? settings.shippingRates : [];
+        const matched = rates.find((r) => r?.name === shippingMethod);
+        const fallback = rates[0];
+        const baseRate = Number((matched || fallback)?.price);
+        let sellerFee = Number.isFinite(baseRate) ? baseRate : 40;
+
+        const freeMin = Number(settings.freeShippingMinimum) || 0;
+        if (freeMin > 0 && (sellerSubtotals[sid] || 0) >= freeMin) {
+          sellerFee = 0;
+        }
+
+        shippingFee += sellerFee;
+      }
+
+      // Fallback if no seller IDs were resolved.
+      if (sellerIds.length === 0) shippingFee = 40;
+    }
+
+    // Validate pickup location per seller for pickup orders.
+    let pickupLocation = null;
+    if (isPickup) {
+      const pickupLocationsBySeller = req.body?.pickupLocationsBySeller || {};
+      const sellerIds = [...new Set(
+        normalizedItems
+          .map((it) => Number(it.sellerId))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      )];
+
+      if (!sellerIds.length) {
+        return res.status(400).json({ message: 'Pickup orders require seller information per item.' });
+      }
+
+      const sellers = await Seller.findAll({ where: { id: sellerIds } });
+      const sellerMap = sellers.reduce((acc, s) => {
+        acc[Number(s.id)] = s;
+        return acc;
+      }, {});
+
+      for (const sid of sellerIds) {
+        const selectedLocation = pickupLocationsBySeller[String(sid)] || pickupLocationsBySeller[sid];
+        const seller = sellerMap[sid];
+        const allowedLocations = Array.isArray(seller?.pickupLocations) ? seller.pickupLocations : [];
+
+        if (!selectedLocation) {
+          return res.status(400).json({ message: 'Please select a pickup location for each seller.' });
+        }
+
+        if (!allowedLocations.includes(selectedLocation)) {
+          return res.status(400).json({ message: `Invalid pickup location for seller #${sid}.` });
+        }
+      }
+
+      normalizedItems = normalizedItems.map((it) => {
+        const sid = Number(it.sellerId);
+        if (!Number.isFinite(sid) || sid <= 0) return it;
+        return {
+          ...it,
+          pickupLocation: pickupLocationsBySeller[String(sid)] || pickupLocationsBySeller[sid] || null,
+        };
+      });
+
+      const uniquePickupLocations = [...new Set(
+        normalizedItems
+          .map((it) => it.pickupLocation)
+          .filter(Boolean)
+      )];
+      pickupLocation = uniquePickupLocations.length <= 1
+        ? (uniquePickupLocations[0] || null)
+        : 'Multiple pickup locations';
+    }
+
+    // Reservation fields (optional)
+    let reservationDateTime = req.body?.reservationDateTime ? new Date(req.body.reservationDateTime) : null;
+    let reservationNote = req.body?.reservationNote || null;
+    if (!isPickup) {
+      reservationDateTime = null;
+      reservationNote = null;
+    }
+
+    // If pickup and no name/email provided, use user profile
+    let firstName = address?.firstName;
+    let lastName = address?.lastName;
+    let email = address?.email;
+    if (isPickup && (!firstName && !lastName)) {
+      // Fetch user profile
+      const user = await (await import('../models/User.js')).default.findByPk(req.user.id);
+      if (user) {
+        // Try to split user.name into first/last
+        const nameParts = user.name ? user.name.split(' ') : [];
+        firstName = nameParts[0] || '';
+        lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        email = user.email;
+      }
+    }
 
     const order = await Order.create({
       userId: req.user.id,
       items: normalizedItems,
-      firstName: address?.firstName,
-      lastName: address?.lastName,
-      email: address?.email,
+      firstName,
+      lastName,
+      email,
       street: address?.street,
-      city: address?.city,
+      city: address?.regionProvinceCityBarangay || address?.city,
       state: address?.state,
       zipcode: address?.zipcode,
       country: address?.country,
       phone: address?.phone,
+      pickupLocation: pickupLocation,
+      reservationDateTime,
+      reservationNote,
       paymentMethod,
       subtotal,
       commission,
       shippingFee,
-      total: subtotal + shippingFee + commission,
+      discount,
+      couponCode,
+      total: Math.max(0, subtotal + shippingFee + commission - discount),
       paymentStatus: 'pending',
       orderStatus: initialStatus,
     });
+
+    await createNotificationSafe({
+      userId: req.user.id,
+      orderId: order.id,
+      type: 'order-placed',
+      title: 'Order Placed',
+      message: `Your order #${order.id} has been placed successfully.`,
+      meta: {
+        orderStatus: order.orderStatus,
+        paymentMethod: order.paymentMethod,
+        total: order.total,
+      },
+    });
+
+    // Increment coupon usage if one was applied
+    if (couponCode) {
+      await useCoupon(couponCode);
+    }
+
+    // Decrement stock for each ordered item
+    for (const item of normalizedItems) {
+      const prodId = item.productId || item.id;
+      if (!prodId) continue;
+      try {
+        const product = await Product.findByPk(prodId);
+        if (product && product.stock !== null && product.stock !== undefined) {
+          const newStock = Math.max(0, product.stock - (item.quantity || 1));
+          await product.update({ stock: newStock });
+        }
+      } catch (stockErr) {
+        console.error('Failed to decrement stock for product', prodId, stockErr.message);
+      }
+    }
+
+    // Send order confirmation email
+    const orderEmail = address?.email || order.email;
+    if (orderEmail) {
+      const itemsList = normalizedItems.map(it =>
+        `<li>${it.name || 'Item'} x${it.quantity || 1}${it.color ? ` (${it.color})` : ''} — ₱${((it.price || 0) * (it.quantity || 1)).toFixed(2)}</li>`
+      ).join('');
+
+      try {
+        await sendEmail({
+          to: orderEmail,
+          subject: `Aninaya — Order #${order.id} Confirmed`,
+          text: `Your order #${order.id} has been placed successfully!\n\nTotal: ₱${order.total.toFixed(2)}\nPayment: ${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}\n\nThank you for shopping with Aninaya!`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">Order Confirmed! 🎉</h2>
+              <p>Hi${address?.firstName ? ' ' + address.firstName : ''},</p>
+              <p>Your order <strong>#${order.id}</strong> has been placed successfully.</p>
+              <h3>Order Summary</h3>
+              <ul>${itemsList}</ul>
+              <hr style="border: 1px solid #eee;" />
+              <p>Subtotal: <strong>₱${subtotal.toFixed(2)}</strong></p>
+              ${discount > 0 ? `<p>Discount: <strong>-₱${discount.toFixed(2)}</strong></p>` : ''}
+              <p>Shipping: <strong>₱${shippingFee.toFixed(2)}</strong></p>
+              <p style="font-size: 18px;">Total: <strong>₱${order.total.toFixed(2)}</strong></p>
+              <p>Payment Method: <strong>${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}</strong></p>
+              ${isPickup && pickupLocation ? `<p>Pickup Location: <strong>${pickupLocation}</strong></p>` : ''}
+              <hr style="border: 1px solid #eee;" />
+              <p style="color: #666; font-size: 14px;">Thank you for shopping with Aninaya!</p>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send order confirmation email:', emailErr.message);
+      }
+    }
 
     res.status(201).json(order);
   } catch (error) {
@@ -105,7 +346,24 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
+    const previousStatus = order.orderStatus;
     await order.update({ orderStatus, trackingNumber });
+
+    if (orderStatus && previousStatus !== orderStatus) {
+      await createNotificationSafe({
+        userId: order.userId,
+        orderId: order.id,
+        type: 'order-status',
+        title: 'Order Status Updated',
+        message: `Your order #${order.id} status changed to ${orderStatus}.`,
+        meta: {
+          previousStatus,
+          orderStatus,
+          trackingNumber: order.trackingNumber || null,
+        },
+      });
+    }
+
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -155,7 +413,7 @@ export const getSellerOrders = async (req, res) => {
 export const updateOrderStatusBySeller = async (req, res) => {
   try {
     const sellerId = req.seller.id;
-    const { orderStatus } = req.body;
+    const { orderStatus, workingDays, estimatedReadyDate } = req.body;
     const order = await Order.findByPk(req.params.id);
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -165,8 +423,90 @@ export const updateOrderStatusBySeller = async (req, res) => {
     const hasSellerItem = items.some(item => Number(item.sellerId) === Number(sellerId));
     if (!hasSellerItem) return res.status(403).json({ message: 'Not authorized for this order' });
 
+    // Keep old values so we only notify on actual changes.
+    const previousStatus = order.orderStatus;
+    const oldReadyDateMs = order.estimatedReadyDate ? new Date(order.estimatedReadyDate).getTime() : null;
+
+    // Prepare update data
+    const updateData = { orderStatus };
+
+    if (estimatedReadyDate !== undefined && order.paymentMethod === 'pickup') {
+      const parsed = new Date(estimatedReadyDate)
+      if (Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({ message: 'Invalid ready date' })
+      }
+      updateData.estimatedReadyDate = parsed
+      updateData.workingDays = null
+    }
+    
+    // If working days provided for pickup orders, calculate estimated ready date
+    if (estimatedReadyDate === undefined && workingDays !== undefined && order.paymentMethod === 'pickup') {
+      updateData.workingDays = workingDays;
+      
+      // Calculate estimated ready date (excluding weekends)
+      if (workingDays > 0) {
+        const startDate = new Date();
+        let daysAdded = 0;
+        let currentDate = new Date(startDate);
+        
+        while (daysAdded < workingDays) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          const dayOfWeek = currentDate.getDay();
+          // Skip weekends (0 = Sunday, 6 = Saturday)
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            daysAdded++;
+          }
+        }
+        
+        updateData.estimatedReadyDate = currentDate;
+      }
+    }
+
     // Update the orderStatus but don't allow sellers to set arbitrary admin-only fields
-    await order.update({ orderStatus });
+    await order.update(updateData);
+
+    if (orderStatus && previousStatus !== orderStatus) {
+      await createNotificationSafe({
+        userId: order.userId,
+        orderId: order.id,
+        type: 'order-status',
+        title: 'Order Status Updated',
+        message: `Your order #${order.id} status changed to ${orderStatus}.`,
+        meta: {
+          previousStatus,
+          orderStatus,
+          updatedBy: 'seller',
+        },
+      });
+    }
+
+    // Notify customer when pickup date is set or changed by seller.
+    if (order.paymentMethod === 'pickup' && order.estimatedReadyDate) {
+      const newReadyDateMs = new Date(order.estimatedReadyDate).getTime();
+      const readyDateChanged = oldReadyDateMs !== newReadyDateMs;
+      if (readyDateChanged) {
+        const formattedDate = new Date(order.estimatedReadyDate).toLocaleString('en-PH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
+        await createNotificationSafe({
+          userId: order.userId,
+          orderId: order.id,
+          type: 'pickup-date',
+          title: 'Pickup Date Updated',
+          message: `Your order #${order.id} is scheduled for pickup on ${formattedDate}.`,
+          meta: {
+            estimatedReadyDate: order.estimatedReadyDate,
+            orderStatus: order.orderStatus,
+          },
+        });
+      }
+    }
+
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -191,6 +531,16 @@ export const cancelOrder = async (req, res) => {
       }
 
       await order.update({ orderStatus: 'cancelled' });
+      await createNotificationSafe({
+        userId: order.userId,
+        orderId: order.id,
+        type: 'order-cancelled',
+        title: 'Order Cancelled',
+        message: `Your order #${order.id} has been cancelled.`,
+        meta: {
+          orderStatus: 'cancelled',
+        },
+      });
       res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -210,6 +560,16 @@ export const markOrderReceived = async (req, res) => {
     if (order.orderStatus !== 'shipped') return res.status(400).json({ message: 'Order must be shipped before marking as received' });
 
     await order.update({ orderStatus: 'completed', receivedAt: new Date() });
+    await createNotificationSafe({
+      userId: order.userId,
+      orderId: order.id,
+      type: 'order-completed',
+      title: 'Order Completed',
+      message: `Order #${order.id} was marked as received.`,
+      meta: {
+        orderStatus: 'completed',
+      },
+    });
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });

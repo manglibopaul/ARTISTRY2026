@@ -45,9 +45,39 @@ const Order = sequelize.define('Order', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
+  discount: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0,
+  },
+  couponCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   paymentMethod: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  pickupLocation: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  reservationDateTime: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  reservationNote: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  workingDays: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Number of working days needed to prepare the product for pickup',
+  },
+  estimatedReadyDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Estimated date when the product will be ready for pickup',
   },
   paymentStatus: {
     type: DataTypes.STRING,

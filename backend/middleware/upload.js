@@ -14,7 +14,7 @@ if (!fs.existsSync(uploadDir)) {
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const fileType = file.fieldname === 'model' ? 'models' : 'images';
+    const fileType = file.fieldname === 'model' || file.fieldname === 'iosModel' ? 'models' : 'images';
     const folder = path.join(uploadDir, fileType);
     
     if (!fs.existsSync(folder)) {
@@ -31,15 +31,15 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'image') {
-    // Accept image files
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (file.fieldname === 'image' || file.fieldname === 'proofOfArtisan') {
+    // Accept image files for both 'image' and 'proofOfArtisan' fields
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed for images'), false);
+      cb(new Error('Only image files are allowed for images and proof of artisan'), false);
     }
-  } else if (file.fieldname === 'model') {
+  } else if (file.fieldname === 'model' || file.fieldname === 'iosModel') {
     // Accept 3D model files
     const allowedMimes = ['model/gltf+json', 'model/gltf-binary', 'application/octet-stream', 'application/json'];
     const allowedExts = ['.glb', '.gltf', '.usdz'];

@@ -7,7 +7,7 @@ import ShopContextProvider from './context/ShopContextProvider'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter basename="/aninaya-e-commerce">
+    <BrowserRouter>
       <ShopContextProvider>
         <App />
       </ShopContextProvider>

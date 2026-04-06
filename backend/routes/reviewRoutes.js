@@ -2,6 +2,7 @@ import express from 'express';
 import { createReview, getReviewsForProduct, checkReviewEligibility, getReviewsForSeller, replyToReview, deleteReview } from '../controllers/reviewController.js';
 import { verifyUser } from '../middleware/auth.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ router.get('/product/:id', getReviewsForProduct);
 router.get('/product/:id/eligible', verifyUser, checkReviewEligibility);
 
 // Protected: create a review
-router.post('/', verifyUser, createReview);
+router.post('/', verifyUser, upload.single('image'), createReview);
 
 // Seller: get reviews for seller's products
 router.get('/seller', verifySeller, getReviewsForSeller);

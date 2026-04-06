@@ -1,15 +1,22 @@
 import React, { useContext, useEffect, useState, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
+import ProductChat from '../components/ProductChat'
 
 const Product = () => {
 
   const {productId} = useParams();
+  const navigate = useNavigate()
   const {products, currency, addToCart} = useContext(ShopContext);
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  // Prefer VITE_API_URL; fallback to current host on port 5000 for mobile LAN access.
+  const apiUrl = import.meta.env.VITE_API_URL
+    || `${window.location.protocol}//${window.location.hostname}:5000`
   const [productData,setProductData] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(true)
+  const [productError, setProductError] = useState('')
+  const [sellerData, setSellerData] = useState(null)
   const [image,setImage] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [showAR, setShowAR] = useState(false);
@@ -17,6 +24,115 @@ const Product = () => {
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [arLoading, setArLoading] = useState(true);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [arError, setArError] = useState('');
+  const [selectedColor, setSelectedColor] = useState('#FF69B4');
+  const [cartColor, setCartColor] = useState('');
+  const modelViewerElementRef = useRef(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const isTulipProduct = productData?.name?.toLowerCase().includes('tulip');
+  const isRoseProduct = productData?.name?.toLowerCase().includes('rose');
+  const isFrogProduct = productData?.name?.toLowerCase().includes('frog');
+  const isSunflowerProduct = productData?.name?.toLowerCase().includes('sunflower');
+  const isOctopusProduct = productData?.name?.toLowerCase().includes('octopus');
+  const measurementLabels = isRoseProduct
+    ? {
+        width: 'Width 10-13 cm (approx. 4-5 in)',
+        head: 'Rose head diameter 7-9 cm',
+        height: 'Total height 30-35 cm (approx. 12-14 in)',
+        stem: 'Stem/base diameter 3-4 cm',
+      }
+    : isFrogProduct
+    ? {
+        width: 'Width (including eyes) 11-12 cm (approx. 4.5 in)',
+        head: 'Diameter (main body) 9-10 cm (approx. 3.5-4 in)',
+        height: 'Thickness 0.5-0.8 cm',
+        stem: '',
+      }
+    : isSunflowerProduct
+    ? {
+        width: 'Width 14-17 cm (approx. 5.5-6.5 in)',
+        head: 'Sunflower head diameter 10-12 cm (approx. 4-4.5 in)',
+        height: 'Total height 28-32 cm (approx. 11-12.5 in)',
+        stem: '',
+      }
+    : isOctopusProduct
+    ? {
+        width: 'Width 5-5.5 cm (approx. 2 in)',
+        head: 'Height (body only) 5-6 cm (approx. 2-2.5 in)',
+        height: '',
+        stem: '',
+      }
+    : {
+        width: 'Width 12-15 cm (approx. 5-6 in)',
+        head: 'Tulip head 5-6 cm height',
+        height: 'Total height 25-30 cm (approx. 10-12 in)',
+        stem: 'Stem length 10-15 cm',
+      };
+  const showStemLabel = Boolean(measurementLabels.stem);
+  const showHeightLabel = Boolean(measurementLabels.height);
+  const measurementPositions = isSunflowerProduct
+    ? {
+        width: 'left-[10%] top-[8%] sm:left-[12%] sm:top-[8%]',
+        head: 'left-[10%] top-[22%] sm:left-[12%] sm:top-[22%]',
+        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
+        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
+      }
+    : isOctopusProduct
+    ? {
+        width: 'left-[10%] top-[10%] sm:left-[12%] sm:top-[10%]',
+        head: 'left-[10%] top-[24%] sm:left-[12%] sm:top-[24%]',
+        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
+        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
+      }
+    : {
+        width: 'left-[10%] top-[10%] sm:left-[12%] sm:top-[10%]',
+        head: 'left-[10%] top-[22%] sm:left-[12%] sm:top-[22%]',
+        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
+        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
+      };
+  const [showMeasurements, setShowMeasurements] = useState(true);
+
+  const colorPresets = [
+    { name: 'Pink', value: '#FF69B4' },
+    { name: 'Red', value: '#FF0000' },
+    { name: 'Blue', value: '#0000FF' },
+    { name: 'Purple', value: '#800080' },
+    { name: 'Yellow', value: '#FFD700' },
+  ];
+
+  const applyColorToModel = (hexColor) => {
+    if (!modelViewerElementRef.current) return;
+    const viewer = modelViewerElementRef.current;
+    
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+    
+    try {
+      if (viewer.model && viewer.model.materials) {
+        viewer.model.materials.forEach((material) => {
+          if (material.pbrMetallicRoughness) {
+            material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+          }
+        });
+      }
+    } catch (e) {
+      console.log('Color change may not be supported for this model');
+    }
+  };
+
+
+  const getAvailableColors = (product) => {
+    if (!product || !product.colors) return [];
+    if (Array.isArray(product.colors)) return product.colors.filter(Boolean);
+    if (typeof product.colors === 'string') {
+      return product.colors.split(',').map(c => c.trim()).filter(Boolean);
+    }
+    return [];
+  };
 
   const getImageUrl = (img) => {
     if (!img) return '/path/to/placeholder.jpg';
@@ -29,19 +145,81 @@ const Product = () => {
     return '/path/to/placeholder.jpg';
   }
 
-  const fetchProductData = async () => {
-    products.map((item)=>{
-      const id = item._id || item.id;
-      if (String(id) === String(productId)) {
-        setProductData(item);
-        // Handle both array of strings and array of objects for images
-        if (Array.isArray(item.image) && item.image.length > 0) {
-          const imageUrl = getImageUrl(item.image[0]);
-          setImage(imageUrl);
-        }
-        return null;
+  const resolveUploadImage = (url) => {
+    if (!url) return ''
+    if (String(url).startsWith('http')) return url
+    return `${apiUrl}${url}`
+  }
+
+  const renderStars = (rating = 0) => {
+    const safe = Math.max(1, Math.min(5, Number(rating) || 0))
+    return `${'★'.repeat(safe)}${'☆'.repeat(5 - safe)}`
+  }
+
+  const fetchSellerData = async (sellerId) => {
+    try {
+      const res = await fetch(`${apiUrl}/api/sellers/${sellerId}`)
+      if (res.ok) {
+        const seller = await res.json()
+        setSellerData(seller)
       }
-    })
+    } catch (e) {
+      console.error('Failed to fetch seller data:', e)
+    }
+  }
+
+  const fetchProductData = async () => {
+    setLoadingProduct(true)
+    setProductError('')
+    // Try to find product in context first (fast)
+    let found = null
+    for (const item of products) {
+      const id = item._id || item.id
+      if (String(id) === String(productId)) {
+        found = item
+        break
+      }
+    }
+
+    if (found) {
+      console.log('Product found in context', found)
+      setProductData(found)
+      if (Array.isArray(found.image) && found.image.length > 0) {
+        const imageUrl = getImageUrl(found.image[0])
+        setImage(imageUrl)
+      }
+      // Fetch seller data if available
+      if (found.sellerId) {
+        fetchSellerData(found.sellerId)
+      }
+      setLoadingProduct(false)
+      return
+    }
+
+    // Fallback: fetch single product from backend if not present in context
+    try {
+      const res = await fetch(`${apiUrl}/api/products/${productId}`)
+      console.log('Fallback product fetch', res.status, res.statusText)
+      if (res.ok) {
+        const data = await res.json()
+        console.log('Fetched single product', data)
+        setProductData(data)
+        if (Array.isArray(data.image) && data.image.length > 0) setImage(getImageUrl(data.image[0]))
+        // Fetch seller data if available
+        if (data.sellerId) {
+          fetchSellerData(data.sellerId)
+        }
+      } else if (res.status === 404) {
+        setProductError('Product not found (404)')
+      } else {
+        setProductError(`Failed to load product: ${res.status} ${res.statusText}`)
+      }
+    } catch (e) {
+      console.error('Failed to fetch single product fallback', e)
+      setProductError(e.message || 'Network error')
+    }
+
+    setLoadingProduct(false)
     // fetch reviews for this product
     try {
       const res = await fetch(`${apiUrl}/api/reviews/product/${productId}`);
@@ -78,71 +256,199 @@ const Product = () => {
 
   useEffect(()=>{
     fetchProductData();
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsMobileDevice(mobile);
   },[productId, products])
+
+  useEffect(() => {
+    const availableColors = getAvailableColors(productData);
+    if (availableColors.length > 0) {
+      setCartColor(availableColors[0]);
+    } else {
+      setCartColor('');
+    }
+  }, [productData])
 
   
 
+  const resolvedModelUrl = productData?.modelUrl
+    ? (productData.modelUrl.startsWith('http') ? productData.modelUrl : `${apiUrl}${productData.modelUrl}`)
+    : '';
+  const resolvedIosModelUrl = productData?.iosModel
+    ? (productData.iosModel.startsWith('http') ? productData.iosModel : `${apiUrl}${productData.iosModel}`)
+    : '';
+
   // Set model-viewer src when AR modal opens
   useEffect(() => {
-    if (showAR && modelViewerRef.current && productData.modelUrl) {
-      // Clear previous content
-      modelViewerRef.current.innerHTML = '';
-      
-      // Create model-viewer element
-      const viewer = document.createElement('model-viewer');
-      const modelUrl = productData.modelUrl.startsWith('http') 
-        ? productData.modelUrl 
-        : `${apiUrl}${productData.modelUrl}`;
-      viewer.setAttribute('src', modelUrl);
-      viewer.setAttribute('ar', '');
-      viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-      viewer.setAttribute('camera-controls', '');
-      viewer.setAttribute('auto-rotate', '');
-      viewer.setAttribute('interaction-prompt', 'auto');
-      viewer.style.width = '100%';
-      viewer.style.height = '500px';
-      
-      if (productData.iosModel) {
-        viewer.setAttribute('ios-src', productData.iosModel);
-      }
-      
-      modelViewerRef.current.appendChild(viewer);
+    if (!productData || !showAR || !modelViewerRef.current) return
+    if (!productData.modelUrl) return
+
+    setArLoading(true);
+    setArError('');
+    setShowMeasurements(true);
+    // Clear previous content
+    modelViewerRef.current.innerHTML = '';
+
+    // Create model-viewer element
+    const viewer = document.createElement('model-viewer');
+    viewer.setAttribute('src', resolvedModelUrl);
+    viewer.setAttribute('ar', '');
+    viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
+    viewer.setAttribute('camera-controls', '');
+    viewer.setAttribute('auto-rotate', '');
+    // Allow the model to load immediately so the preview appears
+    viewer.setAttribute('reveal', 'auto');
+    viewer.setAttribute('interaction-prompt', 'auto');
+    viewer.setAttribute('exposure', '1');
+    viewer.setAttribute('shadow-intensity', '1');
+    viewer.setAttribute('environment-image', 'neutral');
+    viewer.setAttribute('scale-to-fit', 'true');
+    viewer.style.width = '100%';
+    viewer.style.height = '100%';
+
+    if (resolvedIosModelUrl) {
+      viewer.setAttribute('ios-src', resolvedIosModelUrl);
     }
-  }, [showAR, productData.modelUrl, productData.iosModel])
 
-  return productData ? (
-    <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
+    // Handle model loaded event
+    const handleLoad = () => {
+      setArLoading(false);
+      modelViewerElementRef.current = viewer;
+    };
+    const handleError = () => {
+      setArLoading(false);
+      setArError('Failed to load 3D model. Check the model URL and network access.');
+    };
+    viewer.addEventListener('load', handleLoad);
+    viewer.addEventListener('error', handleError);
 
-      <div className='flex gap-12 sm:gap-12 flex-col sm:flex-row'>
+    let showTimeout;
+    const hideMeasurements = () => {
+      if (showTimeout) clearTimeout(showTimeout);
+      setShowMeasurements(false);
+    };
+    const showMeasurementsDelayed = () => {
+      if (showTimeout) clearTimeout(showTimeout);
+      showTimeout = setTimeout(() => setShowMeasurements(true), 200);
+    };
+    const handleCameraChange = () => {
+      hideMeasurements();
+      showMeasurementsDelayed();
+    };
+
+    viewer.addEventListener('pointerdown', hideMeasurements);
+    viewer.addEventListener('pointerup', showMeasurementsDelayed);
+    viewer.addEventListener('pointercancel', showMeasurementsDelayed);
+    viewer.addEventListener('touchstart', hideMeasurements);
+    viewer.addEventListener('touchend', showMeasurementsDelayed);
+    viewer.addEventListener('camera-change', handleCameraChange);
+
+    modelViewerRef.current.appendChild(viewer);
+    
+    return () => {
+      viewer.removeEventListener('load', handleLoad);
+      viewer.removeEventListener('pointerdown', hideMeasurements);
+      viewer.removeEventListener('pointerup', showMeasurementsDelayed);
+      viewer.removeEventListener('pointercancel', showMeasurementsDelayed);
+      viewer.removeEventListener('touchstart', hideMeasurements);
+      viewer.removeEventListener('touchend', showMeasurementsDelayed);
+      viewer.removeEventListener('camera-change', handleCameraChange);
+      viewer.removeEventListener('error', handleError);
+      if (showTimeout) clearTimeout(showTimeout);
+    };
+  }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl]);
+
+  useEffect(() => {
+    if (selectedColor && modelViewerElementRef.current) {
+      applyColorToModel(selectedColor);
+    }
+  }, [selectedColor]);
+
+  const handleNextImage = () => {
+    if (productData.image && productData.image.length > 0) {
+      const nextIndex = (currentImageIndex + 1) % productData.image.length;
+      setCurrentImageIndex(nextIndex);
+      const imgUrl = getImageUrl(productData.image[nextIndex]);
+      setImage(imgUrl);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (productData.image && productData.image.length > 0) {
+      const prevIndex = (currentImageIndex - 1 + productData.image.length) % productData.image.length;
+      setCurrentImageIndex(prevIndex);
+      const imgUrl = getImageUrl(productData.image[prevIndex]);
+      setImage(imgUrl);
+    }
+  };
+
+  if (loadingProduct) return <div className='py-20 text-center'>Loading product...</div>
+  if (productError) return <div className='py-20 text-center text-red-600'>Error: {productError}</div>
+  if (!productData) return <div className='py-20 text-center'>Product not found.</div>
+
+  return (
+    <div className='border-t-2 pt-4 sm:pt-10 px-2 sm:px-0 transition-opacity ease-in duration-500 opacity-100'>
+
+      <div className='flex gap-4 sm:gap-12 flex-col sm:flex-row'>
 
         {/* -------------------------product images----------------- */}
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full gap-2'>
+          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-[18.7%] w-full gap-2 pb-2 sm:pb-0'>
             {productData.image && productData.image.map((item,index)=>{
               const imgUrl = getImageUrl(item);
               const isActive = image === imgUrl;
               return (
                 <img 
-                  onClick={()=>setImage(imgUrl)} 
+                  onClick={()=>{
+                    setImage(imgUrl);
+                    setCurrentImageIndex(index);
+                  }} 
                   src={imgUrl} 
                   key={index} 
-                  className={`w-{24%} sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer rounded transition-all ${isActive ? 'border-2 border-black' : 'border border-gray-300'}`}
+                  className={`w-[20%] sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition-all ${isActive ? 'border-2 border-black' : 'border border-gray-300'}`}
                   alt={`Product view ${index + 1}`}
                 />
               )
             })}
           </div>
-          <div className='w-full sm:w-[80%]'>
-              <img className='w-full h-auto rounded' src={image} alt="" />
+          <div className='w-full sm:w-[80%] relative'>
+              <div className='w-full h-[300px] sm:h-[360px] md:h-[420px] bg-gray-50 rounded overflow-hidden flex items-center justify-center'>
+                <img className='max-w-full max-h-full w-auto h-full object-contain' src={image} alt="" />
+              </div>
+              {productData.image && productData.image.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className='absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all z-10'
+                    aria-label='Previous image'
+                  >
+                    <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className='absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all z-10'
+                    aria-label='Next image'
+                  >
+                    <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                    </svg>
+                  </button>
+                  <div className='absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm'>
+                    {currentImageIndex + 1} / {productData.image.length}
+                  </div>
+                </>
+              )}
           </div>
         </div>
 
         {/* ---------- Product info ---------- */}
         <div className='flex-1'>
-          <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
-            <div className='mt-5 flex items-center gap-6'>
-              <p className='text-3xl font-medium'>{currency}{productData.price}</p>
-              <div className='text-sm text-gray-600'>
+          <h1 className='font-medium text-xl sm:text-2xl mt-2'>{productData.name}</h1>
+            <div className='mt-4 sm:mt-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6'>
+              <p className='text-2xl sm:text-3xl font-medium'>{currency}{productData.price}</p>
+              <div className='text-xs sm:text-sm text-gray-600'>
                 {avgRating ? (
                   <>
                     <span className='font-medium'>{avgRating}</span>
@@ -156,43 +462,113 @@ const Product = () => {
             </div>
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
 
-          {/* ------- ADD TO CART + AR BUTTON ------- */}
-          <div className="flex items-center gap-3 my-8">
-
-            {/* ⭐ View AR button (left side) */}
-            {productData.modelUrl && (
-              <button 
-                onClick={()=>setShowAR(true)} 
-                className='border border-black px-6 py-3 text-sm hover:bg-gray-200'>
-                View AR
-              </button>
+          {/* ------- COLOR + QUANTITY + ADD TO CART ------- */}
+          <div className='my-6 sm:my-8 space-y-4'>
+            {/* Color Selection (seller-defined) */}
+            {getAvailableColors(productData).length > 0 && (
+              <div>
+                <p className='text-sm font-medium mb-2'>Choose Color:</p>
+                <div className='flex flex-wrap gap-2'>
+                  {getAvailableColors(productData).map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setCartColor(color)}
+                      className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium transition-all ${
+                        cartColor === color
+                          ? 'ring-2 ring-offset-2 ring-black scale-105'
+                          : 'hover:scale-105'
+                      }`}
+                      style={{
+                        border: '1px solid #ccc'
+                      }}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
-            <div className='flex items-center gap-2'>
-              <input
-                type='number'
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value) || 1)}
-                className='w-20 px-3 py-2 border rounded'
-                aria-label='Quantity'
-              />
-              <button 
-                onClick={()=>addToCart(productData._id || productData.id, quantity)} 
-                className='bg-black text-white px-6 py-3 text-sm active:bg-pink-700'>
-                ADD TO CART
-              </button>
-            </div>
+            {/* Quantity + Add to Cart + AR Button */}
+            <div className='flex flex-col sm:flex-row gap-3'>
+              {/* ⭐ View AR button */}
+              {productData.modelUrl && (
+                <button 
+                  onClick={()=>setShowAR(true)} 
+                  className='border border-black px-6 py-3 text-sm w-full sm:w-auto bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md hover:from-pink-600 hover:to-yellow-500 transition-colors duration-200'>
+                  View AR
+                </button>
+              )}
 
+              <div className='flex items-center gap-2 w-full sm:w-auto'>
+                <input
+                  type='number'
+                  min={1}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+                  className='w-20 px-3 py-3 border rounded text-sm'
+                  aria-label='Quantity'
+                />
+                <button 
+                  onClick={() => {
+                    const availableColors = getAvailableColors(productData);
+                    addToCart(productData._id || productData.id, quantity, availableColors.length ? cartColor : null);
+                  }} 
+                  className='bg-black text-white px-6 py-3 text-sm active:bg-pink-700 flex-1 sm:flex-none'>
+                  ADD TO CART
+                </button>
+              </div>
+            </div>
           </div>
 
-          <hr className='mt-8 sm:w-4/5' />
+          <hr className='mt-6 sm:mt-8 sm:w-4/5' />
 
-          <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
-              <p>View in Augmented Reality to preview the product size in your space</p>
-              <p>100% Handmade crochet product</p>
-              <p>Cash on delivery is available on this product.</p>
-              <p>Easy return and exchange policy within 6 days.</p>
+          {/* -------- Seller Info -------- */}
+          {sellerData && (
+            <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50'>
+              <div className='flex items-start justify-between gap-4'>
+                <div className='flex-1'>
+                  <button
+                    onClick={() => navigate(`/artisan/${sellerData.id}`)}
+                    className='hover:text-black transition'
+                  >
+                    <h3 className='font-bold text-lg text-left text-gray-900 hover:underline'>
+                      {sellerData.storeName}
+                    </h3>
+                  </button>
+                  {sellerData.expertise && sellerData.expertise.length > 0 && (
+                    <div className='mt-2 flex flex-wrap gap-1'>
+                      {sellerData.expertise.slice(0, 2).map(tag => (
+                        <span key={tag} className='text-xs bg-white text-gray-600 px-2 py-0.5 rounded border border-gray-300'>
+                          {tag}
+                        </span>
+                      ))}
+                      {sellerData.expertise.length > 2 && (
+                        <span className='text-xs text-gray-500'>+{sellerData.expertise.length - 2} more</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate(`/artisan/${sellerData.id}`)}
+                  className='text-sm font-medium text-black hover:bg-black hover:text-white px-4 py-2 rounded border border-black transition'
+                >
+                  View Shop →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Inline product chat - scoped to this product's seller */}
+          <div className='mt-6'>
+            <h3 className='font-semibold mb-2'>Chat with seller</h3>
+            <div className='border rounded p-3'>
+              <ProductChat
+                productId={productId}
+                sellerId={productData.sellerId || productData.seller?.id || sellerData?.id || null}
+                sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Seller'}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -216,14 +592,20 @@ const Product = () => {
           </div>
 
           <div className='space-y-4'>
-            {reviews.length === 0 && <p className='text-sm text-gray-500'>No reviews yet.</p>}
             {reviews.map((r, i) => (
               <div key={i} className='p-3 border rounded bg-gray-50'>
                 <div className='flex items-center justify-between'>
                   <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
-                  <div className='text-sm text-gray-600'>Rating: {r.rating}</div>
+                  <div className='text-sm text-amber-500'>{renderStars(r.rating)}</div>
                 </div>
                 <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
+                {r.imageUrl && (
+                  <img
+                    src={resolveUploadImage(r.imageUrl)}
+                    alt='Review attachment'
+                    className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
+                  />
+                )}
                 {r.sellerReply && (
                   <div className='mt-2 p-2 bg-white border rounded'>
                     <div className='text-xs text-gray-600 font-medium'>Seller reply</div>
@@ -237,7 +619,7 @@ const Product = () => {
                     <button onClick={async () => {
                       if (!confirm('Delete this review?')) return;
                       const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-                      if (!token) return window.location.href = '/login';
+                      if (!token) return navigate('/login');
                       try {
                         const dres = await fetch(`${apiUrl}/api/reviews/${r.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
                         if (!dres.ok) { const txt = await dres.text(); alert(txt || 'Failed to delete review'); return; }
@@ -260,30 +642,99 @@ const Product = () => {
 
       {/* ---------- AR POPUP MODAL ---------- */}
       {showAR && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto">
 
             <button 
-              className="absolute top-2 right-3 text-xl"
+              className="absolute top-1 right-2 sm:top-2 sm:right-3 text-xl hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10"
               onClick={() => setShowAR(false)}
             >
               ✖
             </button>
 
-            <h2 className="text-lg font-medium mb-2">View in Augmented Reality</h2>
+            <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">View in Augmented Reality</h2>
 
-            <div ref={modelViewerRef} style={{ width: "100%", height: "500px" }}>
-            </div>
+            {!productData.modelUrl ? (
+              <div className="p-8 text-center">
+                <p className="text-gray-600 text-base">📦 No 3D model available for this product</p>
+              </div>
+            ) : (
+              <>
+                <div className="relative overflow-hidden">
+                  <div ref={modelViewerRef} style={{ width: "100%", height: "60vh", background: "#f5f5f5" }} className="h-[60vh] sm:h-[70vh]">
+                  </div>
+                  {arError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-red-50 bg-opacity-90">
+                      <div className="text-red-700 text-center text-sm px-4">
+                        {arError}
+                      </div>
+                    </div>
+                  )}
+                  {(isTulipProduct || isRoseProduct || isFrogProduct || isSunflowerProduct || isOctopusProduct) && showMeasurements && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <defs>
+                          <marker id="arrow" markerWidth="4" markerHeight="4" refX="4" refY="2" orient="auto">
+                            <path d="M0,0 L4,2 L0,4 Z" fill="#60a5fa" />
+                          </marker>
+                        </defs>
+                        <line x1="22" y1="22" x2="34" y2="22" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
+                        <line x1="22" y1="30" x2="22" y2="42" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
+                        {showHeightLabel && (
+                          <line x1="78" y1="18" x2="78" y2="58" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
+                        )}
+                        {showStemLabel && (
+                          <line x1="22" y1="55" x2="36" y2="55" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
+                        )}
+                      </svg>
 
-            <p className='mt-2 text-sm text-gray-500'>
-              Point your camera to place the model in your room.
-            </p>
+                      <div className={`absolute ${measurementPositions.width}`}>
+                        <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
+                          {measurementLabels.width}
+                        </span>
+                      </div>
+
+                      <div className={`absolute ${measurementPositions.head}`}>
+                        <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
+                          {measurementLabels.head}
+                        </span>
+                      </div>
+
+                      {showHeightLabel && (
+                        <div className={`absolute ${measurementPositions.height}`}>
+                          <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
+                            {measurementLabels.height}
+                          </span>
+                        </div>
+                      )}
+
+                      {showStemLabel && (
+                        <div className={`absolute ${measurementPositions.stem}`}>
+                          <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
+                            {measurementLabels.stem}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {arLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75">
+                      <div className="text-gray-600 text-center">
+                        <div className="text-2xl mb-2">⏳</div>
+                        <span>Loading 3D model...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </>
+            )}
           </div>
         </div>
       )}
 
     </div>
-  ) : <div className='opacity-0'></div>
+  )
 }
 
 export default Product

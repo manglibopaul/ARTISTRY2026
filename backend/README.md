@@ -29,7 +29,7 @@ cp .env.example .env
 
 Update `.env` with your values:
 ```
-MONGODB_URI=mongodb://localhost:27017/aninaya
+MONGODB_URI=mongodb://localhost:27017/vetches
 JWT_SECRET=your_secure_jwt_secret_key
 PORT=5000
 NODE_ENV=development

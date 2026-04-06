@@ -2,13 +2,13 @@ import React, { useContext } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 
-const CartTotal = () => {
+const CartTotal = ({ shippingFee: shippingFeeProp }) => {
 
     const {currency, delivery_fee, getCartAmount} = useContext(ShopContext);
 
     const subtotal = getCartAmount();
-    const commission = subtotal * 0.15; // 15% commission
-    const total = subtotal === 0 ? 0 : subtotal + delivery_fee + commission;
+    const shippingFee = shippingFeeProp != null ? shippingFeeProp : delivery_fee;
+    const total = subtotal === 0 ? 0 : subtotal + shippingFee;
 
   return (
     <div className='w-full'>
@@ -27,14 +27,7 @@ const CartTotal = () => {
 
         <div className='flex justify-between'>
             <p>Shipping Fee</p>
-            <p>{currency} {delivery_fee.toFixed(2)}</p>
-        </div>
-
-        <hr />
-
-        <div className='flex justify-between'>
-            <p>Commission (15%)</p>
-            <p>{currency} {commission.toFixed(2)}</p>
+            <p>{shippingFee === 0 ? <span className='text-green-600'>FREE</span> : `${currency} ${shippingFee.toFixed(2)}`}</p>
         </div>
 
         <hr />

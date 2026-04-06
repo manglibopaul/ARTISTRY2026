@@ -3,11 +3,21 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 
+const toPublicUploadPath = (filePath, filename) => {
+  if (!filePath) return filename ? `/uploads/images/${filename}` : null;
+  const normalized = String(filePath).replace(/\\/g, '/');
+  const marker = '/uploads/';
+  const idx = normalized.lastIndexOf(marker);
+  if (idx >= 0) return normalized.slice(idx);
+  return filename ? `/uploads/images/${filename}` : null;
+};
+
 // Create a review — only if the user purchased and the order containing the product is completed
 export const createReview = async (req, res) => {
   try {
     const { productId, rating, title, comment } = req.body;
     const userId = req.user.id;
+    const imageUrl = req.file ? toPublicUploadPath(req.file.path, req.file.filename) : null;
 
     if (!productId || !rating || !comment) return res.status(400).json({ message: 'Missing required fields' });
 
@@ -31,7 +41,7 @@ export const createReview = async (req, res) => {
     const user = await User.findByPk(userId);
     const userName = user ? user.name : null;
 
-    const review = await Review.create({ productId, userId, userName, rating, title, comment });
+    const review = await Review.create({ productId, userId, userName, rating, title, comment, imageUrl });
     res.status(201).json(review);
   } catch (err) {
     res.status(500).json({ message: err.message });

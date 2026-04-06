@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}", // must include all component files
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }
