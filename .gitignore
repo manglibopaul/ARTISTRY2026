@@ -12,6 +12,22 @@ dist
 dist-ssr
 *.local
 
+# Environment and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local backend runtime config
+backend/config/config.json
+
 
 # Editor directories and files
 .vscode/*

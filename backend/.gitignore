@@ -14,3 +14,7 @@ build/
 *.swo
 .DS_Store
 uploads/
+*.db
+*.sqlite
+*.sqlite3
+config/config.json
