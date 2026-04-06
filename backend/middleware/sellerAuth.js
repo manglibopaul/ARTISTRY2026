@@ -11,9 +11,13 @@ export const verifySeller = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const seller = await Seller.findByPk(decoded.id);
+    const seller = await Seller.findByPk(decoded.id, { paranoid: false });
     if (!seller) {
       return res.status(401).json({ message: 'Seller session is no longer valid' });
+    }
+
+    if (seller.deletedAt) {
+      return res.status(401).json({ message: 'Seller account has been deleted' });
     }
 
     req.seller = { id: seller.id, isVerified: !!seller.isVerified };
@@ -26,17 +30,11 @@ export const verifySeller = async (req, res, next) => {
 // Require seller account verification for sensitive seller actions
 export const requireVerifiedSeller = async (req, res, next) => {
   try {
-    const sellerId = req.seller?.id;
-    if (!sellerId) {
+    if (!req.seller?.id) {
       return res.status(401).json({ message: 'Unauthorized seller session' });
     }
 
-    const seller = await Seller.findByPk(sellerId);
-    if (!seller) {
-      return res.status(401).json({ message: 'Seller session is no longer valid' });
-    }
-
-    if (!seller.isVerified) {
+    if (!req.seller.isVerified) {
       return res.status(403).json({ message: 'Your seller account is pending admin verification' });
     }
 
