@@ -66,12 +66,6 @@ const Login = () => {
       }
 
       const data = await res.json();
-      // Ensure customer session does not coexist with stale seller/admin sessions.
-      localStorage.removeItem('sellerToken');
-      localStorage.removeItem('seller');
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-
       // Save token and user info
       if (data.token) localStorage.setItem('token', data.token);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
