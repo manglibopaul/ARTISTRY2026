@@ -1,5 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react'
 
+function DeleteThreadModal({ open, onClose, onConfirm, threadName }) {
+  if (!open) return null
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40'>
+      <div className='bg-white rounded-lg shadow-lg p-6 w-[92vw] max-w-md'>
+        <h4 className='text-lg font-semibold mb-2'>Delete Conversation</h4>
+        <p className='text-sm text-gray-700 mb-4'>
+          Delete conversation with <span className='font-semibold'>{threadName || 'this thread'}</span>? This cannot be undone.
+        </p>
+        <div className='flex justify-end gap-2'>
+          <button onClick={onClose} className='px-4 py-2 rounded border'>Cancel</button>
+          <button onClick={onConfirm} className='px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700'>Delete</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const AdminSupportChat = () => {
   const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
   const normalizedApiBase = rawApiUrl.replace(/\/+$/, '')
@@ -13,6 +31,7 @@ const AdminSupportChat = () => {
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const scrollRef = useRef(null)
   const imageRef = useRef(null)
 
@@ -99,8 +118,6 @@ const AdminSupportChat = () => {
 
   const deleteConversation = async () => {
     if (!selected?.threadKey) return
-    const ok = window.confirm(`Delete conversation with ${selected.name}? This cannot be undone.`)
-    if (!ok) return
 
     try {
       const res = await fetch(`${apiRoot}/chat/support/admin/${encodeURIComponent(selected.threadKey)}`, {
@@ -125,8 +142,10 @@ const AdminSupportChat = () => {
       setMessages([])
       setConversations((prev) => prev.filter((c) => c.threadKey !== removedKey))
       fetchConversations()
+      setShowDeleteModal(false)
     } catch (e) {
       setError('Failed to delete conversation')
+      setShowDeleteModal(false)
     }
   }
 
@@ -178,7 +197,7 @@ const AdminSupportChat = () => {
                   <div className='text-xs text-gray-500'>{selected.actorType} support thread</div>
                 </div>
                 <button
-                  onClick={deleteConversation}
+                  onClick={() => setShowDeleteModal(true)}
                   className='text-xs px-3 py-1.5 rounded border border-red-600 text-red-600 hover:bg-red-50'
                 >
                   Delete Thread
@@ -221,6 +240,13 @@ const AdminSupportChat = () => {
           </>
         )}
       </div>
+
+      <DeleteThreadModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={deleteConversation}
+        threadName={selected?.name}
+      />
     </div>
   )
 }
