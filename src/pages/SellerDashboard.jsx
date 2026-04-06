@@ -115,10 +115,31 @@ const SellerDashboard = () => {
       setSeller(JSON.parse(sellerData))
     }
 
+    fetchSellerProfile()
+
     // Fetch products and seller orders on mount so counts show correctly after refresh
     fetchProducts()
     fetchSellerOrders()
   }, [token, navigate])
+
+  const fetchSellerProfile = async () => {
+    try {
+      const response = await axios.get(`${apiUrl}/api/sellers/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.data) {
+        setSeller(response.data)
+        localStorage.setItem('seller', JSON.stringify(response.data))
+      }
+    } catch (error) {
+      console.error('Error fetching seller profile:', error)
+      if (error.response?.status === 401) {
+        localStorage.removeItem('sellerToken')
+        localStorage.removeItem('seller')
+        navigate('/seller/login')
+      }
+    }
+  }
 
   const fetchProducts = async () => {
     try {

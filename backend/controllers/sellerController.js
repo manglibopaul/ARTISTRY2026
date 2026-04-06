@@ -77,6 +77,7 @@ export const registerSeller = async (req, res) => {
         name: seller.name,
         email: seller.email,
         storeName: seller.storeName,
+        isVerified: !!seller.isVerified,
         artisanType: seller.artisanType,
         pickupLocations: seller.pickupLocations,
         proofOfArtisan: seller.proofOfArtisan,
@@ -125,6 +126,7 @@ export const loginSeller = async (req, res) => {
         name: seller.name,
         email: seller.email,
         storeName: seller.storeName,
+        isVerified: !!seller.isVerified,
       },
     });
   } catch (error) {
@@ -204,6 +206,7 @@ export const updateSellerProfile = async (req, res) => {
         name: seller.name,
         email: seller.email,
         storeName: seller.storeName,
+        isVerified: !!seller.isVerified,
         artisanType: seller.artisanType,
       },
     });
