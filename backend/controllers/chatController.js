@@ -470,3 +470,26 @@ export const adminSendSupportMessage = async (req, res) => {
     return res.status(500).json({ message: 'Failed to send support reply' })
   }
 }
+
+// Admin: delete all messages in a support thread
+export const adminDeleteSupportConversation = async (req, res) => {
+  try {
+    const { threadKey } = req.params
+    const supportSeller = await ensureSupportSeller()
+
+    const where = { sellerId: supportSeller.id }
+    if (String(threadKey).startsWith('u:')) {
+      where.userId = Number(String(threadKey).slice(2))
+    } else if (String(threadKey).startsWith('s:')) {
+      where.guestId = `seller:${String(threadKey).slice(2)}`
+    } else {
+      return res.status(400).json({ message: 'Invalid thread key' })
+    }
+
+    const deleted = await ChatMessage.destroy({ where })
+    return res.json({ deleted })
+  } catch (error) {
+    console.error('adminDeleteSupportConversation', error)
+    return res.status(500).json({ message: 'Failed to delete support conversation' })
+  }
+}

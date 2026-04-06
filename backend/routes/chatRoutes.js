@@ -18,6 +18,7 @@ import {
   getAdminSupportConversations,
   getAdminSupportConversationMessages,
   adminSendSupportMessage,
+  adminDeleteSupportConversation,
 } from '../controllers/chatController.js'
 
 const router = express.Router()
@@ -41,6 +42,7 @@ router.post('/support/seller/message', verifySeller, upload.single('image'), sel
 router.get('/support/admin/conversations', verifyAdmin, getAdminSupportConversations)
 router.get('/support/admin/conversation/:threadKey', verifyAdmin, getAdminSupportConversationMessages)
 router.post('/support/admin/:threadKey/message', verifyAdmin, upload.single('image'), adminSendSupportMessage)
+router.delete('/support/admin/:threadKey', verifyAdmin, adminDeleteSupportConversation)
 
 // DEV-only: recent chat messages (for debugging) - NOT for production
 router.get('/dev/messages', (req, res) => {

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 
 const AdminSupportChat = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const normalizedApiBase = rawApiUrl.replace(/\/+$/, '')
+  const apiRoot = normalizedApiBase.endsWith('/api') ? normalizedApiBase : `${normalizedApiBase}/api`
   const token = localStorage.getItem('adminToken')
 
   const [conversations, setConversations] = useState([])
@@ -16,7 +18,7 @@ const AdminSupportChat = () => {
   const resolveUploadUrl = (url) => {
     if (!url) return ''
     if (String(url).startsWith('http')) return url
-    return `${apiUrl}${url}`
+    return `${normalizedApiBase}${url}`
   }
 
   const getMeta = (m) => {
@@ -30,7 +32,7 @@ const AdminSupportChat = () => {
   const fetchConversations = async () => {
     if (!token) return
     try {
-      const res = await fetch(`${apiUrl}/api/chat/support/admin/conversations`, {
+      const res = await fetch(`${apiRoot}/chat/support/admin/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
@@ -45,7 +47,7 @@ const AdminSupportChat = () => {
     if (!token || !threadKey) return
     try {
       setLoading(true)
-      const res = await fetch(`${apiUrl}/api/chat/support/admin/conversation/${encodeURIComponent(threadKey)}`, {
+      const res = await fetch(`${apiRoot}/chat/support/admin/conversation/${encodeURIComponent(threadKey)}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
@@ -69,7 +71,7 @@ const AdminSupportChat = () => {
       const fd = new FormData()
       if (text.trim()) fd.append('text', text.trim())
       if (selectedImage) fd.append('image', selectedImage)
-      const res = await fetch(`${apiUrl}/api/chat/support/admin/${encodeURIComponent(selected.threadKey)}/message`, {
+      const res = await fetch(`${apiRoot}/chat/support/admin/${encodeURIComponent(selected.threadKey)}/message`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
@@ -79,6 +81,25 @@ const AdminSupportChat = () => {
       setSelectedImage(null)
       if (imageRef.current) imageRef.current.value = ''
       fetchMessages(selected.threadKey)
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const deleteConversation = async () => {
+    if (!selected?.threadKey) return
+    const ok = window.confirm(`Delete conversation with ${selected.name}? This cannot be undone.`)
+    if (!ok) return
+
+    try {
+      const res = await fetch(`${apiRoot}/chat/support/admin/${encodeURIComponent(selected.threadKey)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      setSelected(null)
+      setMessages([])
+      fetchConversations()
     } catch (e) {
       // ignore
     }
@@ -125,8 +146,18 @@ const AdminSupportChat = () => {
         ) : (
           <>
             <div className='border-b pb-3 mb-3'>
-              <div className='font-semibold'>{selected.name}</div>
-              <div className='text-xs text-gray-500'>{selected.actorType} support thread</div>
+              <div className='flex items-start justify-between gap-3'>
+                <div>
+                  <div className='font-semibold'>{selected.name}</div>
+                  <div className='text-xs text-gray-500'>{selected.actorType} support thread</div>
+                </div>
+                <button
+                  onClick={deleteConversation}
+                  className='text-xs px-3 py-1.5 rounded border border-red-600 text-red-600 hover:bg-red-50'
+                >
+                  Delete Thread
+                </button>
+              </div>
             </div>
 
             <div ref={scrollRef} className='flex-1 max-h-[420px] overflow-y-auto space-y-3 mb-3'>
