@@ -43,14 +43,7 @@ const Profile = () => {
       fetchProfile();
       return;
     }
-    
-    // If no customer token, check if admin is logged in
-    const adminToken = localStorage.getItem('adminToken');
-    if (adminToken) {
-      navigate('/admin');
-      return;
-    }
-    
+
     // No token found, redirect to login
     navigate('/login');
     return;
