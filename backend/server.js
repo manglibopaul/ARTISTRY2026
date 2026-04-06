@@ -34,6 +34,8 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
+const normalizeOrigin = (value = '') => value.replace(/\/$/, '');
+
 // Connect to database
 connectDB();
 
@@ -48,8 +50,10 @@ const allowedOrigins = [
   'http://192.168.68.126:5173',
   'http://192.168.68.126:5174',
   'http://192.168.68.126:5175',
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-];
+].map(normalizeOrigin);
+
+const configuredFrontendUrl = normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:5173');
+allowedOrigins.push(configuredFrontendUrl);
 
 app.use(compression());
 app.use(cors({
@@ -59,12 +63,14 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (!origin || allowedOrigins.includes(origin)) {
+    const normalizedOrigin = normalizeOrigin(origin || '');
+
+    if (!origin || allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
-    // Production: allow Netlify domains
-    if (origin && origin.includes('netlify.app')) {
+    // Production: allow trusted deployment domains
+    if (normalizedOrigin.endsWith('.netlify.app') || normalizedOrigin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
 
