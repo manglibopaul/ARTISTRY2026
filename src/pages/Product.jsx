@@ -31,68 +31,6 @@ const Product = () => {
   const [cartColor, setCartColor] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const isTulipProduct = productData?.name?.toLowerCase().includes('tulip');
-  const isRoseProduct = productData?.name?.toLowerCase().includes('rose');
-  const isFrogProduct = productData?.name?.toLowerCase().includes('frog');
-  const isSunflowerProduct = productData?.name?.toLowerCase().includes('sunflower');
-  const isOctopusProduct = productData?.name?.toLowerCase().includes('octopus');
-  const measurementLabels = isRoseProduct
-    ? {
-        width: 'Width 10-13 cm (approx. 4-5 in)',
-        head: 'Rose head diameter 7-9 cm',
-        height: 'Total height 30-35 cm (approx. 12-14 in)',
-        stem: 'Stem/base diameter 3-4 cm',
-      }
-    : isFrogProduct
-    ? {
-        width: 'Width (including eyes) 11-12 cm (approx. 4.5 in)',
-        head: 'Diameter (main body) 9-10 cm (approx. 3.5-4 in)',
-        height: 'Thickness 0.5-0.8 cm',
-        stem: '',
-      }
-    : isSunflowerProduct
-    ? {
-        width: 'Width 14-17 cm (approx. 5.5-6.5 in)',
-        head: 'Sunflower head diameter 10-12 cm (approx. 4-4.5 in)',
-        height: 'Total height 28-32 cm (approx. 11-12.5 in)',
-        stem: '',
-      }
-    : isOctopusProduct
-    ? {
-        width: 'Width 5-5.5 cm (approx. 2 in)',
-        head: 'Height (body only) 5-6 cm (approx. 2-2.5 in)',
-        height: '',
-        stem: '',
-      }
-    : {
-        width: 'Width 12-15 cm (approx. 5-6 in)',
-        head: 'Tulip head 5-6 cm height',
-        height: 'Total height 25-30 cm (approx. 10-12 in)',
-        stem: 'Stem length 10-15 cm',
-      };
-  const showStemLabel = Boolean(measurementLabels.stem);
-  const showHeightLabel = Boolean(measurementLabels.height);
-  const measurementPositions = isSunflowerProduct
-    ? {
-        width: 'left-[10%] top-[8%] sm:left-[12%] sm:top-[8%]',
-        head: 'left-[10%] top-[22%] sm:left-[12%] sm:top-[22%]',
-        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
-        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
-      }
-    : isOctopusProduct
-    ? {
-        width: 'left-[10%] top-[10%] sm:left-[12%] sm:top-[10%]',
-        head: 'left-[10%] top-[24%] sm:left-[12%] sm:top-[24%]',
-        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
-        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
-      }
-    : {
-        width: 'left-[10%] top-[10%] sm:left-[12%] sm:top-[10%]',
-        head: 'left-[10%] top-[22%] sm:left-[12%] sm:top-[22%]',
-        height: 'right-[10%] top-[10%] sm:right-[12%] sm:top-[10%]',
-        stem: 'left-[10%] bottom-[34%] sm:left-[12%] sm:bottom-[34%]',
-      };
-  const [showMeasurements, setShowMeasurements] = useState(true);
 
   const colorPresets = [
     { name: 'Pink', value: '#FF69B4' },
@@ -285,7 +223,6 @@ const Product = () => {
 
     setArLoading(true);
     setArError('');
-    setShowMeasurements(true);
     // Clear previous content
     modelViewerRef.current.innerHTML = '';
 
@@ -322,39 +259,11 @@ const Product = () => {
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
 
-    let showTimeout;
-    const hideMeasurements = () => {
-      if (showTimeout) clearTimeout(showTimeout);
-      setShowMeasurements(false);
-    };
-    const showMeasurementsDelayed = () => {
-      if (showTimeout) clearTimeout(showTimeout);
-      showTimeout = setTimeout(() => setShowMeasurements(true), 200);
-    };
-    const handleCameraChange = () => {
-      hideMeasurements();
-      showMeasurementsDelayed();
-    };
-
-    viewer.addEventListener('pointerdown', hideMeasurements);
-    viewer.addEventListener('pointerup', showMeasurementsDelayed);
-    viewer.addEventListener('pointercancel', showMeasurementsDelayed);
-    viewer.addEventListener('touchstart', hideMeasurements);
-    viewer.addEventListener('touchend', showMeasurementsDelayed);
-    viewer.addEventListener('camera-change', handleCameraChange);
-
     modelViewerRef.current.appendChild(viewer);
     
     return () => {
       viewer.removeEventListener('load', handleLoad);
-      viewer.removeEventListener('pointerdown', hideMeasurements);
-      viewer.removeEventListener('pointerup', showMeasurementsDelayed);
-      viewer.removeEventListener('pointercancel', showMeasurementsDelayed);
-      viewer.removeEventListener('touchstart', hideMeasurements);
-      viewer.removeEventListener('touchend', showMeasurementsDelayed);
-      viewer.removeEventListener('camera-change', handleCameraChange);
       viewer.removeEventListener('error', handleError);
-      if (showTimeout) clearTimeout(showTimeout);
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl]);
 
@@ -668,53 +577,6 @@ const Product = () => {
                       <div className="text-red-700 text-center text-sm px-4">
                         {arError}
                       </div>
-                    </div>
-                  )}
-                  {(isTulipProduct || isRoseProduct || isFrogProduct || isSunflowerProduct || isOctopusProduct) && showMeasurements && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      <svg className="absolute inset-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <defs>
-                          <marker id="arrow" markerWidth="4" markerHeight="4" refX="4" refY="2" orient="auto">
-                            <path d="M0,0 L4,2 L0,4 Z" fill="#60a5fa" />
-                          </marker>
-                        </defs>
-                        <line x1="22" y1="22" x2="34" y2="22" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
-                        <line x1="22" y1="30" x2="22" y2="42" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
-                        {showHeightLabel && (
-                          <line x1="78" y1="18" x2="78" y2="58" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
-                        )}
-                        {showStemLabel && (
-                          <line x1="22" y1="55" x2="36" y2="55" stroke="#60a5fa" strokeWidth="0.6" strokeLinecap="round" markerEnd="url(#arrow)" />
-                        )}
-                      </svg>
-
-                      <div className={`absolute ${measurementPositions.width}`}>
-                        <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
-                          {measurementLabels.width}
-                        </span>
-                      </div>
-
-                      <div className={`absolute ${measurementPositions.head}`}>
-                        <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
-                          {measurementLabels.head}
-                        </span>
-                      </div>
-
-                      {showHeightLabel && (
-                        <div className={`absolute ${measurementPositions.height}`}>
-                          <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
-                            {measurementLabels.height}
-                          </span>
-                        </div>
-                      )}
-
-                      {showStemLabel && (
-                        <div className={`absolute ${measurementPositions.stem}`}>
-                          <span className="text-[10px] sm:text-xs bg-white/95 border border-blue-400 text-blue-700 rounded-full px-2.5 py-1 shadow-sm">
-                            {measurementLabels.stem}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   )}
                   {arLoading && (
