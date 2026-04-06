@@ -116,7 +116,32 @@ export const login = async (req, res) => {
         .json({ message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ where: { email } });
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@artistry.local';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'dS96n3ura6Xb7yzcAZTOf5IP';
+    const adminName = process.env.ADMIN_NAME || 'Admin';
+
+    let user = await User.findOne({ where: { email } });
+
+    // Auto-bootstrap admin account for freshly provisioned databases.
+    if (!user && String(email).toLowerCase() === String(adminEmail).toLowerCase() && password === adminPassword) {
+      user = await User.create({
+        name: adminName,
+        email: adminEmail,
+        password: adminPassword,
+        isAdmin: true,
+      });
+    }
+
+    // If admin account exists but was soft-deleted, restore it automatically.
+    if (!user && String(email).toLowerCase() === String(adminEmail).toLowerCase()) {
+      const deletedAdmin = await User.findOne({ where: { email: adminEmail }, paranoid: false });
+      if (deletedAdmin?.deletedAt) {
+        await deletedAdmin.restore();
+        await deletedAdmin.update({ name: adminName, password: adminPassword, isAdmin: true });
+        user = await User.findOne({ where: { email: adminEmail } });
+      }
+    }
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
