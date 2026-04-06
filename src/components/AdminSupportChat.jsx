@@ -12,6 +12,7 @@ const AdminSupportChat = () => {
   const [text, setText] = useState('')
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const scrollRef = useRef(null)
   const imageRef = useRef(null)
 
@@ -32,14 +33,19 @@ const AdminSupportChat = () => {
   const fetchConversations = async () => {
     if (!token) return
     try {
-      const res = await fetch(`${apiRoot}/chat/support/admin/conversations`, {
+      const res = await fetch(`${apiRoot}/chat/support/admin/conversations?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        setError('Failed to load support conversations')
+        return
+      }
       const data = await res.json()
       setConversations(Array.isArray(data) ? data : [])
+      setError('')
     } catch (e) {
-      // ignore
+      setError('Failed to load support conversations')
     }
   }
 
@@ -47,12 +53,17 @@ const AdminSupportChat = () => {
     if (!token || !threadKey) return
     try {
       setLoading(true)
-      const res = await fetch(`${apiRoot}/chat/support/admin/conversation/${encodeURIComponent(threadKey)}`, {
+      const res = await fetch(`${apiRoot}/chat/support/admin/conversation/${encodeURIComponent(threadKey)}?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        setError('Failed to load messages for this thread')
+        return
+      }
       const data = await res.json()
       setMessages(Array.isArray(data) ? data : [])
+      setError('')
       setTimeout(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
       }, 30)
@@ -96,12 +107,26 @@ const AdminSupportChat = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (!res.ok) return
+      if (!res.ok) {
+        const text = await res.text()
+        setError(text || 'Failed to delete conversation')
+        return
+      }
+
+      const result = await res.json().catch(() => ({}))
+      if (typeof result.deleted === 'number' && result.deleted <= 0) {
+        setError('No messages were deleted for this thread')
+      } else {
+        setError('')
+      }
+
+      const removedKey = selected.threadKey
       setSelected(null)
       setMessages([])
+      setConversations((prev) => prev.filter((c) => c.threadKey !== removedKey))
       fetchConversations()
     } catch (e) {
-      // ignore
+      setError('Failed to delete conversation')
     }
   }
 
@@ -122,6 +147,7 @@ const AdminSupportChat = () => {
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
       <div className='bg-white border rounded p-3 max-h-[560px] overflow-y-auto'>
         <h3 className='font-semibold mb-3'>Support Conversations</h3>
+        {error && <div className='mb-3 text-sm text-red-600'>{error}</div>}
         {conversations.length === 0 ? (
           <div className='text-sm text-gray-500'>No support messages yet.</div>
         ) : (

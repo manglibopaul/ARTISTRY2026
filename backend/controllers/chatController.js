@@ -487,6 +487,9 @@ export const adminDeleteSupportConversation = async (req, res) => {
     }
 
     const deleted = await ChatMessage.destroy({ where })
+    if (!deleted) {
+      return res.status(404).json({ message: 'Support conversation not found or already deleted', deleted: 0 })
+    }
     return res.json({ deleted })
   } catch (error) {
     console.error('adminDeleteSupportConversation', error)
