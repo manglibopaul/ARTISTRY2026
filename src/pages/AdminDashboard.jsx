@@ -102,7 +102,7 @@ const AdminDashboard = () => {
       const handleVerifySeller = async () => {
         if (!viewSeller) return;
         try {
-          const res = await fetch(`${apiUrl}/api/sellers/${viewSeller.id}/verify`, {
+          const res = await fetch(`${apiRoot}/sellers/${viewSeller.id}/verify`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
           });
@@ -140,7 +140,7 @@ const AdminDashboard = () => {
     // Delete customer
     const deleteCustomer = async (id) => {
       try {
-        const res = await fetch(`${apiUrl}/api/users/${id}`, { method: 'DELETE', headers: { Authorization: token ? `Bearer ${token}` : '' } });
+        const res = await fetch(`${apiRoot}/users/${id}`, { method: 'DELETE', headers: { Authorization: token ? `Bearer ${token}` : '' } });
         if (!res.ok) throw new Error(await res.text());
         setCustomers((c) => c.filter(u => u.id !== id));
       } catch (err) {
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
     // Delete seller
     const deleteSeller = async (id) => {
       try {
-        const res = await fetch(`${apiUrl}/api/sellers/${id}`, { method: 'DELETE', headers: { Authorization: token ? `Bearer ${token}` : '' } });
+        const res = await fetch(`${apiRoot}/sellers/${id}`, { method: 'DELETE', headers: { Authorization: token ? `Bearer ${token}` : '' } });
         if (!res.ok) throw new Error(await res.text());
         setSellers((s) => s.filter(x => x.id !== id));
       } catch (err) {
@@ -170,7 +170,9 @@ const AdminDashboard = () => {
   const [sellers, setSellers] = useState([]);
   const [loadingSellers, setLoadingSellers] = useState(false);
   const [sellerError, setSellerError] = useState(null);
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const normalizedApiBase = rawApiUrl.replace(/\/+$/, '');
+  const apiRoot = normalizedApiBase.endsWith('/api') ? normalizedApiBase : `${normalizedApiBase}/api`;
   const token = localStorage.getItem('adminToken');
   const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
   const sellerToken = localStorage.getItem('sellerToken');
@@ -203,7 +205,11 @@ const AdminDashboard = () => {
       },
     };
 
-    const res = await fetch(url, mergedOptions);
+    const requestUrl = url.startsWith('http://') || url.startsWith('https://')
+      ? url
+      : `${apiRoot}${url.startsWith('/api') ? url.slice(4) : (url.startsWith('/') ? url : `/${url}`)}`;
+
+    const res = await fetch(requestUrl, mergedOptions);
     if (res.status === 401 || res.status === 403) {
       handleAuthFailure();
       throw new Error('Session expired. Please log in again.');
@@ -250,7 +256,7 @@ const AdminDashboard = () => {
     setLoadingCustomers(true);
     setCustomerError(null);
     try {
-      const res = await authFetch(`${apiUrl}/api/users`);
+      const res = await authFetch('/users');
       if (!res.ok) throw new Error(await readErrorMessage(res));
       const data = await res.json();
       setCustomers(data);
@@ -266,7 +272,7 @@ const AdminDashboard = () => {
     setLoadingSellers(true);
     setSellerError(null);
     try {
-      const res = await authFetch(`${apiUrl}/api/sellers`);
+      const res = await authFetch('/sellers');
       if (!res.ok) throw new Error(await readErrorMessage(res));
       const data = await res.json();
       setSellers(data);
@@ -298,8 +304,8 @@ const AdminDashboard = () => {
     setBinError(null);
     try {
       const [sellerRes, customerRes] = await Promise.all([
-        authFetch('/api/sellers/bin'),
-        authFetch('/api/users/bin'),
+        authFetch('/sellers/bin'),
+        authFetch('/users/bin'),
       ]);
 
       if (!sellerRes.ok) throw new Error(await readErrorMessage(sellerRes));
@@ -319,7 +325,7 @@ const AdminDashboard = () => {
   // Restore seller from bin
   const restoreSeller = async (id) => {
     try {
-      const res = await authFetch(`/api/sellers/bin/${id}/restore`, { method: 'PUT' });
+      const res = await authFetch(`/sellers/bin/${id}/restore`, { method: 'PUT' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinSellers((s) => s.filter(x => x.id !== id));
       fetchSellers(); // Refresh sellers list
@@ -331,7 +337,7 @@ const AdminDashboard = () => {
   // Permanently delete seller from bin
   const permanentDeleteSeller = async (id) => {
     try {
-      const res = await authFetch(`/api/sellers/bin/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/sellers/bin/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinSellers((s) => s.filter(x => x.id !== id));
     } catch (err) {
@@ -342,7 +348,7 @@ const AdminDashboard = () => {
   // Restore customer from bin
   const restoreCustomer = async (id) => {
     try {
-      const res = await authFetch(`/api/users/bin/${id}/restore`, { method: 'PUT' });
+      const res = await authFetch(`/users/bin/${id}/restore`, { method: 'PUT' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinCustomers((u) => u.filter(x => x.id !== id));
       fetchCustomers();
@@ -354,7 +360,7 @@ const AdminDashboard = () => {
   // Permanently delete customer from bin
   const permanentDeleteCustomer = async (id) => {
     try {
-      const res = await authFetch(`/api/users/bin/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/users/bin/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinCustomers((u) => u.filter(x => x.id !== id));
     } catch (err) {
@@ -376,7 +382,7 @@ const AdminDashboard = () => {
     setLoadingOrders(true);
     setOrderError(null);
     try {
-      const res = await authFetch('/api/orders');
+      const res = await authFetch('/orders');
       if (!res.ok) throw new Error(await readErrorMessage(res));
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
