@@ -131,6 +131,8 @@ const AdminDashboard = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmMessage, setConfirmMessage] = useState('');
     const [confirmAction, setConfirmAction] = useState(() => () => {});
+    const [confirmButtonLabel, setConfirmButtonLabel] = useState('Delete');
+    const [confirmButtonColor, setConfirmButtonColor] = useState('bg-red-600');
     const [verificationModalOpen, setVerificationModalOpen] = useState(false);
     const [successModalOpen, setSuccessModalOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -170,6 +172,15 @@ const AdminDashboard = () => {
   const [sellerError, setSellerError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('adminToken');
+  const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
+  const sellerToken = localStorage.getItem('sellerToken');
+  const adminUserRaw = localStorage.getItem('adminUser');
+  let adminUser = null;
+  try {
+    adminUser = adminUserRaw ? JSON.parse(adminUserRaw) : null;
+  } catch {
+    adminUser = null;
+  }
 
   const handleAuthFailure = () => {
     localStorage.removeItem('adminToken');
@@ -211,8 +222,20 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (!token) navigate('/admin/login');
-  }, [token, navigate]);
+    // Valid admin session always takes priority over stale customer/seller tokens.
+    if (token && adminUser?.isAdmin) {
+      return;
+    }
+
+    if (userToken || sellerToken) {
+      navigate('/');
+      return;
+    }
+
+    if (!token || !adminUser?.isAdmin) {
+      navigate('/admin/login');
+    }
+  }, [token, userToken, sellerToken, adminUser, navigate]);
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
@@ -295,7 +318,6 @@ const AdminDashboard = () => {
 
   // Restore seller from bin
   const restoreSeller = async (id) => {
-    if (!window.confirm('Restore this seller?')) return;
     try {
       const res = await authFetch(`/api/sellers/bin/${id}/restore`, { method: 'PUT' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -308,7 +330,6 @@ const AdminDashboard = () => {
 
   // Permanently delete seller from bin
   const permanentDeleteSeller = async (id) => {
-    if (!window.confirm('Permanently delete this seller? This cannot be undone.')) return;
     try {
       const res = await authFetch(`/api/sellers/bin/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -320,7 +341,6 @@ const AdminDashboard = () => {
 
   // Restore customer from bin
   const restoreCustomer = async (id) => {
-    if (!window.confirm('Restore this customer?')) return;
     try {
       const res = await authFetch(`/api/users/bin/${id}/restore`, { method: 'PUT' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -333,7 +353,6 @@ const AdminDashboard = () => {
 
   // Permanently delete customer from bin
   const permanentDeleteCustomer = async (id) => {
-    if (!window.confirm('Permanently delete this customer? This cannot be undone.')) return;
     try {
       const res = await authFetch(`/api/users/bin/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -575,8 +594,20 @@ const AdminDashboard = () => {
                       <td className="p-3">{seller.storeName}</td>
                       <td className="p-3">{seller.email}</td>
                       <td className="p-3 flex gap-2">
-                        <button onClick={() => restoreSeller(seller.id)} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
-                        <button onClick={() => permanentDeleteSeller(seller.id)} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                        <button onClick={() => {
+                          setConfirmMessage('Restore this seller?');
+                          setConfirmButtonLabel('Restore');
+                          setConfirmButtonColor('bg-green-600');
+                          setConfirmAction(() => () => { restoreSeller(seller.id); setConfirmOpen(false); });
+                          setConfirmOpen(true);
+                        }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                        <button onClick={() => {
+                          setConfirmMessage('Permanently delete this seller? This cannot be undone.');
+                          setConfirmButtonLabel('Delete');
+                          setConfirmButtonColor('bg-red-600');
+                          setConfirmAction(() => () => { permanentDeleteSeller(seller.id); setConfirmOpen(false); });
+                          setConfirmOpen(true);
+                        }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -602,8 +633,20 @@ const AdminDashboard = () => {
                         <td className="p-3">{customer.email}</td>
                         <td className="p-3">{customer.phone || '-'}</td>
                         <td className="p-3 flex gap-2">
-                          <button onClick={() => restoreCustomer(customer.id)} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
-                          <button onClick={() => permanentDeleteCustomer(customer.id)} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                          <button onClick={() => {
+                            setConfirmMessage('Restore this customer?');
+                            setConfirmButtonLabel('Restore');
+                            setConfirmButtonColor('bg-green-600');
+                            setConfirmAction(() => () => { restoreCustomer(customer.id); setConfirmOpen(false); });
+                            setConfirmOpen(true);
+                          }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                          <button onClick={() => {
+                            setConfirmMessage('Permanently delete this customer? This cannot be undone.');
+                            setConfirmButtonLabel('Delete');
+                            setConfirmButtonColor('bg-red-600');
+                            setConfirmAction(() => () => { permanentDeleteCustomer(customer.id); setConfirmOpen(false); });
+                            setConfirmOpen(true);
+                          }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -617,7 +660,7 @@ const AdminDashboard = () => {
 
       <ViewCustomerModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} customer={viewCustomer} />
       <ViewSellerModal open={viewSellerModalOpen} onClose={() => setViewSellerModalOpen(false)} seller={viewSeller} onVerifyClick={handleVerifyClick} />
-      <ConfirmModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmAction} message={confirmMessage} buttonLabel="Delete" buttonColor="bg-red-600" />
+      <ConfirmModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmAction} message={confirmMessage} buttonLabel={confirmButtonLabel} buttonColor={confirmButtonColor} />
       <ConfirmModal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)} onConfirm={() => { handleVerifySeller(); setVerificationModalOpen(false); }} message={`Verify seller "${viewSeller?.storeName || 'N/A'}"? This will approve them for the platform.`} buttonLabel="Verify" buttonColor="bg-green-600" />
       <SuccessModal open={successModalOpen} onClose={() => setSuccessModalOpen(false)} message={successMessage} />
     </div>

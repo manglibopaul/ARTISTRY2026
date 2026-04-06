@@ -37,6 +37,56 @@ const buildItemsFromCart = (cartsItems, products) => {
   return items;
 }
 
+const PLACEHOLDER_PATTERN = /\b(test|asdf|qwe|zxc|n\/?a|na|none|unknown|sample|dummy|fake|12345|1111)\b/i;
+
+const isLikelyPlaceholderText = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return true;
+  if (PLACEHOLDER_PATTERN.test(text)) return true;
+
+  const compact = text.replace(/\s+/g, '');
+  if (compact.length < 3) return true;
+  if (/^(.)\1+$/.test(compact)) return true;
+
+  return false;
+};
+
+const hasMinLetters = (value, min = 3) => {
+  const matches = String(value || '').match(/[A-Za-z]/g);
+  return (matches?.length || 0) >= min;
+};
+
+const validateDeliveryAddress = ({ fullName, phone, regionProvinceCityBarangay, street, zipcode }) => {
+  const errors = [];
+
+  const name = String(fullName || '').trim();
+  if (!name || name.length < 5 || !/\s+/.test(name) || !hasMinLetters(name, 4) || isLikelyPlaceholderText(name)) {
+    errors.push('Use your real full name (first and last name).');
+  }
+
+  const normalizedPhone = String(phone || '').replace(/[\s()-]/g, '');
+  if (!/^(?:\+63|63|0)?9\d{9}$/.test(normalizedPhone)) {
+    errors.push('Use a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX).');
+  }
+
+  const location = String(regionProvinceCityBarangay || '').trim();
+  const locationParts = location.split(/[\/,]/).map((x) => x.trim()).filter(Boolean);
+  if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
+    errors.push('Provide a valid Region/Province/City/Barangay.');
+  }
+
+  const streetAddress = String(street || '').trim();
+  if (!streetAddress || streetAddress.length < 8 || !/[A-Za-z]/.test(streetAddress) || !/\d/.test(streetAddress) || isLikelyPlaceholderText(streetAddress)) {
+    errors.push('Provide a complete street address with house/building number.');
+  }
+
+  if (!/^\d{4}$/.test(String(zipcode || '').trim())) {
+    errors.push('Use a valid 4-digit postal code.');
+  }
+
+  return errors;
+};
+
 const PlaceOrder = () => {
 
   const [method,setMethod] = useState('cod')
@@ -497,17 +547,18 @@ const PlaceOrder = () => {
                 : items
 
               if (method !== 'pickup') {
-                const missingFields = []
-                if (!fullName.trim()) missingFields.push('Full name')
-                if (!phone.trim()) missingFields.push('Phone number')
-                if (!regionProvinceCityBarangay.trim()) missingFields.push('Region/Province/City/Barangay')
-                if (!zipcode.trim()) missingFields.push('Postal code')
-                if (!street.trim()) missingFields.push('Street address')
+                const addressErrors = validateDeliveryAddress({
+                  fullName,
+                  phone,
+                  regionProvinceCityBarangay,
+                  street,
+                  zipcode,
+                })
 
-                if (missingFields.length > 0) {
+                if (addressErrors.length > 0) {
                   openModal(
-                    'Incomplete Delivery Address',
-                    `Please complete your delivery address:\n- ${missingFields.join('\n- ')}`
+                    'Invalid Delivery Address',
+                    `Please provide a valid real delivery address:\n- ${addressErrors.join('\n- ')}`
                   )
                   return
                 }

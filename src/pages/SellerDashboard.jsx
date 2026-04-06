@@ -99,6 +99,7 @@ const SellerDashboard = () => {
 
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const isSellerVerified = Boolean(seller?.isVerified)
   const { refreshProducts } = useContext(ShopContext)
   // Polling id for conversations
   const [convoPollId, setConvoPollId] = useState(null)
@@ -372,6 +373,12 @@ const SellerDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!isSellerVerified) {
+      toast.error('Your account is pending admin verification. You cannot upload products yet.')
+      return
+    }
+
     setIsSubmitting(true)
     setUploadProgress(0)
     setUploadError('')
@@ -584,7 +591,7 @@ const SellerDashboard = () => {
           </div>
           <div className='flex gap-2 sm:gap-3 w-full sm:w-auto'>
             <button
-              onClick={() => navigate('/support', { state: { role: 'seller' } })}
+              onClick={() => setSelectedTab('support')}
               className='bg-emerald-600 hover:bg-emerald-700 px-4 sm:px-6 py-2 rounded-lg font-medium text-sm sm:text-base flex-1 sm:flex-none'
             >
               Support
@@ -607,6 +614,13 @@ const SellerDashboard = () => {
 
       {/* Main Content */}
       <div className='max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8'>
+        {!isSellerVerified && (
+          <div className='mb-4 sm:mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900'>
+            <p className='text-sm sm:text-base font-medium'>Your seller account is pending admin verification.</p>
+            <p className='text-xs sm:text-sm mt-1'>You can browse your dashboard, but product uploads are locked until an admin verifies your account.</p>
+          </div>
+        )}
+
         {/* Tabs + Add Product Button */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6'>
           <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
@@ -624,6 +638,11 @@ const SellerDashboard = () => {
               onClick={() => setSelectedTab('chat')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'chat' ? 'bg-black text-white' : 'bg-gray-200'}`}>
               Chat {sellerUnreadChats > 0 && <span className='inline-block ml-1 sm:ml-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full'>{sellerUnreadChats}</span>}
+            </button>
+            <button
+              onClick={() => setSelectedTab('support')}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'support' ? 'bg-black text-white' : 'bg-gray-200'}`}>
+              Support
             </button>
             <button
               onClick={() => setSelectedTab('reviews')}
@@ -649,13 +668,15 @@ const SellerDashboard = () => {
 
           <button
             onClick={() => {
+              if (!isSellerVerified) return
               resetForm()
               setShowForm(!showForm)
               setSelectedTab('products')
             }}
-            className='bg-black text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-gray-800 text-sm sm:text-base w-full sm:w-auto'
+            disabled={!isSellerVerified}
+            className='bg-black text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-gray-800 text-sm sm:text-base w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed'
           >
-            {showForm ? 'Cancel' : 'Add Product'}
+            {!isSellerVerified ? 'Awaiting Verification' : (showForm ? 'Cancel' : 'Add Product')}
           </button>
         </div>
 
@@ -1140,12 +1161,26 @@ const SellerDashboard = () => {
 
         {selectedTab === 'chat' && (
           <div className='bg-white rounded-lg shadow-lg p-6'>
-            <h2 className='text-2xl font-bold mb-4'>Messages</h2>
+            <h2 className='text-2xl font-bold mb-4'>Customer Chat</h2>
             <div>
-              <div className='mb-4 text-sm text-gray-600'>Seller chat — view conversations and reply below.</div>
+              <div className='mb-4 text-sm text-gray-600'>Messages with customers — view conversations and reply below.</div>
               <div>
-                {/* Lazy-import seller chat component */}
+                {/* Customer chat component */}
                 <React.Suspense fallback={<div className='text-sm text-gray-500'>Loading chat...</div>}>
+                  <SellerChat />
+                </React.Suspense>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedTab === 'support' && (
+          <div className='bg-white rounded-lg shadow-lg p-6'>
+            <h2 className='text-2xl font-bold mb-4'>Support Inbox</h2>
+            <div>
+              <div className='mb-4 text-sm text-gray-600'>Private support chat with admin.</div>
+              <div>
+                <React.Suspense fallback={<div className='text-sm text-gray-500'>Loading support chat...</div>}>
                   <SellerAdminChat />
                 </React.Suspense>
               </div>

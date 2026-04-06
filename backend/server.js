@@ -17,7 +17,7 @@ import Coupon from './models/Coupon.js';
 import ReturnRequest from './models/ReturnRequest.js';
 import Notification from './models/Notification.js';
 
-import { connectDB } from './config/database.js';
+import { connectDB, sequelize } from './config/database.js';
 import productRoutes from './routes/productRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -92,7 +92,11 @@ app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running', database: 'SQLite' });
+  res.json({
+    status: 'Server is running',
+    database: sequelize.getDialect(),
+    environment: process.env.NODE_ENV || 'development',
+  });
 });
 
 // Error handling middleware

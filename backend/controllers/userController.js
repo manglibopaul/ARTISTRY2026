@@ -1,4 +1,10 @@
 import User from '../models/User.js';
+import Order from '../models/Order.js';
+import Cart from '../models/Cart.js';
+import Review from '../models/Review.js';
+import ChatMessage from '../models/ChatMessage.js';
+import ReturnRequest from '../models/ReturnRequest.js';
+import Notification from '../models/Notification.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -214,7 +220,7 @@ export const deleteUser = async (req, res) => {
     if (user.deletedAt) return res.status(400).json({ message: 'User is already in bin' });
 
     // Soft delete to bin
-    await user.update({ deletedAt: new Date() });
+    await user.destroy();
     res.json({ message: 'User moved to bin' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -244,7 +250,7 @@ export const restoreUser = async (req, res) => {
     const user = await User.findByPk(req.params.id, { paranoid: false });
     if (!user || !user.deletedAt) return res.status(404).json({ message: 'User not found in bin' });
     if (user.isAdmin) return res.status(403).json({ message: 'Cannot restore admin user via bin' });
-    await user.update({ deletedAt: null });
+    await user.restore();
     res.json({ message: 'User restored' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -257,6 +263,32 @@ export const hardDeleteUser = async (req, res) => {
     const user = await User.findByPk(req.params.id, { paranoid: false });
     if (!user || !user.deletedAt) return res.status(404).json({ message: 'User not found in bin' });
     if (user.isAdmin) return res.status(403).json({ message: 'Cannot hard delete admin user' });
+
+    const userOrders = await Order.findAll({ where: { userId: user.id }, attributes: ['id'] });
+    const orderIds = userOrders.map((o) => o.id);
+
+    // Remove dependents first to satisfy FK constraints.
+    await ReturnRequest.destroy({
+      where: {
+        [Op.or]: [
+          { userId: user.id },
+          ...(orderIds.length ? [{ orderId: { [Op.in]: orderIds } }] : []),
+        ],
+      },
+    });
+    await Notification.destroy({
+      where: {
+        [Op.or]: [
+          { userId: user.id },
+          ...(orderIds.length ? [{ orderId: { [Op.in]: orderIds } }] : []),
+        ],
+      },
+    });
+    await ChatMessage.destroy({ where: { userId: user.id } });
+    await Review.destroy({ where: { userId: user.id } });
+    await Cart.destroy({ where: { userId: user.id } });
+    await Order.destroy({ where: { userId: user.id } });
+
     await user.destroy({ force: true });
     res.json({ message: 'User permanently deleted' });
   } catch (error) {

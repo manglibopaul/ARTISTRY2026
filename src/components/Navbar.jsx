@@ -28,10 +28,12 @@ const Navbar = () => {
 
     const {setShowSearch , getCartCount} = useContext(ShopContext);
     const handleSupportClick = () => {
-      if (adminToken) {
-        navigate('/admin/dashboard?tab=support');
+      if (userToken) {
+        navigate('/support');
       } else if (sellerToken) {
         navigate('/support', { state: { role: 'seller' } });
+      } else if (adminToken) {
+        navigate('/admin/dashboard?tab=support');
       } else {
         navigate('/support');
       }

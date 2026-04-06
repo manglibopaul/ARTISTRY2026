@@ -16,7 +16,4 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.glb', '**/*.usdz'],
-  build: {
-    minify: 'terser',
-  },
 })

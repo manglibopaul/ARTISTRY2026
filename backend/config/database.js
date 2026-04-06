@@ -8,9 +8,10 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../aninaya.db');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: dbPath,
+const isProduction = process.env.NODE_ENV === 'production';
+const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+
+const baseConfig = {
   logging: false,
   pool: {
     max: 5,
@@ -18,7 +19,26 @@ const sequelize = new Sequelize({
     acquire: 30000,
     idle: 10000
   }
-});
+};
+
+const sequelize = hasDatabaseUrl
+  ? new Sequelize(process.env.DATABASE_URL, {
+      ...baseConfig,
+      dialect: 'postgres',
+      dialectOptions: isProduction
+        ? {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false,
+            },
+          }
+        : {},
+    })
+  : new Sequelize({
+      ...baseConfig,
+      dialect: 'sqlite',
+      storage: dbPath,
+    });
 
 const User = sequelize.define('User', {
   id: {
@@ -80,7 +100,9 @@ const connectDB = async () => {
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;
-    console.log('✅ SQLite database connected successfully');
+    const dialect = sequelize.getDialect();
+    const mode = hasDatabaseUrl ? 'DATABASE_URL' : 'local file';
+    console.log(`✅ ${dialect} database connected successfully (${mode})`);
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     console.error('Full error:', error);

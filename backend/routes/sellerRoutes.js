@@ -9,6 +9,7 @@ import {
   findSellerByName,
   getAllSellers,
   getDeletedSellers,
+  restoreDeletedSeller,
   deleteSeller,
   hardDeleteSeller,
   verifySellerByAdmin,
@@ -55,14 +56,15 @@ router.put('/shipping-settings', verifySeller, updateShippingSettings);
 router.get('/return-policy', verifySeller, getReturnPolicy);
 router.put('/return-policy', verifySeller, updateReturnPolicy);
 
-// Public: get single seller by ID
-router.get('/:id', getSeller);
-
 // Admin routes
 router.get('/', verifyAdmin, getAllSellers);
 router.get('/bin', verifyAdmin, getDeletedSellers);
+router.put('/bin/:id/restore', verifyAdmin, restoreDeletedSeller);
 router.delete('/:id', verifyAdmin, deleteSeller); // soft delete
 router.delete('/bin/:id', verifyAdmin, hardDeleteSeller); // hard delete
 router.patch('/:id/verify', verifyAdmin, verifySellerByAdmin);
+
+// Public: get single seller by ID
+router.get('/:id', getSeller);
 
 export default router;

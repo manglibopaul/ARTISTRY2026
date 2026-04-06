@@ -327,6 +327,30 @@ export const hardDeleteSeller = async (req, res) => {
   }
 };
 
+// Restore soft-deleted seller from bin
+export const restoreDeletedSeller = async (req, res) => {
+  try {
+    const seller = await Seller.findByPk(req.params.id, { paranoid: false });
+    if (!seller || !seller.deletedAt) {
+      return res.status(404).json({ message: 'Seller not found in bin' });
+    }
+
+    await seller.restore();
+
+    // Restore corresponding user account if soft-deleted as part of seller deletion
+    const { default: User } = await import('../models/User.js');
+    const user = await User.findOne({ where: { email: seller.email }, paranoid: false });
+    if (user && user.deletedAt) {
+      await user.restore();
+    }
+
+    res.json({ message: 'Seller restored successfully' });
+  } catch (error) {
+    console.error('restoreDeletedSeller', error);
+    res.status(500).json({ message: 'Failed to restore seller' });
+  }
+};
+
 // Admin: delete seller
 export const deleteSeller = async (req, res) => {
   try {
@@ -337,14 +361,14 @@ export const deleteSeller = async (req, res) => {
     }
     // Delete all products for this seller
     await Product.destroy({ where: { sellerId: seller.id } });
-    // Soft-delete the seller using explicit deletedAt timestamp
-    await seller.update({ deletedAt: new Date() });
+    // Soft-delete seller via paranoid model behavior
+    await seller.destroy();
 
     // Also soft-delete the corresponding user (by email)
     const { default: User } = await import('../models/User.js');
     const user = await User.findOne({ where: { email: seller.email } });
     if (user) {
-      await user.update({ deletedAt: new Date() });
+      await user.destroy();
     }
 
     res.json({ message: 'Seller, their products, and corresponding user deleted' });

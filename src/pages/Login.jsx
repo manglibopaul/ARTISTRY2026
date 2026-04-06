@@ -66,6 +66,12 @@ const Login = () => {
       }
 
       const data = await res.json();
+      // Ensure customer session does not coexist with stale seller/admin sessions.
+      localStorage.removeItem('sellerToken');
+      localStorage.removeItem('seller');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+
       // Save token and user info
       if (data.token) localStorage.setItem('token', data.token);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
@@ -225,6 +231,32 @@ const Login = () => {
             )}
           </div>
         </form>
+
+        <div className='mt-4 text-center text-sm text-gray-600'>
+          {mode === 'Sign In' ? (
+            <>
+              Are you a seller?{' '}
+              <button
+                type='button'
+                onClick={() => navigate('/seller/login')}
+                className='text-black underline'
+              >
+                Seller Sign In
+              </button>
+            </>
+          ) : (
+            <>
+              Want to sell on Artistry?{' '}
+              <button
+                type='button'
+                onClick={() => navigate('/seller/login?mode=signup')}
+                className='text-black underline'
+              >
+                Seller Sign Up
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

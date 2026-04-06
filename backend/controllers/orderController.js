@@ -5,6 +5,59 @@ import Notification from '../models/Notification.js';
 import { useCoupon } from './couponController.js';
 import { sendEmail } from '../utils/email.js';
 
+const PLACEHOLDER_PATTERN = /\b(test|asdf|qwe|zxc|n\/?a|na|none|unknown|sample|dummy|fake|12345|1111)\b/i;
+
+const isLikelyPlaceholderText = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return true;
+  if (PLACEHOLDER_PATTERN.test(text)) return true;
+
+  const compact = text.replace(/\s+/g, '');
+  if (compact.length < 3) return true;
+  if (/^(.)\1+$/.test(compact)) return true;
+
+  return false;
+};
+
+const hasMinLetters = (value, min = 3) => {
+  const matches = String(value || '').match(/[A-Za-z]/g);
+  return (matches?.length || 0) >= min;
+};
+
+const validateDeliveryAddress = (address = {}) => {
+  const errors = [];
+
+  const fullName = String(address.firstName || '').trim();
+  const phone = String(address.phone || '').trim();
+  const location = String(address.regionProvinceCityBarangay || address.city || '').trim();
+  const street = String(address.street || '').trim();
+  const zipcode = String(address.zipcode || '').trim();
+
+  if (!fullName || fullName.length < 5 || !/\s+/.test(fullName) || !hasMinLetters(fullName, 4) || isLikelyPlaceholderText(fullName)) {
+    errors.push('Enter your real full name (first and last name).');
+  }
+
+  const normalizedPhone = phone.replace(/[\s()-]/g, '');
+  if (!/^(?:\+63|63|0)?9\d{9}$/.test(normalizedPhone)) {
+    errors.push('Enter a valid Philippine mobile number (e.g., 09XXXXXXXXX or +639XXXXXXXXX).');
+  }
+
+  const locationParts = location.split(/[\/,]/).map((x) => x.trim()).filter(Boolean);
+  if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
+    errors.push('Enter a valid Region/Province/City/Barangay address.');
+  }
+
+  if (!street || street.length < 8 || !/[A-Za-z]/.test(street) || !/\d/.test(street) || isLikelyPlaceholderText(street)) {
+    errors.push('Enter a complete street address with house/building number.');
+  }
+
+  if (!/^\d{4}$/.test(zipcode)) {
+    errors.push('Enter a valid 4-digit postal code.');
+  }
+
+  return errors;
+};
+
 const createNotificationSafe = async (payload) => {
   try {
     await Notification.create(payload);
@@ -26,18 +79,10 @@ export const createOrder = async (req, res) => {
     }
 
     if (!isPickup) {
-      const missing = [];
-      if (!String(address?.firstName || '').trim()) missing.push('firstName');
-      if (!String(address?.phone || '').trim()) missing.push('phone');
-      if (!String(address?.street || '').trim()) missing.push('street');
-      if (!String(address?.zipcode || '').trim()) missing.push('zipcode');
-
-      const cityLike = String(address?.regionProvinceCityBarangay || address?.city || '').trim();
-      if (!cityLike) missing.push('regionProvinceCityBarangay');
-
-      if (missing.length) {
+      const addressErrors = validateDeliveryAddress(address);
+      if (addressErrors.length) {
         return res.status(400).json({
-          message: `Delivery address is incomplete. Missing: ${missing.join(', ')}`,
+          message: `Delivery address validation failed: ${addressErrors.join(' ')}`,
         });
       }
     }

@@ -31,6 +31,13 @@ const AdminLogin = () => {
         throw new Error('Admin access required')
       }
 
+      // Clear non-admin sessions so role guards don't redirect to customer/seller flows.
+      localStorage.removeItem('token')
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('sellerToken')
+      localStorage.removeItem('seller')
+
       if (data.token) localStorage.setItem('adminToken', data.token)
       if (data.user) localStorage.setItem('adminUser', JSON.stringify(data.user))
 

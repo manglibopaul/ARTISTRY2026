@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 const SellerLogin = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(false)
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(() => !new URLSearchParams(location.search).get('mode')?.toLowerCase().includes('signup'))
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -73,6 +74,13 @@ const SellerLogin = () => {
       }
 
       const response = await axios.post(endpoint, dataToSend, config)
+      // Ensure seller session does not coexist with stale customer/admin sessions.
+      localStorage.removeItem('token')
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
+
       // Store token
       localStorage.setItem('sellerToken', response.data.token)
       localStorage.setItem('seller', JSON.stringify(response.data.seller))
