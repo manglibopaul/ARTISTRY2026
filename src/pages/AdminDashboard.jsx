@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
 // Modal to view and verify seller
-function ViewSellerModal({ open, onClose, seller, onVerifyClick }) {
+function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }) {
   if (!open || !seller) return null;
-  // Fix image URL for local backend
+  // Resolve uploads against backend host in production/local.
   let proofUrl = seller.proofOfArtisan || '';
-  if (proofUrl && proofUrl.startsWith('/')) {
-    proofUrl = `${window.location.origin.replace(':5173', ':5000')}${proofUrl}`;
+  if (proofUrl && proofUrl.startsWith('/') && uploadBaseUrl) {
+    proofUrl = `${uploadBaseUrl}${proofUrl}`;
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -665,7 +665,7 @@ const AdminDashboard = () => {
       )}
 
       <ViewCustomerModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} customer={viewCustomer} />
-      <ViewSellerModal open={viewSellerModalOpen} onClose={() => setViewSellerModalOpen(false)} seller={viewSeller} onVerifyClick={handleVerifyClick} />
+      <ViewSellerModal open={viewSellerModalOpen} onClose={() => setViewSellerModalOpen(false)} seller={viewSeller} onVerifyClick={handleVerifyClick} uploadBaseUrl={normalizedApiBase} />
       <ConfirmModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmAction} message={confirmMessage} buttonLabel={confirmButtonLabel} buttonColor={confirmButtonColor} />
       <ConfirmModal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)} onConfirm={() => { handleVerifySeller(); setVerificationModalOpen(false); }} message={`Verify seller "${viewSeller?.storeName || 'N/A'}"? This will approve them for the platform.`} buttonLabel="Verify" buttonColor="bg-green-600" />
       <SuccessModal open={successModalOpen} onClose={() => setSuccessModalOpen(false)} message={successMessage} />
