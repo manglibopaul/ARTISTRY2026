@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
 import path from 'path';
 import { Op } from 'sequelize';
+import { uploadImage } from '../utils/media.js';
 
 const SUPPORT_SELLER_EMAIL = 'admin.support@artistry.local';
 
@@ -22,7 +23,8 @@ export const registerSeller = async (req, res) => {
 
     let proofOfArtisan = null;
     if (req.file) {
-      proofOfArtisan = '/uploads/images/' + path.basename(req.file.path);
+      const uploaded = await uploadImage(req.file, 'artistry/seller-proof');
+      proofOfArtisan = uploaded?.url || null;
     }
 
     if (!name || !email || !password || !storeName) {
@@ -228,7 +230,8 @@ export const updateSellerAvatar = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found' });
     }
 
-    const avatarPath = `/uploads/images/${req.file.filename}`;
+    const uploaded = await uploadImage(req.file, 'artistry/seller-avatar');
+    const avatarPath = uploaded?.url || null;
     await seller.update({ avatar: avatarPath });
 
     return res.status(200).json({

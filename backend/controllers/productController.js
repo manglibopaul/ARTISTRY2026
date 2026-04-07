@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
+import { uploadImage } from '../utils/media.js';
 
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
@@ -72,8 +73,11 @@ export const createProduct = async (req, res) => {
       // Handle multiple images
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
       if (imageFiles.length > 0) {
-        productData.image = imageFiles.map(f => ({
-          url: `/uploads/images/${f.filename}`,
+        const uploadedImages = await Promise.all(
+          imageFiles.map((f) => uploadImage(f, 'artistry/products'))
+        );
+        productData.image = uploadedImages.filter(Boolean).map((f) => ({
+          url: f.url,
           filename: f.filename,
         }));
       }
@@ -149,8 +153,11 @@ export const updateProduct = async (req, res) => {
       // Handle multiple images - append new images to existing ones
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
       if (imageFiles.length > 0) {
-        const newImages = imageFiles.map(f => ({
-          url: `/uploads/images/${f.filename}`,
+        const uploadedImages = await Promise.all(
+          imageFiles.map((f) => uploadImage(f, 'artistry/products'))
+        );
+        const newImages = uploadedImages.filter(Boolean).map((f) => ({
+          url: f.url,
           filename: f.filename,
         }));
         // Merge existing images with new images
