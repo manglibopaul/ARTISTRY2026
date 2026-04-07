@@ -3,8 +3,7 @@
 ## Stack
 - Node.js + Express
 - Sequelize ORM
-- Local development DB: SQLite (`backend/aninaya.db`)
-- Production DB: PostgreSQL (via `DATABASE_URL`)
+- Database: PostgreSQL (via `DATABASE_URL`) for both local and production
 
 ## Quick Start (Local)
 1. Install dependencies:
@@ -18,13 +17,14 @@
    PORT=5000
    NODE_ENV=development
    FRONTEND_URL=http://localhost:5173
+  DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DB_NAME
    ```
 3. Run backend:
    ```bash
    npm run dev
    ```
 
-The backend auto-creates/syncs SQLite locally.
+The backend requires `DATABASE_URL` and syncs PostgreSQL schema on startup.
 
 ## Production Environment Variables
 Set these in your backend host (Render/Railway/etc):
@@ -37,9 +37,9 @@ DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/DB_NAME
 FRONTEND_URL=https://your-frontend-domain.com
 ```
 
-### Database Selection Rules
-- If `DATABASE_URL` exists, backend uses PostgreSQL.
-- If not, backend falls back to local SQLite file.
+### Database Requirement
+- `DATABASE_URL` is mandatory.
+- SQLite fallback has been removed.
 
 ## Health Check
 `GET /api/health`
@@ -66,5 +66,4 @@ Example response:
 
 ## Notes
 - Do not commit real `.env` files.
-- SQLite is fine for local development/demo.
-- Use PostgreSQL for public deployment with multiple users.
+- Use PostgreSQL in all environments.

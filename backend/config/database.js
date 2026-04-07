@@ -1,15 +1,14 @@
 import Sequelize from 'sequelize';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '../aninaya.db');
-
 const isProduction = process.env.NODE_ENV === 'production';
-const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is required. SQLite fallback has been removed.');
+}
 
 const baseConfig = {
   logging: false,
@@ -21,24 +20,18 @@ const baseConfig = {
   }
 };
 
-const sequelize = hasDatabaseUrl
-  ? new Sequelize(process.env.DATABASE_URL, {
-      ...baseConfig,
-      dialect: 'postgres',
-      dialectOptions: isProduction
-        ? {
-            ssl: {
-              require: true,
-              rejectUnauthorized: false,
-            },
-          }
-        : {},
-    })
-  : new Sequelize({
-      ...baseConfig,
-      dialect: 'sqlite',
-      storage: dbPath,
-    });
+const sequelize = new Sequelize(databaseUrl, {
+  ...baseConfig,
+  dialect: 'postgres',
+  dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
+});
 
 const User = sequelize.define('User', {
   id: {
@@ -101,8 +94,7 @@ const connectDB = async () => {
 
     dbConnected = true;
     const dialect = sequelize.getDialect();
-    const mode = hasDatabaseUrl ? 'DATABASE_URL' : 'local file';
-    console.log(`✅ ${dialect} database connected successfully (${mode})`);
+    console.log(`✅ ${dialect} database connected successfully (DATABASE_URL)`);
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     console.error('Full error:', error);
