@@ -128,10 +128,6 @@ const Login = () => {
       // Save token and user info
       if (data.token) localStorage.setItem('token', data.token);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
-      // Clear any stale seller/admin sessions so the navbar/profile stays on the customer account
-      localStorage.removeItem('sellerToken');
-      localStorage.removeItem('seller');
-      localStorage.removeItem('adminToken');
 
       // Redirect after login/register — go to home page
       navigate('/');
