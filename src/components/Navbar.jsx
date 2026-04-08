@@ -27,6 +27,14 @@ const Navbar = () => {
     if (!userToken && userRaw) localStorage.removeItem('user')
 
     const {setShowSearch , getCartCount} = useContext(ShopContext);
+    const handleSellClick = () => {
+      if (sellerToken) {
+        navigate('/seller/profile');
+        return;
+      }
+      navigate('/seller/login?mode=signup');
+    }
+
     const handleSupportClick = () => {
       if (userToken) {
         navigate('/support');
@@ -89,6 +97,10 @@ const Navbar = () => {
           <p>ABOUT US</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </NavLink>
+        <button onClick={handleSellClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
+          <p>SELL</p>
+          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+        </button>
         <button onClick={handleSupportClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
           <p>SUPPORT</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
@@ -168,6 +180,7 @@ const Navbar = () => {
                 <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/collection'>PRODUCTS</NavLink>
                 <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/artisans'>ARTISANS</NavLink>
                 <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/about'>ABOUT US</NavLink>
+                <button onClick={() => { setVisible(false); handleSellClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SELL</button>
                 <button onClick={() => { setVisible(false); handleSupportClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SUPPORT</button>
             </div>
         </div>
