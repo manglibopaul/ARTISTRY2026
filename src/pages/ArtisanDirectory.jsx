@@ -88,6 +88,29 @@ const ArtisanDirectory = () => {
             <p className='text-gray-300 text-lg'>Connect with passionate craftspeople creating handmade treasures</p>
           </div>
 
+          <div className='mx-auto mb-8 max-w-3xl rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md p-4 sm:p-5 text-white shadow-lg'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <div>
+                <p className='text-sm font-semibold uppercase tracking-wider text-gray-300'>Are you an artisan?</p>
+                <p className='text-sm sm:text-base text-gray-200'>List your store, share pickup locations, and reach customers directly.</p>
+              </div>
+              <div className='flex flex-col sm:flex-row gap-2'>
+                <button
+                  onClick={() => navigate('/seller/login?mode=signup')}
+                  className='px-5 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:bg-gray-100 transition'
+                >
+                  Seller Sign Up
+                </button>
+                <button
+                  onClick={() => navigate('/seller/login')}
+                  className='px-5 py-2.5 rounded-full border border-white/30 text-sm font-semibold text-white hover:bg-white/10 transition'
+                >
+                  Seller Sign In
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Filter Buttons */}
           <div className='bg-white bg-opacity-10 backdrop-blur-md rounded-lg p-6'>
             <p className='text-white text-sm font-medium mb-4'>Filter by Craft Type:</p>
