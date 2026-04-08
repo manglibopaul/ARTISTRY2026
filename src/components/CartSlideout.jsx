@@ -70,8 +70,8 @@ const CartSlideout = ({ isOpen, onClose }) => {
         }`}
       >
         {/* Header */}
-        <div className='flex items-center justify-between p-6 border-b'>
-          <h2 className='text-2xl font-bold'>Your cart</h2>
+        <div className='flex items-center justify-between p-4 sm:p-6 border-b'>
+          <h2 className='text-xl sm:text-2xl font-bold'>Your cart</h2>
           <button
             onClick={onClose}
             className='text-gray-400 hover:text-gray-600 transition-colors'

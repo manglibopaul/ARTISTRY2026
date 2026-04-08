@@ -319,7 +319,7 @@ const Product = () => {
                   }} 
                   src={imgUrl} 
                   key={index} 
-                  className={`w-[20%] sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition-all ${isActive ? 'border-2 border-black' : 'border border-gray-300'}`}
+                  className={`w-[20%] sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition-all min-h-[40px] sm:min-h-[60px] ${isActive ? 'border-2 border-black' : 'border border-gray-300'}`}
                   alt={`Product view ${index + 1}`}
                 />
               )
@@ -420,7 +420,7 @@ const Product = () => {
                   min={1}
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value) || 1)}
-                  className='w-20 px-3 py-3 border rounded text-sm'
+                  className='w-24 sm:w-20 px-3 py-3 border rounded text-sm min-h-[44px]'
                   aria-label='Quantity'
                 />
                 <button 
@@ -522,12 +522,12 @@ const Product = () => {
                 )}
                 {r.sellerReply && (
                   <div className='mt-2 p-2 bg-white border rounded'>
-                    <div className='text-xs text-gray-600 font-medium'>Seller reply</div>
+                    <div className='text-sm sm:text-xs text-gray-600 font-medium'>Seller reply</div>
                     <div className='text-sm text-gray-700 mt-1'>{r.sellerReply}</div>
-                    {r.sellerReplyAt && <div className='text-xs text-gray-400 mt-1'>{new Date(r.sellerReplyAt).toLocaleString()}</div>}
+                    {r.sellerReplyAt && <div className='text-sm sm:text-xs text-gray-400 mt-1'>{new Date(r.sellerReplyAt).toLocaleString()}</div>}
                   </div>
                 )}
-                <div className='mt-2 text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
+                <div className='mt-2 text-sm sm:text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
               </div>
             ))}
           </div>
@@ -560,7 +560,7 @@ const Product = () => {
             ) : (
               <>
                 <div className="relative overflow-hidden">
-                  <div ref={modelViewerRef} style={{ width: "100%", height: "60vh", background: "#f5f5f5" }} className="h-[60vh] sm:h-[70vh]">
+                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
                   {arError && (
                     <div className="absolute inset-0 flex items-center justify-center bg-red-50 bg-opacity-90">

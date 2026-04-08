@@ -180,7 +180,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
   })
 
   return (
-    <div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden' style={{ height: 'calc(100vh - 140px)', minHeight: '500px' }}>
+    <div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden' style={{ height: 'calc(100vh - 140px)', minHeight: '300px' }}>
       <div className='grid grid-cols-1 md:grid-cols-[320px_1fr] h-full'>
         {/* ===== LEFT SIDEBAR ===== */}
         <div className='border-r border-gray-200 flex flex-col h-full'>

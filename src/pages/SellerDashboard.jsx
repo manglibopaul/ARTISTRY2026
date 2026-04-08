@@ -660,7 +660,7 @@ const SellerDashboard = () => {
 
         {/* Tabs + Add Product Button */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6'>
-          <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+          <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative' style={{ maskImage: 'linear-gradient(90deg, black 85%, transparent)' }}>
             <button
               onClick={() => setSelectedTab('products')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'products' ? 'bg-black text-white' : 'bg-gray-200'}`}>
@@ -739,7 +739,7 @@ const SellerDashboard = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <form onSubmit={handleSubmit} className='grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6'>
 
               <input
                 type='text'
@@ -832,7 +832,7 @@ const SellerDashboard = () => {
                           <button
                             type='button'
                             onClick={() => removeImage(idx)}
-                            className='absolute top-1 left-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                            className='absolute top-0 left-0 bg-red-500 hover:bg-red-600 text-white text-sm rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
                             title='Remove image'
                           >
                             ×
