@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const REQUEST_TIMEOUT_MS = 12000;
+
 const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -11,10 +13,16 @@ const Profile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     setError(null);
+    let timeoutId;
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('userToken');
       if (!token) throw new Error('Please sign in');
-      const res = await fetch(`${apiUrl}/api/users/profile`, { headers: { Authorization: `Bearer ${token}` } });
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const res = await fetch(`${apiUrl}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
       if (!res.ok) {
         const text = await res.text();
         let msg = text;
@@ -39,8 +47,15 @@ const Profile = () => {
       const data = await res.json();
       setProfile(data);
     } catch (err) {
-      setError(err.message || 'Failed to load profile');
-    } finally { setLoading(false); }
+      if (err.name === 'AbortError') {
+        setError('The server is taking too long to respond. It may be waking up, please try again.');
+      } else {
+        setError(err.message || 'Failed to load profile');
+      }
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -76,7 +91,20 @@ const Profile = () => {
   };
 
   if (loading) return <div className='pt-16'><p>Loading…</p></div>
-  if (error) return <div className='pt-16'><p className='text-red-500'>{error}</p></div>
+  if (error) {
+    return (
+      <div className='pt-16 space-y-3'>
+        <p className='text-red-500'>{error}</p>
+        <button
+          type='button'
+          onClick={fetchProfile}
+          className='px-4 py-2 bg-black text-white rounded text-sm'
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
   if (!profile) return <div className='pt-16'><p>Please sign in to view your profile.</p></div>
 
   return (
