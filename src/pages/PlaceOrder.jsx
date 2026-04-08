@@ -320,12 +320,11 @@ const PlaceOrder = () => {
       }
 
       try {
-        // Extract city from regionProvinceCityBarangay (usually format: Region/Province/City/Barangay)
-        const parts = regionProvinceCityBarangay.split(/[\/,]/).map(p => p.trim())
-        const city = parts.length > 2 ? parts[2] : parts[parts.length - 1]
-        const region = parts.length > 1 ? parts[0] : parts[0]
-
-        const coords = await geocodeAddress(street, city, region)
+        // Use the full area field so both formats work:
+        // - "Region/Province/City/Barangay"
+        // - "City, Province" (saved profile format)
+        const area = regionProvinceCityBarangay.trim()
+        const coords = await geocodeAddress(street, area, country || 'Philippines')
         if (coords) {
           setDeliveryMapLat(coords.lat)
           setDeliveryMapLon(coords.lon)
@@ -341,7 +340,7 @@ const PlaceOrder = () => {
     }
 
     geocodeDeliveryAddress()
-  }, [street, regionProvinceCityBarangay, method])
+  }, [street, regionProvinceCityBarangay, country, method])
 
   const subtotal = getCartAmount ? getCartAmount() : 0
 
@@ -521,24 +520,24 @@ const PlaceOrder = () => {
                     type="text" 
                     placeholder='Street name, building, house no.' 
                   />
-
-                  {/* Delivery Location Map */}
-                  {deliveryMapLat && deliveryMapLon && (
-                    <div className='mt-4 sm:mt-6 mb-4 sm:mb-6'>
-                      <MapPin
-                        lat={deliveryMapLat}
-                        lon={deliveryMapLon}
-                        label="Your Delivery Location"
-                        address={`${street}, ${regionProvinceCityBarangay}`}
-                        isPickup={false}
-                      />
-                    </div>
-                  )}
                 </>
               )}
 
               {useSavedAddress && savedAddress && (
                 <input type='hidden' value={country} readOnly />
+              )}
+
+              {/* Delivery Location Map (works for both saved and new addresses) */}
+              {deliveryMapLat && deliveryMapLon && (
+                <div className='mt-4 sm:mt-6 mb-4 sm:mb-6'>
+                  <MapPin
+                    lat={deliveryMapLat}
+                    lon={deliveryMapLon}
+                    label="Your Delivery Location"
+                    address={`${street}, ${regionProvinceCityBarangay}`}
+                    isPickup={false}
+                  />
+                </div>
               )}
 
               {/* Shipping Rate Selection */}
