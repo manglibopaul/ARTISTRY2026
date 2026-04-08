@@ -104,6 +104,22 @@ const SellerDashboard = () => {
   // Polling id for conversations
   const [convoPollId, setConvoPollId] = useState(null)
 
+  const resolveImageUrl = (image) => {
+    if (!image) return ''
+
+    if (typeof image === 'object' && image.url) {
+      return image.url.startsWith('http') ? image.url : `${apiUrl}${image.url}`
+    }
+
+    if (typeof image === 'string') {
+      if (image.startsWith('http')) return image
+      if (image.startsWith('/')) return `${apiUrl}${image}`
+      return `${apiUrl}/uploads/images/${image}`
+    }
+
+    return ''
+  }
+
   useEffect(() => {
     if (!token) {
       navigate('/')
@@ -898,14 +914,7 @@ const SellerDashboard = () => {
                 <div className='sm:hidden divide-y divide-gray-200'>
                   {products.map((product) => {
                     const img = Array.isArray(product.image) && product.image.length > 0 ? product.image[0] : null
-                    let src = ''
-                    if (img) {
-                      if (typeof img === 'object' && img.url) {
-                        src = img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`
-                      } else if (typeof img === 'string') {
-                        src = img.startsWith('http') ? img : `${apiUrl}${img}`
-                      }
-                    }
+                    const src = resolveImageUrl(img)
                     const stock = product.stock ?? 0
                     return (
                       <div key={product.id} className='p-4'>
@@ -960,14 +969,7 @@ const SellerDashboard = () => {
                           <td className='px-6 py-4'>
                             {(() => {
                               const img = Array.isArray(product.image) && product.image.length > 0 ? product.image[0] : null
-                              let src = ''
-                              if (img) {
-                                if (typeof img === 'object' && img.url) {
-                                  src = img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`
-                                } else if (typeof img === 'string') {
-                                  src = img.startsWith('http') ? img : `${apiUrl}${img}`
-                                }
-                              }
+                              const src = resolveImageUrl(img)
                               return src ? (
                                 <img src={src} alt={product.name} className='w-10 h-10 object-cover rounded' />
                               ) : (
