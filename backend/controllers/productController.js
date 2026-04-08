@@ -1,6 +1,6 @@
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
-import { uploadImage } from '../utils/media.js';
+import { uploadImage, uploadModel } from '../utils/media.js';
 
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
@@ -85,13 +85,15 @@ export const createProduct = async (req, res) => {
       // Handle model file (GLB)
       const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
-        productData.modelUrl = `/uploads/models/${modelFile.filename}`;
+        const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+        productData.modelUrl = uploadedModel?.url || null;
       }
 
       // Handle iOS model file (USDZ)
       const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
       if (iosModelFile) {
-        productData.iosModel = `/uploads/models/${iosModelFile.filename}`;
+        const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
+        productData.iosModel = uploadedIosModel?.url || null;
       }
     }
 
@@ -170,13 +172,15 @@ export const updateProduct = async (req, res) => {
       // Handle model file (GLB)
       const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
-        updateData.modelUrl = `/uploads/models/${modelFile.filename}`;
+        const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+        updateData.modelUrl = uploadedModel?.url || null;
       }
 
       // Handle iOS model file (USDZ)
       const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
       if (iosModelFile) {
-        updateData.iosModel = `/uploads/models/${iosModelFile.filename}`;
+        const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
+        updateData.iosModel = uploadedIosModel?.url || null;
       }
     } else {
       // If no files uploaded, use existing images
