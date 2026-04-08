@@ -170,21 +170,3 @@ export const replyToReview = async (req, res) => {
   }
 };
 
-// Delete a review (customer can delete own review)
-export const deleteReview = async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: 'Not authenticated' });
-
-    const reviewId = req.params.id;
-    const review = await Review.findByPk(reviewId);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-
-    if (Number(review.userId) !== Number(userId)) return res.status(403).json({ message: 'Not authorized to delete this review' });
-
-    await review.destroy();
-    res.json({ message: 'Review deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};

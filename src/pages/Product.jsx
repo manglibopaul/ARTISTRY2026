@@ -527,22 +527,7 @@ const Product = () => {
                     {r.sellerReplyAt && <div className='text-xs text-gray-400 mt-1'>{new Date(r.sellerReplyAt).toLocaleString()}</div>}
                   </div>
                 )}
-                <div className='flex items-center justify-between mt-2'>
-                  <div className='text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
-                  {currentUser && Number(r.userId) === Number(currentUser.id) && (
-                    <button onClick={async () => {
-                      if (!confirm('Delete this review?')) return;
-                      const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-                      if (!token) return navigate('/login');
-                      try {
-                        const dres = await fetch(`${apiUrl}/api/reviews/${r.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-                        if (!dres.ok) { const txt = await dres.text(); alert(txt || 'Failed to delete review'); return; }
-                        setReviews(prev => prev.filter(x => Number(x.id) !== Number(r.id)));
-                        alert('Review deleted');
-                      } catch (e) { alert(e.message || 'Failed to delete review'); }
-                    }} className='text-xs text-red-600 underline'>Delete</button>
-                  )}
-                </div>
+                <div className='mt-2 text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
               </div>
             ))}
           </div>

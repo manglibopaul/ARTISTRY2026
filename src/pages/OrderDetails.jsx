@@ -272,39 +272,6 @@ const OrderDetails = () => {
     }
   };
 
-  const deleteReview = async (productId, reviewId) => {
-    const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-    if (!token) return navigate('/login');
-    openConfirmModal('Delete Review', 'Delete this review?', async () => {
-      try {
-        const res = await fetch(`${apiUrl}/api/reviews/${reviewId}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          openInfoModal('Delete Failed', txt || 'Failed to delete review');
-          return;
-        }
-        // Remove review from local order state
-        setOrder(prev => {
-          const items = Array.isArray(prev.items) ? prev.items.map(it => {
-            const pid = it.productId || it.id || it._id;
-            if (Number(pid) === Number(productId)) {
-              const revs = Array.isArray(it.reviews) ? it.reviews.filter(r => Number(r.id) !== Number(reviewId)) : [];
-              return { ...it, reviews: revs };
-            }
-            return it;
-          }) : prev.items;
-          return { ...prev, items };
-        });
-        openInfoModal('Review Deleted', 'Your review has been deleted.');
-      } catch (err) {
-        openInfoModal('Delete Failed', err.message || 'Failed to delete review');
-      }
-    }, 'Delete');
-  };
-
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const resolveImage = (image) => {
@@ -490,12 +457,7 @@ const OrderDetails = () => {
                                 className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
                               />
                             )}
-                            <div className='flex items-center justify-between mt-2'>
-                              <div className='text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
-                              {currentUser && Number(r.userId) === Number(currentUser.id) && (
-                                <button onClick={() => deleteReview(item.productId || item.id || item._id, r.id)} className='text-xs text-red-600 underline'>Delete</button>
-                              )}
-                            </div>
+                            <div className='mt-2 text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
                           </div>
                         ))}
                       </div>
