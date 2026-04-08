@@ -1,6 +1,15 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import AddressPickerMap from '../components/AddressPickerMap'
+
+const formatAddressFromParts = (address) => {
+  if (!address) return ''
+  const street = [address.house_number, address.road].filter(Boolean).join(' ').trim()
+  const locality = [address.suburb, address.neighbourhood, address.village, address.town, address.city].filter(Boolean).join(', ')
+  const region = [address.state, address.postcode, address.country].filter(Boolean).join(', ')
+  return [street || locality, locality && street ? locality : '', region].filter(Boolean).join('\n')
+}
 
 const SellerLogin = () => {
   const navigate = useNavigate()
@@ -10,6 +19,8 @@ const SellerLogin = () => {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [showSellerAddressPicker, setShowSellerAddressPicker] = useState(false)
+  const [showPickupPicker, setShowPickupPicker] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,6 +33,20 @@ const SellerLogin = () => {
     proofOfArtisan: null,
   })
   const [pickupInput, setPickupInput] = useState('')
+
+  const handleSellerAddressPick = ({ address }) => {
+    const formatted = formatAddressFromParts(address)
+    if (formatted) {
+      setFormData(prev => ({ ...prev, address: formatted }))
+    }
+  }
+
+  const handlePickupLocationPick = ({ address }) => {
+    const formatted = formatAddressFromParts(address)
+    if (formatted) {
+      setPickupInput(formatted.replace(/\n/g, ', '))
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value, files } = e.target
@@ -148,8 +173,28 @@ const SellerLogin = () => {
                 className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
                 rows='3'
               />
+              <button
+                type='button'
+                onClick={() => setShowSellerAddressPicker(v => !v)}
+                className='w-full px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50'
+              >
+                {showSellerAddressPicker ? 'Hide seller address map' : 'Pin seller address on map'}
+              </button>
+              {showSellerAddressPicker && (
+                <AddressPickerMap onLocationPick={handleSellerAddressPick} />
+              )}
               <div>
                 <label className='block text-sm mb-1'>Pickup Locations</label>
+                <button
+                  type='button'
+                  onClick={() => setShowPickupPicker(v => !v)}
+                  className='w-full mb-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50'
+                >
+                  {showPickupPicker ? 'Hide pickup location map' : 'Pin pickup location on map'}
+                </button>
+                {showPickupPicker && (
+                  <AddressPickerMap onLocationPick={handlePickupLocationPick} />
+                )}
                 <div className='flex gap-2 mb-2'>
                   <input
                     type='text'
