@@ -102,6 +102,9 @@ const PlaceOrder = () => {
   const [street, setStreet] = useState('');
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('Philippines');
+  const [useSavedAddress, setUseSavedAddress] = useState(false);
+  const [savedAddress, setSavedAddress] = useState(null);
+  const [loadingSavedAddress, setLoadingSavedAddress] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
   const [sellerPickupLocations, setSellerPickupLocations] = useState([])
@@ -134,6 +137,66 @@ const PlaceOrder = () => {
     const token = localStorage.getItem('token')
     setIsLoggedIn(!!token)
   }, [])
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      setUseSavedAddress(false)
+      setSavedAddress(null)
+      return
+    }
+
+    const fetchProfileAddress = async () => {
+      try {
+        setLoadingSavedAddress(true)
+        const res = await axios.get(`${apiUrl}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const profile = res.data || {}
+        const nextSavedAddress = {
+          fullName: profile.name || '',
+          phone: profile.phone || '',
+          regionProvinceCityBarangay: [profile.city, profile.state].filter(Boolean).join(', '),
+          zipcode: profile.zipcode || '',
+          street: profile.street || '',
+          email: profile.email || '',
+          country: profile.country || 'Philippines',
+        }
+
+        const hasAddress = Boolean(
+          nextSavedAddress.fullName ||
+          nextSavedAddress.phone ||
+          nextSavedAddress.regionProvinceCityBarangay ||
+          nextSavedAddress.zipcode ||
+          nextSavedAddress.street
+        )
+
+        if (hasAddress) {
+          setSavedAddress(nextSavedAddress)
+          setUseSavedAddress(true)
+          setFullName(nextSavedAddress.fullName)
+          setPhone(nextSavedAddress.phone)
+          setRegionProvinceCityBarangay(nextSavedAddress.regionProvinceCityBarangay)
+          setZipcode(nextSavedAddress.zipcode)
+          setStreet(nextSavedAddress.street)
+          setEmail(nextSavedAddress.email)
+          setCountry(nextSavedAddress.country)
+        } else {
+          setSavedAddress(null)
+          setUseSavedAddress(false)
+        }
+      } catch (error) {
+        console.error('Failed to load saved address:', error)
+        setSavedAddress(null)
+        setUseSavedAddress(false)
+      } finally {
+        setLoadingSavedAddress(false)
+      }
+    }
+
+    fetchProfileAddress()
+  }, [apiUrl])
 
   // Fetch pickup locations and shipping settings from sellers in cart
   React.useEffect(() => {
@@ -277,6 +340,35 @@ const PlaceOrder = () => {
     return totalShipping
   }, [method, cartsItems, products, sellerShippingInfo, selectedShippingRate])
 
+  const fillNewAddress = () => {
+    if (savedAddress) {
+      setFullName(savedAddress.fullName)
+      setPhone(savedAddress.phone)
+      setRegionProvinceCityBarangay('')
+      setZipcode('')
+      setStreet('')
+      setEmail(savedAddress.email)
+      setCountry(savedAddress.country || 'Philippines')
+    }
+    setUseSavedAddress(false)
+  }
+
+  const useProfileAddress = () => {
+    if (!savedAddress) return
+    setUseSavedAddress(true)
+    setFullName(savedAddress.fullName)
+    setPhone(savedAddress.phone)
+    setRegionProvinceCityBarangay(savedAddress.regionProvinceCityBarangay)
+    setZipcode(savedAddress.zipcode)
+    setStreet(savedAddress.street)
+    setEmail(savedAddress.email)
+    setCountry(savedAddress.country || 'Philippines')
+  }
+
+  const selectedAddress = useSavedAddress && savedAddress
+    ? savedAddress
+    : { fullName, phone, regionProvinceCityBarangay, zipcode, street, email, country }
+
   return (
     <div className='min-h-screen bg-white pt-6 sm:pt-8 pb-12 sm:pb-20 px-4 sm:px-0'>
       <div className='max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12'>
@@ -290,60 +382,107 @@ const PlaceOrder = () => {
           {method !== 'pickup' ? (
             <div>
               <h2 className='text-xl sm:text-2xl font-bold mb-3 sm:mb-4'>Delivery</h2>
+
+              {isLoggedIn && savedAddress && (
+                <div className='mb-4 rounded border border-gray-200 bg-gray-50 p-4'>
+                  <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <p className='text-sm font-semibold text-gray-900'>Saved address from your profile</p>
+                      <p className='text-xs text-gray-500'>Use it as-is, or switch to a new address for this order.</p>
+                    </div>
+                    <div className='flex gap-2'>
+                      <button
+                        type='button'
+                        onClick={useProfileAddress}
+                        className={`px-3 py-2 rounded text-sm border ${useSavedAddress ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
+                      >
+                        Use saved address
+                      </button>
+                      <button
+                        type='button'
+                        onClick={fillNewAddress}
+                        className={`px-3 py-2 rounded text-sm border ${!useSavedAddress ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300'}`}
+                      >
+                        Use new address
+                      </button>
+                    </div>
+                  </div>
+
+                  {useSavedAddress ? (
+                    <div className='mt-4 grid gap-2 text-sm text-gray-700'>
+                      <div><span className='font-medium'>Name:</span> {selectedAddress.fullName || '-'}</div>
+                      <div><span className='font-medium'>Phone:</span> {selectedAddress.phone || '-'}</div>
+                      <div><span className='font-medium'>Area:</span> {selectedAddress.regionProvinceCityBarangay || '-'}</div>
+                      <div><span className='font-medium'>Street:</span> {selectedAddress.street || '-'}</div>
+                      <div><span className='font-medium'>Postal code:</span> {selectedAddress.zipcode || '-'}</div>
+                    </div>
+                  ) : (
+                    <p className='mt-3 text-xs text-gray-500'>Enter the new delivery address below for this order.</p>
+                  )}
+                </div>
+              )}
               
               {/* Country Select */}
-              <select 
-                value={country} 
-                onChange={e=>setCountry(e.target.value)}
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black bg-white text-sm sm:text-base'
-              >
-                <option value='Philippines'>Philippines</option>
-              </select>
+              {!useSavedAddress && (
+                <>
+                  <select 
+                    value={country} 
+                    onChange={e=>setCountry(e.target.value)}
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black bg-white text-sm sm:text-base'
+                  >
+                    <option value='Philippines'>Philippines</option>
+                  </select>
 
-              {/* Full Name */}
-              <input 
-                value={fullName} 
-                onChange={e=>setFullName(e.target.value)} 
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
-                type="text" 
-                placeholder='Full name' 
-              />
+                  {/* Full Name */}
+                  <input 
+                    value={fullName} 
+                    onChange={e=>setFullName(e.target.value)} 
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                    type="text" 
+                    placeholder='Full name' 
+                  />
 
-              {/* Phone Number */}
-              <input 
-                value={phone} 
-                onChange={e=>setPhone(e.target.value)} 
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
-                type="text" 
-                placeholder='Phone number' 
-              />
+                  {/* Phone Number */}
+                  <input 
+                    value={phone} 
+                    onChange={e=>setPhone(e.target.value)} 
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                    type="text" 
+                    placeholder='Phone number' 
+                  />
 
-              {/* Region/Province/City/Barangay */}
-              <input 
-                value={regionProvinceCityBarangay} 
-                onChange={e=>setRegionProvinceCityBarangay(e.target.value)} 
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
-                type="text" 
-                placeholder='Region/Province/City/Barangay' 
-              />
+                  {/* Region/Province/City/Barangay */}
+                  <input 
+                    value={regionProvinceCityBarangay} 
+                    onChange={e=>setRegionProvinceCityBarangay(e.target.value)} 
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                    type="text" 
+                    placeholder='Region/Province/City/Barangay' 
+                  />
 
-              {/* Postal code */}
-              <input 
-                value={zipcode} 
-                onChange={e=>setZipcode(e.target.value)} 
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
-                type="text" 
-                placeholder='Postal code' 
-              />
+                  {/* Postal code */}
+                  <input 
+                    value={zipcode} 
+                    onChange={e=>setZipcode(e.target.value)} 
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                    type="text" 
+                    placeholder='Postal code' 
+                  />
 
-              {/* Street name, building, house no. */}
-              <input 
-                value={street} 
-                onChange={e=>setStreet(e.target.value)} 
-                className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
-                type="text" 
-                placeholder='Street name, building, house no.' 
-              />
+                  {/* Street name, building, house no. */}
+                  <input 
+                    value={street} 
+                    onChange={e=>setStreet(e.target.value)} 
+                    className='w-full border border-gray-300 rounded px-3 sm:px-4 py-2.5 sm:py-3 mb-3 sm:mb-4 focus:outline-none focus:ring-2 focus:ring-black text-sm sm:text-base' 
+                    type="text" 
+                    placeholder='Street name, building, house no.' 
+                  />
+                </>
+              )}
+
+              {useSavedAddress && savedAddress && (
+                <input type='hidden' value={country} readOnly />
+              )}
 
               {/* Shipping Rate Selection */}
               {shippingRates.length > 0 && (
@@ -547,13 +686,7 @@ const PlaceOrder = () => {
                 : items
 
               if (method !== 'pickup') {
-                const addressErrors = validateDeliveryAddress({
-                  fullName,
-                  phone,
-                  regionProvinceCityBarangay,
-                  street,
-                  zipcode,
-                })
+                const addressErrors = validateDeliveryAddress(selectedAddress)
 
                 if (addressErrors.length > 0) {
                   openModal(
@@ -572,7 +705,7 @@ const PlaceOrder = () => {
                 firstName = parts[0];
                 lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
               }
-              const address = method === 'pickup' ? {} : { firstName, lastName, phone, regionProvinceCityBarangay, zipcode, street, email, country };
+              const address = method === 'pickup' ? {} : { firstName, lastName, phone: selectedAddress.phone, regionProvinceCityBarangay: selectedAddress.regionProvinceCityBarangay, zipcode: selectedAddress.zipcode, street: selectedAddress.street, email: selectedAddress.email, country: selectedAddress.country };
               const pickupInfo = method === 'pickup' ? { reservationDateTime: reservationDateTime || null, reservationNote: reservationNote || null } : undefined;
 
               try {
