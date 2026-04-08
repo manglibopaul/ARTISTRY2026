@@ -25,40 +25,69 @@ const MapPin = ({ lat, lon, label, address, isPickup = false }) => {
   useEffect(() => {
     if (!lat || !lon || !mapRef.current) return;
 
-    // Initialize map
-    if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([lat, lon], 15);
+    try {
+      // Initialize map
+      if (!mapInstance.current) {
+        mapInstance.current = L.map(mapRef.current, {
+          preferCanvas: true, // Better performance on mobile
+          zoomControl: true,
+          touchZoom: true, // Enable touch zoom for mobile
+          dragging: true,
+        }).setView([lat, lon], 15);
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(mapInstance.current);
-    }
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '\u00a9 OpenStreetMap contributors',
+          maxZoom: 19,
+        }).addTo(mapInstance.current);
 
-    // Clear existing markers
-    mapInstance.current.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        mapInstance.current.removeLayer(layer);
+        // Invalidate size to fix map rendering issues (especially on mobile)
+        setTimeout(() => {
+          mapInstance.current?.invalidateSize();
+        }, 100);
       }
-    });
 
-    // Add marker with color based on type
-    const markerColor = isPickup ? 'gold' : 'red';
-    const icon = L.icon({
-      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-${markerColor}.png`,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
-    });
+      // Clear existing markers
+      mapInstance.current.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          mapInstance.current.removeLayer(layer);
+        }
+      });
 
-    const marker = L.marker([lat, lon], { icon }).addTo(mapInstance.current);
-    marker.bindPopup(`<div class="text-sm"><strong>${label}</strong><br/>${address}</div>`).openPopup();
+      // Add marker with color based on type
+      const markerColor = isPickup ? 'gold' : 'red';
+      const icon = L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-${markerColor}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
 
-    // Center and zoom to marker
-    mapInstance.current.setView([lat, lon], 15);
+      const marker = L.marker([lat, lon], { icon }).addTo(mapInstance.current);
+      marker.bindPopup(`<div class="text-sm"><strong>${label}</strong><br/>${address}</div>`).openPopup();
+
+      // Center and zoom to marker
+      mapInstance.current.setView([lat, lon], 15);
+
+      // Handle window resize to adjust map size
+      const handleResize = () => {
+        if (mapInstance.current) {
+          setTimeout(() => {
+            mapInstance.current?.invalidateSize();
+          }, 250);
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    } catch (error) {
+      console.error('MapPin error:', error);
+    }
   }, [lat, lon, label, address, isPickup]);
 
   if (!lat || !lon) {
@@ -74,10 +103,13 @@ const MapPin = ({ lat, lon, label, address, isPickup = false }) => {
       <div className='text-sm font-medium text-gray-700 mb-2'>{label}</div>
       <div
         ref={mapRef}
-        className='w-full h-64 sm:h-80 border border-gray-300 rounded-lg shadow-sm'
+        className='w-full h-64 sm:h-80 border border-gray-300 rounded-lg shadow-sm overflow-hidden'
         style={{ backgroundColor: '#e5e3df' }}
+        data-map
+        role='region'
+        aria-label={`Map showing ${label}`}
       />
-      <div className='text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded border border-gray-200'>
+      <div className='text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded border border-gray-200 break-words'>
         {address}
       </div>
     </div>
