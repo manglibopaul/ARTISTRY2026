@@ -5,6 +5,39 @@
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
+export const geocodeQuery = async (query) => {
+  try {
+    const cleanQuery = String(query || '').trim();
+    if (!cleanQuery) return null;
+
+    const response = await fetch(
+      `${NOMINATIM_URL}?` + new URLSearchParams({
+        q: cleanQuery,
+        format: 'json',
+        limit: 1,
+      })
+    );
+
+    if (!response.ok) {
+      console.error('Geocoding API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data || data.length === 0) return null;
+
+    const result = data[0];
+    return {
+      lat: parseFloat(result.lat),
+      lon: parseFloat(result.lon),
+      displayName: result.display_name,
+    };
+  } catch (error) {
+    console.error('Geocoding query error:', error);
+    return null;
+  }
+};
+
 /**
  * Convert address to coordinates
  * @param {string} street - Street address
@@ -21,33 +54,18 @@ export const geocodeAddress = async (street, city, region) => {
 
     // Build query string - Philippines specific
     const query = `${street}, ${city}, ${region}, Philippines`;
-    
-    const response = await fetch(
-      `${NOMINATIM_URL}?` + new URLSearchParams({
-        q: query,
-        format: 'json',
-        limit: 1,
-        countrycodes: 'ph', // Limit to Philippines
-      })
-    );
 
-    if (!response.ok) {
-      console.error('Geocoding API error:', response.status);
-      return null;
-    }
+    const result = await geocodeQuery(query);
 
-    const data = await response.json();
-    
-    if (!data || data.length === 0) {
+    if (!result) {
       console.warn('No location found for:', query);
       return null;
     }
 
-    const result = data[0];
     return {
-      lat: parseFloat(result.lat),
-      lon: parseFloat(result.lon),
-      displayName: result.display_name,
+      lat: result.lat,
+      lon: result.lon,
+      displayName: result.displayName,
     };
   } catch (error) {
     console.error('Geocoding error:', error);

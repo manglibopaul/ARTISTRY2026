@@ -5,7 +5,7 @@ import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import MapPin from '../components/MapPin'
-import { geocodeAddress } from '../utils/geocoding'
+import { geocodeAddress, geocodeQuery } from '../utils/geocoding'
 
 const parseCartKey = (key) => {
   if (typeof key !== 'string') return { id: key, color: null };
@@ -128,6 +128,7 @@ const PlaceOrder = () => {
   })
   const [deliveryMapLat, setDeliveryMapLat] = useState(null)
   const [deliveryMapLon, setDeliveryMapLon] = useState(null)
+  const [pickupMapLocations, setPickupMapLocations] = useState({})
 
   const openModal = (title, message) => {
     setModalState({ open: true, title, message })
@@ -341,6 +342,39 @@ const PlaceOrder = () => {
 
     geocodeDeliveryAddress()
   }, [street, regionProvinceCityBarangay, country, method])
+
+  React.useEffect(() => {
+    const geocodePickupLocations = async () => {
+      if (method !== 'pickup') {
+        setPickupMapLocations({})
+        return
+      }
+
+      const nextLocations = {}
+      for (const seller of pickupLocationsGrouped) {
+        const selectedLocation = pickupLocationsBySeller[String(seller.sellerId)]
+        if (!selectedLocation) continue
+
+        try {
+          const coords = await geocodeQuery(`${selectedLocation}, Philippines`)
+          if (coords) {
+            nextLocations[String(seller.sellerId)] = {
+              lat: coords.lat,
+              lon: coords.lon,
+              label: seller.storeName || 'Pickup Location',
+              address: selectedLocation,
+            }
+          }
+        } catch (error) {
+          console.error('Geocoding pickup location failed:', error)
+        }
+      }
+
+      setPickupMapLocations(nextLocations)
+    }
+
+    geocodePickupLocations()
+  }, [method, pickupLocationsBySeller, pickupLocationsGrouped])
 
   const subtotal = getCartAmount ? getCartAmount() : 0
 
@@ -602,6 +636,17 @@ const PlaceOrder = () => {
                             <option key={idx} value={loc}>{loc}</option>
                           ))}
                         </select>
+                        {pickupMapLocations[String(seller.sellerId)] && (
+                          <div className='mt-3'>
+                            <MapPin
+                              lat={pickupMapLocations[String(seller.sellerId)].lat}
+                              lon={pickupMapLocations[String(seller.sellerId)].lon}
+                              label={`${seller.storeName} Pickup Location`}
+                              address={pickupMapLocations[String(seller.sellerId)].address}
+                              isPickup={true}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
