@@ -74,11 +74,13 @@ const Product = () => {
 
   const getImageUrl = (img) => {
     if (!img) return '/path/to/placeholder.jpg';
-    
+
     if (typeof img === 'object' && img.url) {
       return img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`;
     } else if (typeof img === 'string') {
-      return img.startsWith('http') ? img : `${apiUrl}${img}`;
+      if (img.startsWith('http')) return img;
+      if (img.startsWith('/')) return `${apiUrl}${img}`;
+      return `${apiUrl}/uploads/images/${img}`;
     }
     return '/path/to/placeholder.jpg';
   }
@@ -125,6 +127,8 @@ const Product = () => {
       if (Array.isArray(found.image) && found.image.length > 0) {
         const imageUrl = getImageUrl(found.image[0])
         setImage(imageUrl)
+      } else {
+        setImage('/path/to/placeholder.jpg')
       }
       // Fetch seller data if available
       if (found.sellerId) {
@@ -143,6 +147,7 @@ const Product = () => {
         console.log('Fetched single product', data)
         setProductData(data)
         if (Array.isArray(data.image) && data.image.length > 0) setImage(getImageUrl(data.image[0]))
+        else setImage('/path/to/placeholder.jpg')
         // Fetch seller data if available
         if (data.sellerId) {
           fetchSellerData(data.sellerId)

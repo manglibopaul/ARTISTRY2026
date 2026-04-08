@@ -82,6 +82,17 @@ const ensureReviewsImageUrlColumn = async () => {
   }
 };
 
+const ensureReviewsOrderIdColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Reviews');
+  if (!table.orderId) {
+    await qi.addColumn('Reviews', 'orderId', {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -90,6 +101,7 @@ const connectDB = async () => {
     await sequelize.sync({ force: false });
     await ensureUsersDeletedAtColumn();
     await ensureReviewsImageUrlColumn();
+    await ensureReviewsOrderIdColumn();
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;

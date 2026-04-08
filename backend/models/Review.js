@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import User from './User.js';
+import Order from './Order.js';
 
 const Review = sequelize.define('Review', {
   id: {
@@ -11,6 +12,14 @@ const Review = sequelize.define('Review', {
   productId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+  },
+  orderId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Order,
+      key: 'id',
+    },
   },
   userId: {
     type: DataTypes.INTEGER,

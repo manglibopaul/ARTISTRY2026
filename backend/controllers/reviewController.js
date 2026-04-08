@@ -15,33 +15,59 @@ const toPublicUploadPath = (filePath, filename) => {
 // Create a review — only if the user purchased and the order containing the product is completed
 export const createReview = async (req, res) => {
   try {
-    const { productId, rating, title, comment } = req.body;
+    const { productId, orderId, rating, title, comment } = req.body;
     const userId = req.user.id;
     const imageUrl = req.file ? toPublicUploadPath(req.file.path, req.file.filename) : null;
 
     if (!productId || !rating || !comment) return res.status(400).json({ message: 'Missing required fields' });
 
-    // Prevent duplicate reviews
-    const existing = await Review.findOne({ where: { productId, userId } });
-    if (existing) return res.status(400).json({ message: 'You have already reviewed this product' });
+    const reviewOrderId = orderId ? Number(orderId) : null;
 
-    // Verify that the user has at least one completed order containing this product
-    const orders = await Order.findAll({ where: { userId } });
-    const hasCompleted = orders.some(o => {
-      try {
-        const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
-        return (o.orderStatus === 'completed') && items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
-      } catch (e) {
-        return false;
+    if (reviewOrderId) {
+      const order = await Order.findByPk(reviewOrderId);
+      if (!order || Number(order.userId) !== Number(userId)) {
+        return res.status(403).json({ message: 'You can only review your own orders.' });
       }
-    });
 
-    if (!hasCompleted) return res.status(403).json({ message: 'You can only review products you have completed (received).' });
+      if (order.orderStatus !== 'completed') {
+        return res.status(403).json({ message: 'You can only review products you have completed (received).' });
+      }
+
+      try {
+        const items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]');
+        const inOrder = items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
+        if (!inOrder) {
+          return res.status(403).json({ message: 'This product is not part of the selected order.' });
+        }
+      } catch (e) {
+        return res.status(400).json({ message: 'Unable to verify the selected order.' });
+      }
+
+      const existing = await Review.findOne({ where: { productId, userId, orderId: reviewOrderId } });
+      if (existing) return res.status(400).json({ message: 'You have already reviewed this product for this order' });
+    } else {
+      // Legacy fallback: keep the previous product-level restriction when no order is supplied.
+      const existing = await Review.findOne({ where: { productId, userId } });
+      if (existing) return res.status(400).json({ message: 'You have already reviewed this product' });
+
+      // Verify that the user has at least one completed order containing this product
+      const orders = await Order.findAll({ where: { userId } });
+      const hasCompleted = orders.some(o => {
+        try {
+          const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
+          return (o.orderStatus === 'completed') && items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
+        } catch (e) {
+          return false;
+        }
+      });
+
+      if (!hasCompleted) return res.status(403).json({ message: 'You can only review products you have completed (received).' });
+    }
 
     const user = await User.findByPk(userId);
     const userName = user ? user.name : null;
 
-    const review = await Review.create({ productId, userId, userName, rating, title, comment, imageUrl });
+    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, imageUrl });
     res.status(201).json(review);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -63,8 +89,24 @@ export const getReviewsForProduct = async (req, res) => {
 export const checkReviewEligibility = async (req, res) => {
   try {
     const productId = req.params.id;
+    const orderId = req.query.orderId ? Number(req.query.orderId) : null;
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+    if (orderId) {
+      const order = await Order.findByPk(orderId);
+      if (!order || Number(order.userId) !== Number(userId) || order.orderStatus !== 'completed') {
+        return res.json({ eligible: false });
+      }
+
+      try {
+        const items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]');
+        const eligible = items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
+        return res.json({ eligible });
+      } catch (e) {
+        return res.json({ eligible: false });
+      }
+    }
 
     const orders = await Order.findAll({ where: { userId } });
     const eligible = orders.some(o => {

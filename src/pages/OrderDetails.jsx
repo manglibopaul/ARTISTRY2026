@@ -143,7 +143,9 @@ const OrderDetails = () => {
                 if (rRes.ok) {
                   rdata = await rRes.json();
                   items[i] = { ...items[i], reviews: rdata };
-                  const hasUserReview = userId ? rdata.some(r => Number(r.userId) === Number(userId)) : false;
+                  const hasUserReview = userId
+                    ? rdata.some(r => Number(r.userId) === Number(userId) && Number(r.orderId) === Number(data.id))
+                    : false;
                   items[i].canReview = Boolean(token) && (data.orderStatus === 'completed') && (!userId ? true : !hasUserReview);
                 }
               } catch (e) {
@@ -232,6 +234,7 @@ const OrderDetails = () => {
       setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: true } }));
       const formData = new FormData();
       formData.append('productId', productId);
+      formData.append('orderId', String(order.id));
       formData.append('rating', String(form.rating));
       if (form.title) formData.append('title', form.title);
       formData.append('comment', form.comment);
