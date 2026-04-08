@@ -8,6 +8,7 @@ const EyeIcon = ({ open }) => open ? (
 import { Link, useNavigate } from 'react-router-dom'
 import MapPin from '../components/MapPin'
 import { geocodeAddress } from '../utils/geocoding'
+import AddressPickerMap from '../components/AddressPickerMap'
 
 const Login = () => {
   const [mode, setMode] = useState('Sign In'); // 'Sign In' or 'Sign Up'
@@ -24,6 +25,7 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [signupMapLat, setSignupMapLat] = useState(null);
   const [signupMapLon, setSignupMapLon] = useState(null);
   const [signupMapLoading, setSignupMapLoading] = useState(false);
@@ -141,6 +143,26 @@ const Login = () => {
     }
   };
 
+  const handlePinnedAddress = ({ lat, lon, address }) => {
+    setSignupMapLat(lat)
+    setSignupMapLon(lon)
+
+    if (!address) return
+
+    const streetParts = [address.house_number, address.road].filter(Boolean)
+    const nextStreet = streetParts.join(' ').trim() || address.suburb || address.neighbourhood || ''
+    const nextCity = address.city || address.town || address.village || address.county || ''
+    const nextState = address.state || address.region || ''
+    const nextZip = address.postcode || ''
+    const nextCountry = address.country || 'Philippines'
+
+    if (nextStreet) setStreet(nextStreet)
+    if (nextCity) setCity(nextCity)
+    if (nextState) setState(nextState)
+    if (nextZip) setZipcode(nextZip)
+    if (nextCountry) setCountry(nextCountry)
+  }
+
   return (
     <div className='min-h-[70vh] flex items-center justify-center py-12'>
       <div className='w-full max-w-md bg-white rounded-lg shadow-lg p-8'>
@@ -201,6 +223,19 @@ const Login = () => {
                   placeholder='Country'
                   className='w-1/2 border rounded-md px-4 py-3 placeholder-gray-400'
                 />
+              </div>
+
+              <div>
+                <button
+                  type='button'
+                  onClick={() => setShowAddressPicker(v => !v)}
+                  className='w-full border border-gray-300 rounded-md px-4 py-2 text-sm hover:bg-gray-50'
+                >
+                  {showAddressPicker ? 'Hide map picker' : 'Pin address on map'}
+                </button>
+                {showAddressPicker && (
+                  <AddressPickerMap onLocationPick={handlePinnedAddress} />
+                )}
               </div>
 
               <div className='mt-1'>
