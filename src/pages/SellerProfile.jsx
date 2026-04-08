@@ -28,7 +28,7 @@ const SellerProfile = () => {
   const [saveError, setSaveError] = useState('')
 
   const token = localStorage.getItem('sellerToken')
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const normalizeAvatarUrl = (url) => {
     if (!url) return ''

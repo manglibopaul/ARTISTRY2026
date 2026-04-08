@@ -95,7 +95,7 @@ const PlaceOrder = () => {
 
   const {navigate} = useContext(ShopContext);
   const { products, cartsItems, refreshProducts, getCartAmount, currency, clearCart } = useContext(ShopContext);
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');

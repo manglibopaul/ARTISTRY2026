@@ -170,7 +170,7 @@ const AdminDashboard = () => {
   const [sellers, setSellers] = useState([]);
   const [loadingSellers, setLoadingSellers] = useState(false);
   const [sellerError, setSellerError] = useState(null);
-  const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const rawApiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
   const normalizedApiBase = rawApiUrl.replace(/\/+$/, '');
   const apiRoot = normalizedApiBase.endsWith('/api') ? normalizedApiBase : `${normalizedApiBase}/api`;
   const token = localStorage.getItem('adminToken');

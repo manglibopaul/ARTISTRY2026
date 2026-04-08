@@ -6,7 +6,7 @@ import { assets } from '../assets/assets'
 const CartSlideout = ({ isOpen, onClose }) => {
   const navigate = useNavigate()
   const { products, currency, cartsItems, updateQuantity, getCartAmount, parseCartKey } = useContext(ShopContext)
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
   const [cartData, setCartData] = useState([])
   const [sellers, setSellers] = useState({})
 

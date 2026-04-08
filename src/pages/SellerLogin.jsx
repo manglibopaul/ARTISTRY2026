@@ -79,8 +79,8 @@ const SellerLogin = () => {
 
     try {
       const endpoint = isLogin
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/sellers/login`
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/sellers/register`
+        ? `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')}/api/sellers/login`
+        : `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')}/api/sellers/register`
 
       let dataToSend = formData
       let config = { timeout: 30000 }

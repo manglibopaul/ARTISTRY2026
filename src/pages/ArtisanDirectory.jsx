@@ -11,7 +11,7 @@ const ArtisanDirectory = () => {
   const [loading, setLoading] = useState(true)
   const [selectedType, setSelectedType] = useState(null)
   const [artisanTypes, setArtisanTypes] = useState([])
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const resolveAvatarUrl = (url) => {
     if (!url) return ''

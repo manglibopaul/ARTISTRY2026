@@ -11,7 +11,7 @@ const SellerAdminChat = () => {
   const scrollRef = useRef(null)
 
   const token = localStorage.getItem('sellerToken')
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const resolveUploadUrl = (url) => {
     if (!url) return ''

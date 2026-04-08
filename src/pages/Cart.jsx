@@ -8,7 +8,7 @@ import CartTotal from '../components/CartTotal';
 const Cart = () => {
 
   const { products, currency, cartsItems , updateQuantity, navigate, parseCartKey} = useContext(ShopContext);
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const [cartData,setCartData] = useState([]);
 

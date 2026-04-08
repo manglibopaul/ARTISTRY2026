@@ -18,7 +18,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
   const [guestId, setGuestId] = useState(localStorage.getItem('guestChatId') || '')
   const [guestName, setGuestName] = useState(localStorage.getItem('guestName') || '')
   const [guestEmail, setGuestEmail] = useState(localStorage.getItem('guestEmail') || '')
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
   const scrollRef = useRef(null)
   const imageInputRef = useRef(null)
   const filterRef = useRef(null)

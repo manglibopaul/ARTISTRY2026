@@ -108,7 +108,7 @@ const OrderDetails = () => {
         // If items lack images, try to fetch product info for each
         try {
           const items = Array.isArray(data.items) ? data.items : JSON.parse(data.items || '[]');
-          const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
           // If token present, attempt to fetch current user profile to check review eligibility
           const token = localStorage.getItem('token') || localStorage.getItem('userToken');
           let userId = null;
@@ -321,7 +321,7 @@ const OrderDetails = () => {
     }
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
   const resolveImage = (image) => {
     let imageUrl = '/path/to/placeholder.jpg';
