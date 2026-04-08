@@ -10,9 +10,9 @@ const Product = () => {
   const {productId} = useParams();
   const navigate = useNavigate()
   const {products, currency, addToCart} = useContext(ShopContext);
-  // Prefer VITE_API_URL; fallback to current host on port 5000 for mobile LAN access.
+  // Use localhost fallback only in development; production must use configured API URL.
   const apiUrl = import.meta.env.VITE_API_URL
-    || `${window.location.protocol}//${window.location.hostname}:5000`
+    || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
   const [productData,setProductData] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(true)
   const [productError, setProductError] = useState('')

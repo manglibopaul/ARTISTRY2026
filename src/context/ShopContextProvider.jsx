@@ -13,9 +13,9 @@ const ShopContextProvider = (props) => {
   const [cartsItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
-  // Prefer VITE_API_URL; fallback to current host on port 5000 so mobile LAN works even if env isn't loaded
-  const apiUrl = import.meta.env.VITE_API_URL 
-    || `${window.location.protocol}//${window.location.hostname}:5000`
+  // Use localhost fallback only in development; production must use configured API URL.
+  const apiUrl = import.meta.env.VITE_API_URL
+    || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
   
   const parseCartKey = (key) => {
     if (typeof key !== 'string') return { id: key, color: null };
