@@ -25,6 +25,11 @@ const Navbar = () => {
     try { userObj = userRaw && userToken ? JSON.parse(userRaw) : null } catch (e) { userObj = null }
     // Auto-clean orphaned user data
     if (!userToken && userRaw) localStorage.removeItem('user')
+    // If a customer session exists, clear any stale seller session so the profile icon stays on the customer account.
+    if (userToken && sellerToken) {
+      localStorage.removeItem('sellerToken')
+      localStorage.removeItem('seller')
+    }
 
     const {setShowSearch , getCartCount} = useContext(ShopContext);
     const handleSupportClick = () => {
