@@ -19,7 +19,15 @@ const Profile = () => {
         const text = await res.text();
         let msg = text;
         try { msg = JSON.parse(text).message || text; } catch {}
-        if (res.status === 401 || res.status === 403 || msg.toLowerCase().includes('invalid token')) {
+        const normalizedMsg = String(msg || '').toLowerCase();
+        if (
+          res.status === 401 ||
+          res.status === 403 ||
+          res.status === 404 ||
+          normalizedMsg.includes('invalid token') ||
+          normalizedMsg.includes('user not found') ||
+          normalizedMsg.includes('account is deleted')
+        ) {
           localStorage.removeItem('token');
           localStorage.removeItem('userToken');
           localStorage.removeItem('user');

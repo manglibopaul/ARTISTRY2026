@@ -628,7 +628,7 @@ const SellerDashboard = () => {
           </div>
           <div className='flex gap-2 sm:gap-3 w-full sm:w-auto'>
             <button
-              onClick={() => setSelectedTab('support')}
+              onClick={() => navigate('/support', { state: { role: 'seller' } })}
               className='bg-emerald-600 hover:bg-emerald-700 px-4 sm:px-6 py-2 rounded-lg font-medium text-sm sm:text-base flex-1 sm:flex-none'
             >
               Support
@@ -675,11 +675,6 @@ const SellerDashboard = () => {
               onClick={() => setSelectedTab('chat')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'chat' ? 'bg-black text-white' : 'bg-gray-200'}`}>
               Chat {sellerUnreadChats > 0 && <span className='inline-block ml-1 sm:ml-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full'>{sellerUnreadChats}</span>}
-            </button>
-            <button
-              onClick={() => setSelectedTab('support')}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'support' ? 'bg-black text-white' : 'bg-gray-200'}`}>
-              Support
             </button>
             <button
               onClick={() => setSelectedTab('reviews')}
