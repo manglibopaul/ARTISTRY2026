@@ -307,7 +307,7 @@ const PlaceOrder = () => {
   React.useEffect(() => {
     const geocodeDeliveryAddress = async () => {
       // Only geocode if we have all required fields and are in delivery mode
-      if (method !== 'delivery') {
+      if (method === 'pickup') {
         setDeliveryMapLat(null)
         setDeliveryMapLon(null)
         return
