@@ -115,7 +115,14 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
-  const hostForLog = HOST === '0.0.0.0' ? 'localhost' : HOST;
-  console.log(`🚀 Server running on http://${hostForLog}:${PORT}`);
-  console.log(`🔌 Bound to host ${HOST} (listen on all interfaces: ${HOST === '0.0.0.0'})`);
+  const isAllInterfaces = HOST === '0.0.0.0';
+  const localHint = `http://localhost:${PORT}`;
+  const publicUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '';
+
+  console.log(`🚀 Server started (pid ${process.pid})`);
+  console.log(`🔌 Bound to ${HOST}:${PORT} (all interfaces: ${isAllInterfaces})`);
+  console.log(`🏠 Local access hint: ${localHint}`);
+  if (publicUrl) {
+    console.log(`🌐 Public URL: ${publicUrl}`);
+  }
 });
