@@ -441,7 +441,7 @@ const OrderDetails = () => {
                 isPickup={true}
               />
             </div>
-          )}}
+          )}
         </div>
 
         <div className='border p-3 sm:p-4 rounded'>
