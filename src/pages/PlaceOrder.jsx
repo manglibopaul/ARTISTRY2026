@@ -4,6 +4,8 @@ import CartTotal from '../components/CartTotal'
 import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
+import MapPin from '../components/MapPin'
+import { geocodeAddress } from '../utils/geocoding'
 
 const parseCartKey = (key) => {
   if (typeof key !== 'string') return { id: key, color: null };
@@ -124,6 +126,8 @@ const PlaceOrder = () => {
     title: '',
     message: '',
   })
+  const [deliveryMapLat, setDeliveryMapLat] = useState(null)
+  const [deliveryMapLon, setDeliveryMapLon] = useState(null)
 
   const openModal = (title, message) => {
     setModalState({ open: true, title, message })
@@ -298,6 +302,46 @@ const PlaceOrder = () => {
     }
     setCartData(tempData)
   }, [cartsItems])
+
+  // Geocode delivery address to get map coordinates
+  React.useEffect(() => {
+    const geocodeDeliveryAddress = async () => {
+      // Only geocode if we have all required fields and are in delivery mode
+      if (method !== 'delivery') {
+        setDeliveryMapLat(null)
+        setDeliveryMapLon(null)
+        return
+      }
+
+      if (!street || !regionProvinceCityBarangay) {
+        setDeliveryMapLat(null)
+        setDeliveryMapLon(null)
+        return
+      }
+
+      try {
+        // Extract city from regionProvinceCityBarangay (usually format: Region/Province/City/Barangay)
+        const parts = regionProvinceCityBarangay.split(/[\/,]/).map(p => p.trim())
+        const city = parts.length > 2 ? parts[2] : parts[parts.length - 1]
+        const region = parts.length > 1 ? parts[0] : parts[0]
+
+        const coords = await geocodeAddress(street, city, region)
+        if (coords) {
+          setDeliveryMapLat(coords.lat)
+          setDeliveryMapLon(coords.lon)
+        } else {
+          setDeliveryMapLat(null)
+          setDeliveryMapLon(null)
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error)
+        setDeliveryMapLat(null)
+        setDeliveryMapLon(null)
+      }
+    }
+
+    geocodeDeliveryAddress()
+  }, [street, regionProvinceCityBarangay, method])
 
   const subtotal = getCartAmount ? getCartAmount() : 0
 
@@ -477,6 +521,19 @@ const PlaceOrder = () => {
                     type="text" 
                     placeholder='Street name, building, house no.' 
                   />
+
+                  {/* Delivery Location Map */}
+                  {deliveryMapLat && deliveryMapLon && (
+                    <div className='mt-4 sm:mt-6 mb-4 sm:mb-6'>
+                      <MapPin
+                        lat={deliveryMapLat}
+                        lon={deliveryMapLon}
+                        label="Your Delivery Location"
+                        address={`${street}, ${regionProvinceCityBarangay}`}
+                        isPickup={false}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

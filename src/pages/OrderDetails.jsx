@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import Title from '../components/Title'
+import MapPin from '../components/MapPin'
+import { geocodeAddress } from '../utils/geocoding'
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -12,6 +14,10 @@ const OrderDetails = () => {
   const [reviewForms, setReviewForms] = useState({});
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
   const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
+  const [deliveryMapLat, setDeliveryMapLat] = useState(null);
+  const [deliveryMapLon, setDeliveryMapLon] = useState(null);
+  const [pickupMapLat, setPickupMapLat] = useState(null);
+  const [pickupMapLon, setPickupMapLon] = useState(null);
 
   const openInfoModal = (title, message) => {
     setInfoModal({ open: true, title, message });
@@ -180,6 +186,49 @@ const OrderDetails = () => {
 
     fetchOrder();
   }, [id]);
+
+  // Geocode delivery address when order loads
+  useEffect(() => {
+    if (!order) {
+      setDeliveryMapLat(null);
+      setDeliveryMapLon(null);
+      setPickupMapLat(null);
+      setPickupMapLon(null);
+      return;
+    }
+
+    const geocodeAddresses = async () => {
+      // Geocode delivery address
+      if (order.street && order.city && order.state) {
+        try {
+          const coords = await geocodeAddress(order.street, order.city, order.state);
+          if (coords) {
+            setDeliveryMapLat(coords.lat);
+            setDeliveryMapLon(coords.lon);
+          }
+        } catch (error) {
+          console.error('Geocoding delivery address failed:', error);
+        }
+      }
+
+      // Geocode pickup location if order has one
+      if (order.pickupLocation && order.method === 'pickup') {
+        try {
+          // Pickup location format is usually just the address string
+          // Try to geocode it - Nominatim is flexible with location format
+          const coords = await geocodeAddress(order.pickupLocation, 'Philippines', 'Philippines');
+          if (coords) {
+            setPickupMapLat(coords.lat);
+            setPickupMapLon(coords.lon);
+          }
+        } catch (error) {
+          console.error('Geocoding pickup location failed:', error);
+        }
+      }
+    };
+
+    geocodeAddresses();
+  }, [order]);
 
   // If the URL includes ?focusReview=1 (or any value), scroll to the first review form when available
   const location = useLocation();
@@ -367,8 +416,32 @@ const OrderDetails = () => {
               <p>{order.country}</p>
               <p className='text-sm text-gray-500'>Email: {order.email}</p>
               <p className='text-sm text-gray-500'>Phone: {order.phone}</p>
+
+              {/* Delivery Location Map */}
+              {deliveryMapLat && deliveryMapLon && (
+                <div className='mt-4'>
+                  <MapPin
+                    lat={deliveryMapLat}
+                    lon={deliveryMapLon}
+                    label="Your Delivery Location"
+                    address={`${order.street}, ${order.city}, ${order.state} ${order.zipcode}`}
+                    isPickup={false}
+                  />
+                </div>
+              )}
             </div>
           )}
+          {order.method === 'pickup' && pickupMapLat && pickupMapLon && (
+            <div className='mt-4'>
+              <MapPin
+                lat={pickupMapLat}
+                lon={pickupMapLon}
+                label="Seller Pickup Location"
+                address={order.pickupLocation || 'Pickup Location'}
+                isPickup={true}
+              />
+            </div>
+          )}}
         </div>
 
         <div className='border p-3 sm:p-4 rounded'>

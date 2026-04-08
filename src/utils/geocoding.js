@@ -1,0 +1,82 @@
+/**
+ * Geocoding utility using Nominatim (OpenStreetMap)
+ * Free service, no API key required
+ */
+
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+
+/**
+ * Convert address to coordinates
+ * @param {string} street - Street address
+ * @param {string} city - City/municipality
+ * @param {string} region - Region/province
+ * @returns {Promise} - { lat, lon, displayName } or null if not found
+ */
+export const geocodeAddress = async (street, city, region) => {
+  try {
+    if (!street || !city || !region) {
+      console.warn('Incomplete address for geocoding:', { street, city, region });
+      return null;
+    }
+
+    // Build query string - Philippines specific
+    const query = `${street}, ${city}, ${region}, Philippines`;
+    
+    const response = await fetch(
+      `${NOMINATIM_URL}?` + new URLSearchParams({
+        q: query,
+        format: 'json',
+        limit: 1,
+        countrycodes: 'ph', // Limit to Philippines
+      })
+    );
+
+    if (!response.ok) {
+      console.error('Geocoding API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      console.warn('No location found for:', query);
+      return null;
+    }
+
+    const result = data[0];
+    return {
+      lat: parseFloat(result.lat),
+      lon: parseFloat(result.lon),
+      displayName: result.display_name,
+    };
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+};
+
+/**
+ * Reverse geocode - get address from coordinates
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {Promise} - address object or null
+ */
+export const reverseGeocode = async (lat, lon) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?` + new URLSearchParams({
+        lat,
+        lon,
+        format: 'json',
+      })
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data.address || null;
+  } catch (error) {
+    console.error('Reverse geocoding error:', error);
+    return null;
+  }
+};
