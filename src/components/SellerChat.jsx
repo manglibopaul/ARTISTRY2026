@@ -69,7 +69,7 @@ const SellerChat = () => {
     } catch (err) {
       console.error('fetchConversations', err)
       // Dev fallback: try loading recent messages and synthesize conversations (useful when sellerToken is missing)
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         try {
           const devRes = await fetch(`${apiUrl}/api/chat/dev/messages`)
           const all = await devRes.json()
@@ -316,7 +316,7 @@ const SellerChat = () => {
       </div>
 
       {/* Dev debug drawer - only visible in development */}
-      {process.env.NODE_ENV !== 'production' && (
+      {import.meta.env.DEV && (
         <div className='col-span-1 md:col-span-3 mt-4'>
           <div className='bg-white rounded-lg shadow p-4'>
             <div className='flex items-center justify-between mb-2'>

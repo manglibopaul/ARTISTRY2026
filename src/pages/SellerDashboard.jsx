@@ -333,7 +333,7 @@ const SellerDashboard = () => {
     } catch (err) {
       console.error('fetchSellerConversations', err)
       // Dev fallback: if API fails (e.g., token issues) try the dev messages endpoint
-      if (process.env.NODE_ENV !== 'production') {
+      if (import.meta.env.DEV) {
         try {
           const devRes = await fetch(`${apiUrl}/api/chat/dev/messages`)
           const all = await devRes.json()
