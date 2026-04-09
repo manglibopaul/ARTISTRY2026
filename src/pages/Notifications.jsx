@@ -66,6 +66,36 @@ const Notifications = () => {
     }
   }
 
+  const deleteOne = async (id) => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('userToken')
+      if (!token) return
+      const res = await fetch(`${apiUrl}/api/notifications/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to delete notification')
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    } catch (e) {
+      setError(e.message || 'Failed to delete notification')
+    }
+  }
+
+  const deleteAll = async () => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('userToken')
+      if (!token) return
+      const res = await fetch(`${apiUrl}/api/notifications/all`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to delete all notifications')
+      setNotifications([])
+    } catch (e) {
+      setError(e.message || 'Failed to delete all notifications')
+    }
+  }
+
   useEffect(() => {
     fetchNotifications()
   }, [fetchNotifications])
@@ -85,6 +115,13 @@ const Notifications = () => {
               className='px-3 py-2 text-sm rounded bg-black text-white hover:bg-gray-800'
             >
               Mark all read
+            </button>
+            <button
+              type='button'
+              onClick={deleteAll}
+              className='px-3 py-2 text-sm rounded border border-red-300 text-red-700 hover:bg-red-50'
+            >
+              Delete all
             </button>
           </div>
         </div>
@@ -120,6 +157,13 @@ const Notifications = () => {
                       Mark read
                     </button>
                   )}
+                  <button
+                    type='button'
+                    onClick={() => deleteOne(n.id)}
+                    className='px-3 py-1.5 text-xs rounded border border-red-300 text-red-700 hover:bg-red-50'
+                  >
+                    Delete
+                  </button>
                   {n.orderId && (
                     <button
                       type='button'

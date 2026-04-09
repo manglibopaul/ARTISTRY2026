@@ -34,3 +34,25 @@ export const markAllNotificationsRead = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
+
+export const deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findByPk(req.params.id)
+    if (!notification) return res.status(404).json({ message: 'Notification not found' })
+    if (notification.userId !== req.user.id) return res.status(403).json({ message: 'Not authorized' })
+
+    await notification.destroy()
+    res.json({ message: 'Notification deleted' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+export const deleteAllNotifications = async (req, res) => {
+  try {
+    await Notification.destroy({ where: { userId: req.user.id } })
+    res.json({ message: 'All notifications deleted' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
