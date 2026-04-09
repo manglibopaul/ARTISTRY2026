@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { ShopContext } from '../context/ShopContext'
@@ -19,21 +19,16 @@ const ArtisanDirectory = () => {
     return `${apiUrl}${url}`
   }
 
-  useEffect(() => {
-    fetchArtisanTypes()
-    fetchSellers()
-  }, [])
-
-  const fetchArtisanTypes = async () => {
+  const fetchArtisanTypes = useCallback(async () => {
     try {
       const res = await axios.get(`${apiUrl}/api/sellers/types`)
       setArtisanTypes(res.data?.artisanTypes || [])
     } catch (error) {
       console.error('Error fetching artisan types:', error)
     }
-  }
+  }, [apiUrl])
 
-  const fetchSellers = async () => {
+  const fetchSellers = useCallback(async () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/sellers/all`)
@@ -63,7 +58,12 @@ const ArtisanDirectory = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl])
+
+  useEffect(() => {
+    fetchArtisanTypes()
+    fetchSellers()
+  }, [fetchArtisanTypes, fetchSellers])
 
   const normalizeType = (value) => String(value || '').trim().toLowerCase()
 

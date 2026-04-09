@@ -9,7 +9,7 @@ export const verifyUser = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };
@@ -22,7 +22,7 @@ export const verifyUserOptional = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     return next();
-  } catch (error) {
+  } catch {
     // If token is invalid, ignore and continue as guest
     return next();
   }
@@ -48,7 +48,7 @@ export const verifyAdmin = async (req, res, next) => {
     }
 
     return res.status(403).json({ message: 'Admin access required' });
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };

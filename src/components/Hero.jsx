@@ -26,7 +26,7 @@ const Hero = () => {
           window.scrollTo({ top: absoluteTop - HEADER_OFFSET, behavior: 'smooth' });
         }, 100);
       }
-    } catch (e) {
+    } catch {
       
       const absoluteTop = target.getBoundingClientRect().top + window.pageYOffset;
       window.scrollTo({ top: absoluteTop - HEADER_OFFSET, behavior: 'smooth' });

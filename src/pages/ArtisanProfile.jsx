@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { ShopContext } from '../context/ShopContext'
@@ -14,11 +14,7 @@ const ArtisanProfile = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
-  useEffect(() => {
-    fetchSellerProfile()
-  }, [sellerId])
-
-  const fetchSellerProfile = async () => {
+  const fetchSellerProfile = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -36,7 +32,11 @@ const ArtisanProfile = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, sellerId])
+
+  useEffect(() => {
+    fetchSellerProfile()
+  }, [fetchSellerProfile])
 
   const sellerProducts = products.filter(p => {
     const pid = p.sellerId || p.id

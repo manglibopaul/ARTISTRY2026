@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { assets } from '../assets/assets';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const SearchBar = () => {
 
     const { search, setSearch, showSearch, setShowSearch, products } = useContext(ShopContext);
     const [searchResults, setSearchResults] = useState([]);
-    const location = useLocation();
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 

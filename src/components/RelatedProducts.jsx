@@ -21,7 +21,7 @@ const RelatedProducts = ({category,subCategory}) => {
 
         }
 
-    },[products])
+    },[products, category, subCategory])
 
   return (
     <div className='my-24'>

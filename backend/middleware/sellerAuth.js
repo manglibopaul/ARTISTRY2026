@@ -22,7 +22,7 @@ export const verifySeller = async (req, res, next) => {
 
     req.seller = { id: seller.id, isVerified: !!seller.isVerified };
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };
@@ -39,7 +39,7 @@ export const requireVerifiedSeller = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
+  } catch {
     return res.status(500).json({ message: 'Failed to verify seller status' });
   }
 };

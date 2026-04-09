@@ -5,7 +5,6 @@ import Order from '../models/Order.js';
 import { ARTISAN_TYPES_ARRAY } from '../utils/artisanTypes.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
-import path from 'path';
 import { Op } from 'sequelize';
 import { uploadImage } from '../utils/media.js';
 
@@ -260,7 +259,7 @@ export const getSellerOrders = async (req, res) => {
       let items = order.items || [];
       // items stored as JSON (Sequelize JSON) — ensure it's an array
       if (typeof items === 'string') {
-        try { items = JSON.parse(items); } catch (e) { items = []; }
+        try { items = JSON.parse(items); } catch { items = []; }
       }
 
       const sellerItems = items.filter((it) => {

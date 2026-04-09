@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
@@ -6,7 +6,6 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
   const [selectedImage, setSelectedImage] = useState(null)
-  const [loading, setLoading] = useState(false)
   const scrollRef = useRef(null)
   const imageInputRef = useRef(null)
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
@@ -32,14 +31,7 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
     getGuestId()
   }, [token])
 
-  useEffect(() => {
-    if (!sellerId) return
-    fetchMessages()
-    const id = setInterval(fetchMessages, 5000)
-    return () => clearInterval(id)
-  }, [sellerId, productId])
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!sellerId) return
     try {
       const guestId = getGuestId()
@@ -63,7 +55,14 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
     } catch (err) {
       console.error('ProductChat fetchMessages', err)
     }
-  }
+  }, [apiUrl, productId, sellerId, token])
+
+  useEffect(() => {
+    if (!sellerId) return
+    fetchMessages()
+    const id = setInterval(fetchMessages, 5000)
+    return () => clearInterval(id)
+  }, [sellerId, fetchMessages])
 
   const sendMessage = async () => {
     if (!sellerId) {

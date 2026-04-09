@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import ProductItem from '../components/ProductItem'
 
@@ -13,7 +13,7 @@ const Collection = () => {
 
   const isLoading = !products
 
-  const applyFilter = () => {
+  const applyFilter = useCallback(() => {
     let productsCopy = products.slice()
 
     if (showSearch && search) {
@@ -47,9 +47,9 @@ const Collection = () => {
     }
 
     setFilterProducts(productsCopy)
-  }
+  }, [products, showSearch, search, activeCollection, availabilityFilter, minPrice, maxPrice])
 
-  const sortProduct = () => {
+  const sortProduct = useCallback(() => {
     const fpCopy = filterProducts.slice()
 
     switch (sortType) {
@@ -65,15 +65,15 @@ const Collection = () => {
         applyFilter()
         break
     }
-  }
+  }, [filterProducts, sortType, applyFilter])
 
   useEffect(() => {
     applyFilter()
-  }, [search, showSearch, products, availabilityFilter, minPrice, maxPrice, activeCollection])
+  }, [applyFilter])
 
   useEffect(() => {
     sortProduct()
-  }, [sortType])
+  }, [sortProduct])
 
   return (
     <div className='min-h-screen bg-white'>

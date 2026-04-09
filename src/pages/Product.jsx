@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
-import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductChat from '../components/ProductChat'
 
@@ -23,22 +22,14 @@ const Product = () => {
   const modelViewerRef = useRef(null);
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [, setCurrentUser] = useState(null);
   const [arLoading, setArLoading] = useState(true);
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [, setIsMobileDevice] = useState(false);
   const [arError, setArError] = useState('');
-  const [selectedColor, setSelectedColor] = useState('#FF69B4');
+  const [selectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const colorPresets = [
-    { name: 'Pink', value: '#FF69B4' },
-    { name: 'Red', value: '#FF0000' },
-    { name: 'Blue', value: '#0000FF' },
-    { name: 'Purple', value: '#800080' },
-    { name: 'Yellow', value: '#FFD700' },
-  ];
 
   const applyColorToModel = (hexColor) => {
     if (!modelViewerElementRef.current) return;
@@ -57,7 +48,7 @@ const Product = () => {
           }
         });
       }
-    } catch (e) {
+    } catch {
       console.log('Color change may not be supported for this model');
     }
   };
@@ -72,7 +63,7 @@ const Product = () => {
     return [];
   };
 
-  const getImageUrl = (img) => {
+  const getImageUrl = useCallback((img) => {
     if (!img) return '/path/to/placeholder.jpg';
 
     if (typeof img === 'object' && img.url) {
@@ -83,7 +74,7 @@ const Product = () => {
       return `${apiUrl}/uploads/images/${img}`;
     }
     return '/path/to/placeholder.jpg';
-  }
+  }, [apiUrl])
 
   const resolveUploadImage = (url) => {
     if (!url) return ''
@@ -96,7 +87,7 @@ const Product = () => {
     return `${'★'.repeat(safe)}${'☆'.repeat(5 - safe)}`
   }
 
-  const fetchSellerData = async (sellerId) => {
+  const fetchSellerData = useCallback(async (sellerId) => {
     try {
       const res = await fetch(`${apiUrl}/api/sellers/${sellerId}`)
       if (res.ok) {
@@ -106,9 +97,9 @@ const Product = () => {
     } catch (e) {
       console.error('Failed to fetch seller data:', e)
     }
-  }
+  }, [apiUrl])
 
-  const fetchProductData = async () => {
+  const fetchProductData = useCallback(async () => {
     setLoadingProduct(true)
     setProductError('')
     // Try to find product in context first (fast)
@@ -176,7 +167,7 @@ const Product = () => {
           setAvgRating(null);
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -190,18 +181,18 @@ const Product = () => {
           setCurrentUser(ud);
         }
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
     // no eligibility/form fetching here — reviews can be submitted from Order view only
-  }
+  }, [apiUrl, productId, products, fetchSellerData, getImageUrl])
 
   useEffect(()=>{
     fetchProductData();
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobileDevice(mobile);
-  },[productId, products])
+  },[fetchProductData])
 
   useEffect(() => {
     const availableColors = getAvailableColors(productData);

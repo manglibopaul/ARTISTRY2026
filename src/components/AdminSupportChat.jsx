@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 function DeleteThreadModal({ open, onClose, onConfirm, threadName }) {
   if (!open) return null
@@ -49,7 +49,7 @@ const AdminSupportChat = () => {
     return m.meta
   }
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!token) return
     try {
       const res = await fetch(`${apiRoot}/chat/support/admin/conversations?t=${Date.now()}`, {
@@ -63,12 +63,12 @@ const AdminSupportChat = () => {
       const data = await res.json()
       setConversations(Array.isArray(data) ? data : [])
       setError('')
-    } catch (e) {
+    } catch {
       setError('Failed to load support conversations')
     }
-  }
+  }, [apiRoot, token])
 
-  const fetchMessages = async (threadKey = selected?.threadKey) => {
+  const fetchMessages = useCallback(async (threadKey = selected?.threadKey) => {
     if (!token || !threadKey) return
     try {
       setLoading(true)
@@ -87,12 +87,12 @@ const AdminSupportChat = () => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
       }, 30)
       fetchConversations()
-    } catch (e) {
+    } catch {
       // ignore
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiRoot, token, selected?.threadKey, fetchConversations])
 
   const sendReply = async () => {
     if (!selected?.threadKey) return
@@ -111,7 +111,7 @@ const AdminSupportChat = () => {
       setSelectedImage(null)
       if (imageRef.current) imageRef.current.value = ''
       fetchMessages(selected.threadKey)
-    } catch (e) {
+    } catch {
       // ignore
     }
   }
@@ -143,7 +143,7 @@ const AdminSupportChat = () => {
       setConversations((prev) => prev.filter((c) => c.threadKey !== removedKey))
       fetchConversations()
       setShowDeleteModal(false)
-    } catch (e) {
+    } catch {
       setError('Failed to delete conversation')
       setShowDeleteModal(false)
     }
@@ -153,14 +153,14 @@ const AdminSupportChat = () => {
     fetchConversations()
     const id = setInterval(fetchConversations, 8000)
     return () => clearInterval(id)
-  }, [])
+  }, [fetchConversations])
 
   useEffect(() => {
     if (!selected?.threadKey) return
     fetchMessages(selected.threadKey)
     const id = setInterval(() => fetchMessages(selected.threadKey), 5000)
     return () => clearInterval(id)
-  }, [selected?.threadKey])
+  }, [selected?.threadKey, fetchMessages])
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>

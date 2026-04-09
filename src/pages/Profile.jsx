@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const REQUEST_TIMEOUT_MS = 12000;
@@ -10,7 +10,7 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
     let timeoutId;
@@ -26,7 +26,11 @@ const Profile = () => {
       if (!res.ok) {
         const text = await res.text();
         let msg = text;
-        try { msg = JSON.parse(text).message || text; } catch {}
+        try {
+          msg = JSON.parse(text).message || text;
+        } catch {
+          // Keep raw text when response is not valid JSON.
+        }
         const normalizedMsg = String(msg || '').toLowerCase();
         if (
           res.status === 401 ||
@@ -56,7 +60,7 @@ const Profile = () => {
       if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
     }
-  };
+  }, [apiUrl, navigate]);
 
   useEffect(() => {
     const customerToken = localStorage.getItem('token') || localStorage.getItem('userToken');
@@ -70,7 +74,7 @@ const Profile = () => {
     // No token found, redirect to login
     navigate('/login');
     return;
-  }, [navigate]);
+  }, [navigate, fetchProfile]);
 
   const onSave = async (e) => {
     e.preventDefault();

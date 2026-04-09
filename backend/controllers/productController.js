@@ -59,7 +59,7 @@ export const createProduct = async (req, res) => {
       if (typeof colors === 'string') {
         try {
           colors = JSON.parse(colors);
-        } catch (e) {
+        } catch {
           colors = colors.split(',').map(c => c.trim()).filter(Boolean);
         }
       }
@@ -125,7 +125,7 @@ export const updateProduct = async (req, res) => {
       if (typeof colors === 'string') {
         try {
           colors = JSON.parse(colors);
-        } catch (e) {
+        } catch {
           colors = colors.split(',').map(c => c.trim()).filter(Boolean);
         }
       }
@@ -141,7 +141,7 @@ export const updateProduct = async (req, res) => {
         existingImages = typeof updateData.existingImages === 'string' 
           ? JSON.parse(updateData.existingImages) 
           : updateData.existingImages;
-      } catch (e) {
+      } catch {
         existingImages = [];
       }
       delete updateData.existingImages; // Remove from updateData

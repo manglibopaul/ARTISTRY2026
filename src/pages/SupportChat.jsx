@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const SupportChat = () => {
@@ -39,7 +39,7 @@ const SupportChat = () => {
     return m.meta
   }
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!role || !token) return
     try {
       setLoading(true)
@@ -60,7 +60,7 @@ const SupportChat = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, role, token])
 
   const sendMessage = async () => {
     if (!role || !token) return
@@ -101,7 +101,7 @@ const SupportChat = () => {
     fetchMessages()
     const id = setInterval(fetchMessages, 5000)
     return () => clearInterval(id)
-  }, [role, token])
+  }, [role, token, navigate, fetchMessages])
 
   return (
     <div className='border-t pt-6 sm:pt-10'>

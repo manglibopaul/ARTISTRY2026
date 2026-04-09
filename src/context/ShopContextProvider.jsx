@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ShopContext } from "./ShopContext";
 import axios from 'axios'
 import { toast } from "react-toastify";
@@ -30,30 +30,30 @@ const ShopContextProvider = (props) => {
     return { id: key, color: null };
   };
 
-  const findProductByCartKey = (key) => {
+  const findProductByCartKey = useCallback((key) => {
     const { id } = parseCartKey(key);
     return products.find((product) => (
       product._id ? String(product._id) === String(id) : String(product.id) === String(id)
     ));
-  };
+  }, [products]);
 
   // Sync cart to backend (debounced)
   const syncCartRef = React.useRef(null);
-  const syncCartToServer = (items) => {
+  const syncCartToServer = useCallback((items) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     if (syncCartRef.current) clearTimeout(syncCartRef.current);
     syncCartRef.current = setTimeout(async () => {
       try {
         await axios.post(`${apiUrl}/api/cart`, { items }, { headers: { Authorization: `Bearer ${token}` } });
-      } catch (err) {
+      } catch {
         // Silent fail — cart will still work locally
       }
     }, 500);
-  };
+  }, [apiUrl]);
 
   // Load cart from server on mount if logged in
-  const loadCartFromServer = async () => {
+  const loadCartFromServer = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
@@ -61,10 +61,10 @@ const ShopContextProvider = (props) => {
       if (res.data?.items && Object.keys(res.data.items).length > 0) {
         setCartItems(res.data.items);
       }
-    } catch (err) {
+    } catch {
       // Silent fail
     }
-  };
+  }, [apiUrl]);
 
   // Clear cart (after order placed)
   const clearCart = async () => {
@@ -73,7 +73,7 @@ const ShopContextProvider = (props) => {
     if (token) {
       try {
         await axios.delete(`${apiUrl}/api/cart`, { headers: { Authorization: `Bearer ${token}` } });
-      } catch (err) { /* silent */ }
+      } catch { /* silent */ }
     }
   };
 
@@ -105,7 +105,7 @@ const ShopContextProvider = (props) => {
           totalCount += cartsItems[items];
         }
       } catch (error) {
-        
+        console.warn('Skipping invalid cart item while counting:', items, error);
       }
     }
     return totalCount;
@@ -130,14 +130,14 @@ const ShopContextProvider = (props) => {
           totalAmount += itemInfo.price * cartsItems[items]
         }
       } catch (error) {
-        
+        console.warn('Skipping invalid cart item while totaling:', items, error);
       }
     }
     return totalAmount;
   }
 
   // Fetch products from backend
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await axios.get(`${apiUrl}/api/products`);
       setProducts(res.data || []);
@@ -145,12 +145,12 @@ const ShopContextProvider = (props) => {
       console.error('Error fetching products for context:', error);
       toast.error('Failed to load products');
     }
-  }
+  }, [apiUrl])
 
   useEffect(() => {
     fetchProducts();
     loadCartFromServer();
-  }, [])
+  }, [fetchProducts, loadCartFromServer])
 
   useEffect(() => {
     if (!products || products.length === 0) return;
@@ -171,7 +171,7 @@ const ShopContextProvider = (props) => {
       setCartItems(cleanedCart);
       syncCartToServer(cleanedCart);
     }
-  }, [products]);
+  }, [products, cartsItems, findProductByCartKey, syncCartToServer]);
 
   const value = {
     products,

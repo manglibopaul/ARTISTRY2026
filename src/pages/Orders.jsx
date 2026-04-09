@@ -76,14 +76,14 @@ const Orders = () => {
                       const prod = await pRes.json();
                       if (prod && prod.image) items[i] = { ...it, image: prod.image };
                     }
-                  } catch (e) {
+                  } catch {
                     // ignore per-item fetch errors
                   }
                 }
               }
             }
             return { ...order, items };
-          } catch (err) {
+          } catch {
             return order;
           }
         }));
@@ -103,7 +103,7 @@ const Orders = () => {
       return;
     }
     fetchOrders();
-  }, []);
+  }, [apiUrl, navigate]);
 
   const resolveImage = (image) => {
     let imageUrl = '/path/to/placeholder.jpg';
@@ -233,7 +233,7 @@ const Orders = () => {
                         const pid = firstItem ? (firstItem.productId || firstItem.id || firstItem._id) : null;
                         const hash = pid ? `#review-form-${pid}` : '';
                         navigate(`/orders/${order.id}?focusReview=1${hash}`);
-                      } catch (e) {
+                      } catch {
                         // fallback to location assign
                         const firstItem = Array.isArray(order.items) && order.items.length ? order.items[0] : null;
                         const pid = firstItem ? (firstItem.productId || firstItem.id || firstItem._id) : null;

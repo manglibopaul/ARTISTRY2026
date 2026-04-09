@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
@@ -9,13 +9,13 @@ const SellerChat = () => {
   const [text, setText] = useState('')
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [pollId, setPollId] = useState(null)
   const [devMessages, setDevMessages] = useState([])
 
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
   const scrollRef = useRef(null)
   const imageInputRef = useRef(null)
+  const pollIdRef = useRef(null)
 
   const resolveUploadUrl = (url) => {
     if (!url) return ''
@@ -43,23 +43,7 @@ const SellerChat = () => {
     return meta.imageUrl || m?.imageUrl || null
   }
 
-  useEffect(() => {
-    fetchConversations()
-    return () => {
-      if (pollId) clearInterval(pollId)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!selectedConv) return
-    fetchMessages()
-    if (pollId) clearInterval(pollId)
-    const id = setInterval(fetchMessages, 5000)
-    setPollId(id)
-    return () => clearInterval(id)
-  }, [selectedConv])
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/chat/seller/conversations`, {
@@ -105,9 +89,9 @@ const SellerChat = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, token])
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedConv) return
     try {
       const key = selectedConv.userId ? selectedConv.userId : selectedConv.guestId
@@ -120,7 +104,23 @@ const SellerChat = () => {
     } catch (err) {
       console.error('fetchMessages', err)
     }
-  }
+  }, [apiUrl, token, selectedConv, fetchConversations])
+
+  useEffect(() => {
+    fetchConversations()
+    return () => {
+      if (pollIdRef.current) clearInterval(pollIdRef.current)
+    }
+  }, [fetchConversations])
+
+  useEffect(() => {
+    if (!selectedConv) return
+    fetchMessages()
+    if (pollIdRef.current) clearInterval(pollIdRef.current)
+    const id = setInterval(fetchMessages, 5000)
+    pollIdRef.current = id
+    return () => clearInterval(id)
+  }, [selectedConv, fetchMessages])
 
   const selectConversation = (conv) => {
     setSelectedConv(conv)
@@ -212,7 +212,7 @@ const SellerChat = () => {
         </div>
 
         <div className='mt-3 mb-3'>
-          <input onChange={(e) => { const q = e.target.value; setConversations(prev => prev); }} placeholder='Search' className='w-full px-3 py-2 border rounded-md text-sm' />
+          <input placeholder='Search' className='w-full px-3 py-2 border rounded-md text-sm' />
         </div>
 
         <div className='space-y-3 overflow-y-auto max-h-[520px] pr-2'>

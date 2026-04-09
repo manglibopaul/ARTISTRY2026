@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const Notifications = () => {
@@ -9,7 +9,7 @@ const Notifications = () => {
 
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
@@ -35,7 +35,7 @@ const Notifications = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, navigate])
 
   const markOneRead = async (id) => {
     try {
@@ -68,7 +68,7 @@ const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications()
-  }, [])
+  }, [fetchNotifications])
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications])
 

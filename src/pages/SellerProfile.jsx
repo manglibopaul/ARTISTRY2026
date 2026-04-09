@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
@@ -12,7 +12,6 @@ const SellerProfile = () => {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [avatarError, setAvatarError] = useState('')
   const [artisanTypes, setArtisanTypes] = useState([])
-  const [expertiseTags, setExpertiseTags] = useState([])
   const [formData, setFormData] = useState({
     name: '',
     storeName: '',
@@ -30,33 +29,22 @@ const SellerProfile = () => {
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
-  const normalizeAvatarUrl = (url) => {
+  const normalizeAvatarUrl = useCallback((url) => {
     if (!url) return ''
     if (url.startsWith('http')) return url
     return `${apiUrl}${url}`
-  }
+  }, [apiUrl])
 
-  useEffect(() => {
-    // Check for seller token - if not present, redirect immediately
-    if (!token) {
-      navigate('/seller/login')
-      return
-    }
-    fetchArtisanTypes()
-    fetchProfile()
-  }, [token, navigate])
-
-  const fetchArtisanTypes = async () => {
+  const fetchArtisanTypes = useCallback(async () => {
     try {
       const res = await axios.get(`${apiUrl}/api/sellers/types`)
       setArtisanTypes(res.data?.artisanTypes || [])
-      setExpertiseTags(res.data?.expertiseTags || [])
     } catch (error) {
       console.error('Error fetching artisan types:', error)
     }
-  }
+  }, [apiUrl])
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true)
       const response = await axios.get(`${apiUrl}/api/sellers/profile`, {
@@ -85,7 +73,17 @@ const SellerProfile = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, navigate, token, normalizeAvatarUrl])
+
+  useEffect(() => {
+    // Check for seller token - if not present, redirect immediately
+    if (!token) {
+      navigate('/seller/login')
+      return
+    }
+    fetchArtisanTypes()
+    fetchProfile()
+  }, [token, navigate, fetchArtisanTypes, fetchProfile])
 
   if (loading) {
     return (
@@ -116,15 +114,6 @@ const SellerProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleExpertiseToggle = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      expertise: prev.expertise.includes(tag)
-        ? prev.expertise.filter(t => t !== tag)
-        : [...prev.expertise, tag]
-    }))
   }
 
   const handleAvatarChange = async (e) => {

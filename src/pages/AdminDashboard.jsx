@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
 // Modal to view and verify seller
@@ -184,13 +184,13 @@ const AdminDashboard = () => {
     adminUser = null;
   }
 
-  const handleAuthFailure = () => {
+  const handleAuthFailure = useCallback(() => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
     navigate('/admin/login');
-  };
+  }, [navigate]);
 
-  const authFetch = async (url, options = {}) => {
+  const authFetch = useCallback(async (url, options = {}) => {
     const adminToken = localStorage.getItem('adminToken');
     if (!adminToken) {
       handleAuthFailure();
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
       throw new Error('Session expired. Please log in again.');
     }
     return res;
-  };
+  }, [apiRoot, handleAuthFailure]);
 
   const readErrorMessage = async (res) => {
     const text = await res.text();
@@ -252,7 +252,7 @@ const AdminDashboard = () => {
   }, [location.search, selectedTab]);
 
   // Fetch customers
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setLoadingCustomers(true);
     setCustomerError(null);
     try {
@@ -265,10 +265,10 @@ const AdminDashboard = () => {
     } finally {
       setLoadingCustomers(false);
     }
-  };
+  }, [authFetch]);
 
   // Fetch sellers
-  const fetchSellers = async () => {
+  const fetchSellers = useCallback(async () => {
     setLoadingSellers(true);
     setSellerError(null);
     try {
@@ -281,12 +281,12 @@ const AdminDashboard = () => {
     } finally {
       setLoadingSellers(false);
     }
-  };
+  }, [authFetch]);
 
   useEffect(() => {
     if (selectedTab === 'customers') fetchCustomers();
     if (selectedTab === 'sellers') fetchSellers();
-  }, [selectedTab]);
+  }, [selectedTab, fetchCustomers, fetchSellers]);
 
   // State for bin (soft-deleted sellers)
   const [binSellers, setBinSellers] = useState([]);

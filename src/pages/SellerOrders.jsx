@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 const SellerOrders = () => {
@@ -8,7 +8,7 @@ const SellerOrders = () => {
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
   const token = localStorage.getItem('sellerToken');
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${apiUrl}/api/orders/seller/my-orders`, {
@@ -20,11 +20,11 @@ const SellerOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, token]);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
 
   return (
     <div className='my-6 px-3 sm:px-4'>

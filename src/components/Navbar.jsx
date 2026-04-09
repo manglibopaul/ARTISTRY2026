@@ -13,16 +13,15 @@ const Navbar = () => {
     const sellerToken = localStorage.getItem('sellerToken');
     const sellerRaw = localStorage.getItem('seller')
     let sellerObj = null
-    try { sellerObj = sellerRaw && sellerToken ? JSON.parse(sellerRaw) : null } catch (e) { sellerObj = null }
+    try { sellerObj = sellerRaw && sellerToken ? JSON.parse(sellerRaw) : null } catch { sellerObj = null }
     // Auto-clean orphaned seller data (no token but object lingers)
     if (!sellerToken && sellerRaw) localStorage.removeItem('seller')
-    const sellerLabel = sellerObj?.storeName || 'ARTISTRY'
 
     const userToken = localStorage.getItem('token') || localStorage.getItem('userToken');
     const adminToken = localStorage.getItem('adminToken');
     const userRaw = localStorage.getItem('user')
     let userObj = null
-    try { userObj = userRaw && userToken ? JSON.parse(userRaw) : null } catch (e) { userObj = null }
+    try { userObj = userRaw && userToken ? JSON.parse(userRaw) : null } catch { userObj = null }
     // Auto-clean orphaned user data
     if (!userToken && userRaw) localStorage.removeItem('user')
 

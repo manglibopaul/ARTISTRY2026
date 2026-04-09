@@ -1,8 +1,6 @@
 import { connectDB } from '../config/database.js';
 import Product from '../models/Product.js';
 
-const products = [];
-
 const seedDatabase = async () => {
   try {
     await connectDB();

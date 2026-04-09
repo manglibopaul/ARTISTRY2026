@@ -42,7 +42,7 @@ const validateDeliveryAddress = (address = {}) => {
     errors.push('Enter a valid Philippine mobile number (e.g., 09XXXXXXXXX or +639XXXXXXXXX).');
   }
 
-  const locationParts = location.split(/[\/,]/).map((x) => x.trim()).filter(Boolean);
+  const locationParts = location.split(/[/,]/).map((x) => x.trim()).filter(Boolean);
   if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
     errors.push('Enter a valid Region/Province/City/Barangay address.');
   }
@@ -122,7 +122,7 @@ export const createOrder = async (req, res) => {
             newItem.deliveryMode = req.body.paymentMethod === 'pickup' ? 'pickup' : 'delivery';
           }
           return newItem;
-        } catch (err) {
+        } catch {
           // ignore lookup errors and return original item
           return it;
         }
@@ -441,7 +441,7 @@ export const getSellerOrders = async (req, res) => {
             // include a sellerItems property for frontend convenience
             return { ...order.toJSON(), sellerItems };
           }
-        } catch (err) {
+        } catch {
           return null;
         }
         return null;

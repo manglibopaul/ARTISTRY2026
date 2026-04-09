@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
@@ -39,22 +39,13 @@ const SellerAdminChat = () => {
     return meta.imageUrl || m?.imageUrl || null
   }
 
-  useEffect(() => { fetchConversations() }, [])
-
-  useEffect(() => {
-    if (!selected) return
-    fetchMessages()
-    const id = setInterval(fetchMessages, 5000)
-    return () => clearInterval(id)
-  }, [selected])
-
   const sanitizeLabel = (c) => {
     const possible = [c.name, c.userName, c.guestName, c.userEmail, c.guestEmail]
     for (const p of possible) if (p && String(p).trim() && !/^\d+$/.test(String(p).trim())) return String(p)
     return 'Customer'
   }
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/chat/seller/conversations`, { headers: { Authorization: `Bearer ${token}` } })
@@ -63,9 +54,9 @@ const SellerAdminChat = () => {
       console.error('fetchConversations', err)
       toast.error('Failed to load conversations')
     } finally { setLoading(false) }
-  }
+  }, [apiUrl, token])
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selected) return
     try {
       const key = selected.userId ? selected.userId : selected.guestId
@@ -74,7 +65,16 @@ const SellerAdminChat = () => {
       setTimeout(() => scrollToBottom(), 50)
       fetchConversations()
     } catch (err) { console.error('fetchMessages', err) }
-  }
+  }, [apiUrl, token, selected, fetchConversations])
+
+  useEffect(() => { fetchConversations() }, [fetchConversations])
+
+  useEffect(() => {
+    if (!selected) return
+    fetchMessages()
+    const id = setInterval(fetchMessages, 5000)
+    return () => clearInterval(id)
+  }, [selected, fetchMessages])
 
   const sendReply = async () => {
     if (!text.trim() || !selected) return
@@ -135,7 +135,7 @@ const SellerAdminChat = () => {
                     const key = selected.userId ? selected.userId : selected.guestId
                     const res = await fetch(`${apiUrl}/api/chat/seller/conversation/${encodeURIComponent(key)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } })
                     if (!res.ok) { const txt = await res.text(); throw new Error(txt || 'Failed to delete') }
-                    const j = await res.json()
+                    await res.json()
                     // remove from local list
                     setConversations(prev => prev.filter(x => x !== selected))
                     setSelected(null)

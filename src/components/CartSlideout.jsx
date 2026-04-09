@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext'
-import { assets } from '../assets/assets'
 
 const CartSlideout = ({ isOpen, onClose }) => {
   const navigate = useNavigate()

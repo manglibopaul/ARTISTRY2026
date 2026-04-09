@@ -1,4 +1,4 @@
-import { connectDB, sequelize } from '../config/database.js';
+import { connectDB } from '../config/database.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 

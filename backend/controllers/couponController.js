@@ -67,7 +67,7 @@ export const getAllCoupons = async (req, res) => {
   try {
     const coupons = await Coupon.findAll({ order: [['createdAt', 'DESC']] });
     res.json(coupons);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to load coupons' });
   }
 };
@@ -104,7 +104,7 @@ export const deleteCoupon = async (req, res) => {
     if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
     await coupon.destroy();
     res.json({ message: 'Coupon deleted' });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to delete coupon' });
   }
 };
@@ -116,7 +116,7 @@ export const toggleCoupon = async (req, res) => {
     if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
     await coupon.update({ isActive: !coupon.isActive });
     res.json(coupon);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to update coupon' });
   }
 };

@@ -120,6 +120,8 @@ const SellerDashboard = () => {
     return ''
   }
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // Intentional mount auth/bootstrap flow; keeping stable startup behavior over broad callback refactor.
   useEffect(() => {
     if (!token) {
       navigate('/')
@@ -302,6 +304,7 @@ const SellerDashboard = () => {
     }
   }
 
+  // Intentional tab-driven lazy loads for seller dashboard sections.
   useEffect(() => {
     if (selectedTab === 'orders') fetchSellerOrders()
     if (selectedTab === 'reviews') fetchSellerReviews()
@@ -315,6 +318,7 @@ const SellerDashboard = () => {
     }
   }, [selectedTab])
 
+  // Intentional background polling lifecycle for conversation badges.
   useEffect(() => {
     // start background polling for new conversations/unread counts
     fetchSellerConversations()
@@ -323,6 +327,7 @@ const SellerDashboard = () => {
     setConvoPollId(id)
     return () => clearInterval(id)
   }, [])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const fetchSellerConversations = async () => {
     try {
@@ -344,7 +349,7 @@ const SellerDashboard = () => {
             if (!convMap.has(key) || new Date(m.createdAt) > new Date(convMap.get(key).createdAt)) convMap.set(key, m)
           }
           const convs = Array.from(convMap.values())
-          const unread = convs.reduce((acc, m) => acc + 0, 0)
+          const unread = convs.reduce((acc, m) => acc + (m.unreadCount || 0), 0)
           setSellerUnreadChats(unread)
         } catch (devErr) {
           console.error('fetchSellerConversations dev fallback', devErr)
@@ -481,11 +486,10 @@ const SellerDashboard = () => {
         },
       }
 
-      let response
       if (editingProduct) {
-        response = await axiosInstance.put(uploadUrl, uploadData, config)
+        await axiosInstance.put(uploadUrl, uploadData, config)
       } else {
-        response = await axiosInstance.post(uploadUrl, uploadData, config)
+        await axiosInstance.post(uploadUrl, uploadData, config)
       }
 
       // Success
@@ -493,7 +497,7 @@ const SellerDashboard = () => {
       
       // Refresh product lists
       fetchProducts()
-      try { refreshProducts && refreshProducts() } catch (e) {}
+      try { refreshProducts && refreshProducts() } catch (refreshErr) { console.warn('refreshProducts failed:', refreshErr) }
       resetForm()
       setShowForm(false)
       setUploadProgress(0)
@@ -524,7 +528,7 @@ const SellerDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       fetchProducts()
-      try { refreshProducts && refreshProducts() } catch (e) {}
+      try { refreshProducts && refreshProducts() } catch (refreshErr) { console.warn('refreshProducts failed:', refreshErr) }
     } catch (error) {
       console.error(error)
     } finally {

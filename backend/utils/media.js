@@ -65,7 +65,7 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
       url: uploaded.secure_url,
       filename: uploaded.public_id,
     };
-  } catch (error) {
+  } catch {
     return {
       url: localUrl,
       filename: file.filename || null,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
@@ -12,7 +12,6 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('All')
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
-  const [pollInterval, setPollInterval] = useState(null)
   const token = localStorage.getItem('token') || localStorage.getItem('userToken')
   // guest fields
   const [guestId, setGuestId] = useState(localStorage.getItem('guestChatId') || '')
@@ -22,6 +21,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
   const scrollRef = useRef(null)
   const imageInputRef = useRef(null)
   const filterRef = useRef(null)
+  const pollIntervalRef = useRef(null)
 
   const resolveUploadUrl = (url) => {
     if (!url) return ''
@@ -40,33 +40,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  useEffect(() => {
-    // ensure guestId exists for anonymous users
-    if (!token && !guestId) {
-      const id = `g_${Date.now()}_${Math.random().toString(36).slice(2,9)}`
-      localStorage.setItem('guestChatId', id)
-      setGuestId(id)
-    }
-    // Only auto-select a seller if explicitly passed via props (e.g. from product/artisan page)
-    if (defaultSellerId) {
-      setSelectedSeller({ sellerId: defaultSellerId, sellerName: defaultSellerName || 'Artisan', lastAt: Date.now() })
-      fetchMessages(defaultSellerId)
-    }
-    fetchConversations()
-  }, [])
-
-  useEffect(() => {
-    if (!selectedSeller) return
-    fetchMessages(selectedSeller.sellerId)
-
-    // start polling for new messages every 5s
-    if (pollInterval) clearInterval(pollInterval)
-    const id = setInterval(() => fetchMessages(selectedSeller.sellerId, false), 5000)
-    setPollInterval(id)
-    return () => clearInterval(id)
-  }, [selectedSeller])
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       setLoading(true)
       const qs = token ? '' : `?guestId=${encodeURIComponent(guestId)}`
@@ -80,9 +54,9 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl, token, guestId])
 
-  const fetchMessages = async (sellerId, scroll = true) => {
+  const fetchMessages = useCallback(async (sellerId, scroll = true) => {
     try {
       const qs = token ? '' : `?guestId=${encodeURIComponent(guestId)}`
       const res = await axios.get(`${apiUrl}/api/chat/user/conversation/${sellerId}${qs}`, {
@@ -94,7 +68,33 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     } catch (err) {
       console.error('fetchMessages', err)
     }
-  }
+  }, [apiUrl, token, guestId, fetchConversations])
+
+  useEffect(() => {
+    // ensure guestId exists for anonymous users
+    if (!token && !guestId) {
+      const id = `g_${Date.now()}_${Math.random().toString(36).slice(2,9)}`
+      localStorage.setItem('guestChatId', id)
+      setGuestId(id)
+    }
+    // Only auto-select a seller if explicitly passed via props (e.g. from product/artisan page)
+    if (defaultSellerId) {
+      setSelectedSeller({ sellerId: defaultSellerId, sellerName: defaultSellerName || 'Artisan', lastAt: Date.now() })
+      fetchMessages(defaultSellerId)
+    }
+    fetchConversations()
+  }, [defaultSellerId, defaultSellerName, fetchConversations, fetchMessages, guestId, token])
+
+  useEffect(() => {
+    if (!selectedSeller) return
+    fetchMessages(selectedSeller.sellerId)
+
+    // start polling for new messages every 5s
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    const id = setInterval(() => fetchMessages(selectedSeller.sellerId, false), 5000)
+    pollIntervalRef.current = id
+    return () => clearInterval(id)
+  }, [selectedSeller, fetchMessages])
 
   const selectConversation = (conv) => {
     setSelectedSeller(conv)

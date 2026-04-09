@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -8,17 +8,9 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
     const { currency } = useShop();
     const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
     const [sellerData, setSellerData] = useState(null)
-    const [loadingSeller, setLoadingSeller] = useState(false)
+    const [, setLoadingSeller] = useState(false)
 
-    useEffect(() => {
-      if (sellerId && !sellerName) {
-        fetchSellerData()
-      } else if (sellerName) {
-        setSellerData({ storeName: sellerName, artisanType, id: sellerId })
-      }
-    }, [sellerId, sellerName, artisanType])
-
-    const fetchSellerData = async () => {
+    const fetchSellerData = useCallback(async () => {
       try {
         setLoadingSeller(true)
         const res = await fetch(`${apiUrl}/api/sellers/${sellerId}`)
@@ -31,7 +23,15 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
       } finally {
         setLoadingSeller(false)
       }
-    }
+    }, [apiUrl, sellerId])
+
+    useEffect(() => {
+      if (sellerId && !sellerName) {
+        fetchSellerData()
+      } else if (sellerName) {
+        setSellerData({ storeName: sellerName, artisanType, id: sellerId })
+      }
+    }, [sellerId, sellerName, artisanType, fetchSellerData])
 
     // Handle both array of strings and array of objects for images
     let imageUrl = '/path/to/placeholder.jpg';

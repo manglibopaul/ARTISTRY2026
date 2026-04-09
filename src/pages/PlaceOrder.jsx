@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react'
 import Title from '../components/Title'
 import CartTotal from '../components/CartTotal'
-import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import MapPin from '../components/MapPin'
@@ -72,7 +71,7 @@ const validateDeliveryAddress = ({ fullName, phone, regionProvinceCityBarangay, 
   }
 
   const location = String(regionProvinceCityBarangay || '').trim();
-  const locationParts = location.split(/[\/,]/).map((x) => x.trim()).filter(Boolean);
+  const locationParts = location.split(/[/,]/).map((x) => x.trim()).filter(Boolean);
   if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
     errors.push('Provide a valid Region/Province/City/Barangay.');
   }
@@ -106,16 +105,14 @@ const PlaceOrder = () => {
   const [country, setCountry] = useState('Philippines');
   const [useSavedAddress, setUseSavedAddress] = useState(false);
   const [savedAddress, setSavedAddress] = useState(null);
-  const [loadingSavedAddress, setLoadingSavedAddress] = useState(false);
+  const [, setLoadingSavedAddress] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
   const [sellerPickupLocations, setSellerPickupLocations] = useState([])
-  const [reservationDateTime, setReservationDateTime] = useState('')
-  const [reservationNote, setReservationNote] = useState('')
-  const [discountCode, setDiscountCode] = useState('')
-  const [appliedDiscount, setAppliedDiscount] = useState(0)
-  const [discountMsg, setDiscountMsg] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [reservationDateTime] = useState('')
+  const [reservationNote] = useState('')
+  const [appliedDiscount] = useState(0)
+  const [appliedCoupon] = useState(null)
   const [cartData, setCartData] = React.useState([])
   const [isLoggedIn, setIsLoggedIn] = React.useState(false)
   const [shippingRates, setShippingRates] = React.useState([])
@@ -272,7 +269,7 @@ const PlaceOrder = () => {
       setSellerShippingInfo(shippingInfo)
     }
     fetchSellerData()
-  }, [cartsItems, products, apiUrl])
+  }, [cartsItems, products, apiUrl, selectedShippingRate])
 
   const pickupLocationsGrouped = React.useMemo(() => {
     const grouped = {}
@@ -811,7 +808,7 @@ const PlaceOrder = () => {
 
               try {
                 setPlacing(true);
-                const res = await axios.post(`${apiUrl}/api/orders`, {
+                await axios.post(`${apiUrl}/api/orders`, {
                   items: itemsWithPickup,
                   address,
                   paymentMethod: method,

@@ -39,7 +39,7 @@ export const createReview = async (req, res) => {
         if (!inOrder) {
           return res.status(403).json({ message: 'This product is not part of the selected order.' });
         }
-      } catch (e) {
+      } catch {
         return res.status(400).json({ message: 'Unable to verify the selected order.' });
       }
 
@@ -56,7 +56,7 @@ export const createReview = async (req, res) => {
         try {
           const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
           return (o.orderStatus === 'completed') && items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
-        } catch (e) {
+        } catch {
           return false;
         }
       });
@@ -103,7 +103,7 @@ export const checkReviewEligibility = async (req, res) => {
         const items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]');
         const eligible = items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
         return res.json({ eligible });
-      } catch (e) {
+      } catch {
         return res.json({ eligible: false });
       }
     }
@@ -113,7 +113,7 @@ export const checkReviewEligibility = async (req, res) => {
       try {
         const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
         return (o.orderStatus === 'completed') && items.some(it => Number(it.productId || it.id || it._id) === Number(productId));
-      } catch (e) {
+      } catch {
         return false;
       }
     });

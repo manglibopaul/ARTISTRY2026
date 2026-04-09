@@ -120,7 +120,7 @@ const OrderDetails = () => {
                 setCurrentUser(userData);
                 userId = userData.id;
               }
-            } catch (e) {
+            } catch {
               // ignore profile fetch errors — we'll still show the review form when a token exists and order is completed
             }
           }
@@ -136,7 +136,7 @@ const OrderDetails = () => {
                   const prod = await pRes.json();
                   if (prod && prod.image) items[i] = { ...it, image: prod.image };
                 }
-              } catch (e) {
+              } catch {
                 // ignore per-item fetch errors
               }
             }
@@ -154,13 +154,13 @@ const OrderDetails = () => {
                     : false;
                   items[i].canReview = Boolean(token) && (data.orderStatus === 'completed') && (!userId ? true : !hasUserReview);
                 }
-              } catch (e) {
+              } catch {
                 // ignore review fetch errors
               }
 
               // If review fetch failed (network or 500), still allow the UI to show the form
               // when the user is authenticated and the order is completed. Server still enforces eligibility.
-              if (!items[i].hasOwnProperty('canReview')) {
+              if (!Object.prototype.hasOwnProperty.call(items[i], 'canReview')) {
                 items[i].canReview = Boolean(token) && (data.orderStatus === 'completed');
               }
 
@@ -172,7 +172,7 @@ const OrderDetails = () => {
           }
 
           data.items = items;
-        } catch (e) {
+        } catch {
           // ignore
         }
 
@@ -261,7 +261,7 @@ const OrderDetails = () => {
           if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 150);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [order, location.search, location.hash, reviewForms]);
