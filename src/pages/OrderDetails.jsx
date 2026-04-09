@@ -222,7 +222,7 @@ const OrderDetails = () => {
       }
 
       // Geocode pickup location if order has one
-      if (order.pickupLocation && order.method === 'pickup') {
+      if (order.pickupLocation && (order.paymentMethod === 'pickup' || order.method === 'pickup')) {
         try {
           // Pickup location format is usually just the address string
           // Try to geocode it - Nominatim is flexible with location format
@@ -360,6 +360,8 @@ const OrderDetails = () => {
     );
   }
 
+  const isPickupOrder = order?.paymentMethod === 'pickup' || order?.method === 'pickup'
+
   if (loading) return <div className='pt-16'><p className='text-sm text-gray-500'>Loading order…</p></div>
   if (error) return <div className='pt-16'><p className='text-sm text-red-500'>{error}</p></div>
   if (!order) return <div className='pt-16'><p className='text-sm text-gray-500'>No order selected.</p></div>
@@ -385,8 +387,8 @@ const OrderDetails = () => {
         </div>
 
         <div className='border p-3 sm:p-4 rounded'>
-          <h3 className='font-medium mb-2'>{order.paymentMethod === 'pickup' ? 'Pickup Details' : 'Shipping Address'}</h3>
-          {order.paymentMethod === 'pickup' ? (
+          <h3 className='font-medium mb-2'>{isPickupOrder ? 'Pickup Details' : 'Shipping Address'}</h3>
+          {isPickupOrder ? (
             <div>
               <p className='font-medium text-green-700'>📦 Pickup Order</p>
               <p className='text-sm mt-2'>Pickup Location: {order.pickupLocation || 'N/A'}</p>
@@ -439,7 +441,7 @@ const OrderDetails = () => {
               )}
             </div>
           )}
-          {order.method === 'pickup' && pickupMapLat && pickupMapLon && (
+          {isPickupOrder && pickupMapLat && pickupMapLon && (
             <div className='mt-4'>
               <MapPin
                 lat={pickupMapLat}
@@ -467,7 +469,7 @@ const OrderDetails = () => {
                   <p className='font-medium'>{item.name || item.title || 'Product'}</p>
                   <p className='text-sm text-gray-600'>Price: ₱{item.price} • Qty: {item.quantity || item.qty || 1}</p>
                   {item.color && <p className='text-sm text-gray-600'>Color: {item.color}</p>}
-                  {order.paymentMethod === 'pickup' && item.pickupLocation && (
+                  {isPickupOrder && item.pickupLocation && (
                     <p className='text-sm text-gray-600'>Pickup Location: {item.pickupLocation}</p>
                   )}
                     {item.canReview ? (
@@ -554,7 +556,7 @@ const OrderDetails = () => {
             <p className='text-xs sm:text-sm text-gray-500'>Subtotal</p>
             <p className='text-sm sm:text-base'>₱{order.subtotal}</p>
           </div>
-          {order.paymentMethod !== 'pickup' && (
+          {!isPickupOrder && (
             <div className='text-right'>
               <p className='text-xs sm:text-sm text-gray-500'>Shipping</p>
               <p className='text-sm sm:text-base'>₱{order.shippingFee}</p>

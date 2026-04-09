@@ -1125,7 +1125,9 @@ const SellerDashboard = () => {
                           className='w-full px-3 py-2 border rounded text-sm'>
                           <option value='pending'>pending</option>
                           <option value='processing'>processing</option>
-                          <option value='shipped'>shipped</option>
+                          {order.paymentMethod !== 'pickup' && order.method !== 'pickup' && (
+                            <option value='shipped'>shipped</option>
+                          )}
                           <option value='completed'>completed</option>
                           <option value='cancelled'>cancelled</option>
                         </select>
@@ -1208,7 +1210,9 @@ const SellerDashboard = () => {
                               className='px-2 py-1 border rounded'>
                               <option value='pending'>pending</option>
                               <option value='processing'>processing</option>
-                              <option value='shipped'>shipped</option>
+                              {order.paymentMethod !== 'pickup' && order.method !== 'pickup' && (
+                                <option value='shipped'>shipped</option>
+                              )}
                               <option value='completed'>completed</option>
                               <option value='cancelled'>cancelled</option>
                             </select>
