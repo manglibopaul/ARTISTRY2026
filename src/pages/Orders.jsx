@@ -32,6 +32,11 @@ const Orders = () => {
     }
   }
 
+  const handleCustomerProfileClick = () => {
+    const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+    navigate(token ? '/profile' : '/login');
+  }
+
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -125,7 +130,7 @@ const Orders = () => {
       <div className='flex items-center gap-2 mb-4 max-w-md'>
         <button
           type='button'
-          onClick={() => navigate('/profile')}
+          onClick={handleCustomerProfileClick}
           className='px-4 py-2 bg-black text-white rounded text-sm sm:text-base'
         >
           My Profile

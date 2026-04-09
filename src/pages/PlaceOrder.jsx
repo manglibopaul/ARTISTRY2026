@@ -7,16 +7,17 @@ import MapPin from '../components/MapPin'
 import { geocodeAddress, geocodeQuery } from '../utils/geocoding'
 
 const parseCartKey = (key) => {
-  if (typeof key !== 'string') return { id: key, color: null };
+  if (typeof key !== 'string') return { id: key, color: null, size: null };
   if (key.includes('::')) {
     const [id, ...rest] = key.split('::');
-    return { id, color: rest.join('::') || null };
+    const [color = null, size = null] = rest.join('::').split('||');
+    return { id, color: color || null, size: size || null };
   }
   const dashIndex = key.indexOf('-');
   if (dashIndex > 0 && /^\d+$/.test(key.slice(0, dashIndex))) {
-    return { id: key.slice(0, dashIndex), color: key.slice(dashIndex + 1) || null };
+    return { id: key.slice(0, dashIndex), color: key.slice(dashIndex + 1) || null, size: null };
   }
-  return { id: key, color: null };
+  return { id: key, color: null, size: null };
 }
 
 // Helper to build items from cart
@@ -25,14 +26,14 @@ const buildItemsFromCart = (cartsItems, products) => {
   for (const key in cartsItems) {
     const qty = cartsItems[key];
     if (!qty || qty <= 0) continue;
-    const { id, color } = parseCartKey(key);
+    const { id, color, size } = parseCartKey(key);
     // key may be string id; match product by id or _id
     const prod = products.find(p => (p._id ? String(p._id) === String(id) : String(p.id) === String(id)));
     if (prod) {
-      items.push({ productId: prod.id || prod._id, name: prod.name, price: prod.price, quantity: qty, color: color || null, sellerId: prod.sellerId || prod.sellerId || null });
+      items.push({ productId: prod.id || prod._id, name: prod.name, price: prod.price, quantity: qty, color: color || null, size: size || null, sellerId: prod.sellerId || prod.sellerId || null });
     } else {
       // fallback, include id only
-      items.push({ productId: Number(id), quantity: qty, color: color || null });
+      items.push({ productId: Number(id), quantity: qty, color: color || null, size: size || null });
     }
   }
   return items;
@@ -289,11 +290,12 @@ const PlaceOrder = () => {
     const tempData = []
     for (const items in cartsItems) {
       if (cartsItems[items] > 0) {
-        const { id, color } = parseCartKey(items)
+        const { id, color, size } = parseCartKey(items)
         tempData.push({
           _id: items,
           productId: id,
           color: color || null,
+          size: size || null,
           quantity: cartsItems[items]
         })
       }
@@ -688,8 +690,13 @@ const PlaceOrder = () => {
                   </div>
                   <div className='flex-1'>
                     <h3 className='font-medium text-sm sm:text-base'>{productData.name}</h3>
-                      {Array.isArray(productData.sizes) && productData.sizes.length > 0 && <p className='text-xs sm:text-sm text-gray-600'>Sizes: {productData.sizes.join(', ')}</p>}
-                      {typeof productData.size === 'string' && productData.size && <p className='text-xs sm:text-sm text-gray-600'>Size: {productData.size}</p>}
+                      {item.size ? (
+                        <p className='text-xs sm:text-sm text-gray-600'>Size: {item.size}</p>
+                      ) : Array.isArray(productData.sizes) && productData.sizes.length > 0 ? (
+                        <p className='text-xs sm:text-sm text-gray-600'>Sizes: {productData.sizes.join(', ')}</p>
+                      ) : typeof productData.size === 'string' && productData.size ? (
+                        <p className='text-xs sm:text-sm text-gray-600'>Size: {productData.size}</p>
+                      ) : null}
                     {item.color && <p className='text-xs sm:text-sm text-gray-600'>Color: {item.color}</p>}
                     <p className='text-xs sm:text-sm text-gray-600 mt-1'>{currency}{productData.price}</p>
                   </div>

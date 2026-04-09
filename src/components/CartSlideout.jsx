@@ -130,7 +130,7 @@ const CartSlideout = ({ isOpen, onClose }) => {
 
                     {/* Cart Items */}
                     {validItems.map((item, index) => {
-                      const { id: productId, color } = parseCartKey(item._id)
+                      const { id: productId, color, size } = parseCartKey(item._id)
                       const productData = products.find((product) => {
                         if (product._id && String(product._id) === String(productId)) return true
                         if (product.id && String(product.id) === String(productId)) return true
@@ -168,6 +168,9 @@ const CartSlideout = ({ isOpen, onClose }) => {
                             <p className='text-sm text-gray-600'>{currency}{productData.price}</p>
                             {color && (
                               <p className='text-xs text-gray-500 mt-1'>Color: {color}</p>
+                            )}
+                            {size && (
+                              <p className='text-xs text-gray-500 mt-1'>Size: {size}</p>
                             )}
                             {Array.isArray(productData.sizes) && productData.sizes.length > 0 && (
                               <p className='text-xs text-gray-500 mt-1'>Sizes: {productData.sizes.join(', ')}</p>

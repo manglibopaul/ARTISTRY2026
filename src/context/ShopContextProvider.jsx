@@ -18,16 +18,17 @@ const ShopContextProvider = (props) => {
     || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
   
   const parseCartKey = (key) => {
-    if (typeof key !== 'string') return { id: key, color: null };
+    if (typeof key !== 'string') return { id: key, color: null, size: null };
     if (key.includes('::')) {
       const [id, ...rest] = key.split('::');
-      return { id, color: rest.join('::') || null };
+      const [color = null, size = null] = rest.join('::').split('||');
+      return { id, color: color || null, size: size || null };
     }
     const dashIndex = key.indexOf('-');
     if (dashIndex > 0 && /^\d+$/.test(key.slice(0, dashIndex))) {
-      return { id: key.slice(0, dashIndex), color: key.slice(dashIndex + 1) || null };
+      return { id: key.slice(0, dashIndex), color: key.slice(dashIndex + 1) || null, size: null };
     }
-    return { id: key, color: null };
+    return { id: key, color: null, size: null };
   };
 
   const findProductByCartKey = useCallback((key) => {
@@ -77,13 +78,15 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  // Add item to cart with optional quantity (default 1) and color
-  const addToCart = async (itemId, qty = 1, color = null) => {
+  // Add item to cart with optional quantity (default 1), color, and size
+  const addToCart = async (itemId, qty = 1, color = null, size = null) => {
 
     let cartData = structuredClone(cartsItems);
     
-    // Create a unique key combining itemId and color
-    const cartKey = color ? `${itemId}::${color}` : itemId;
+    // Create a unique key combining itemId, color, and size
+    const cartKey = (color || size)
+      ? `${itemId}::${color || ''}||${size || ''}`
+      : itemId;
 
     if (cartData[cartKey]) {
       cartData[cartKey] += Number(qty || 0);
@@ -92,8 +95,8 @@ const ShopContextProvider = (props) => {
     }
     setCartItems(cartData);
     syncCartToServer(cartData);
-    const colorText = color ? ` (${color})` : '';
-    toast.success(`Item added to cart${colorText}!`);
+    const optionText = [color, size].filter(Boolean).join(', ');
+    toast.success(`Item added to cart${optionText ? ` (${optionText})` : ''}!`);
 
   }
 

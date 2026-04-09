@@ -28,6 +28,7 @@ const Product = () => {
   const [arError, setArError] = useState('');
   const [selectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -212,6 +213,15 @@ const Product = () => {
       setCartColor(availableColors[0]);
     } else {
       setCartColor('');
+    }
+  }, [productData])
+
+  useEffect(() => {
+    const availableSizes = getAvailableSizes(productData);
+    if (availableSizes.length > 0) {
+      setSelectedSize(availableSizes[0]);
+    } else {
+      setSelectedSize('');
     }
   }, [productData])
 
@@ -411,12 +421,14 @@ const Product = () => {
                 <p className='text-sm font-medium mb-2'>Available Sizes:</p>
                 <div className='flex flex-wrap gap-2'>
                   {getAvailableSizes(productData).map((size) => (
-                    <span
+                    <button
                       key={size}
-                      className='px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border border-gray-300 bg-white'
+                      type='button'
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
                     >
                       {size}
-                    </span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -445,7 +457,13 @@ const Product = () => {
                 <button 
                   onClick={() => {
                     const availableColors = getAvailableColors(productData);
-                    addToCart(productData._id || productData.id, quantity, availableColors.length ? cartColor : null);
+                    const availableSizes = getAvailableSizes(productData);
+                    addToCart(
+                      productData._id || productData.id,
+                      quantity,
+                      availableColors.length ? cartColor : null,
+                      availableSizes.length ? selectedSize : null,
+                    );
                   }} 
                   className='bg-black text-white px-6 py-3 text-sm active:bg-pink-700 flex-1 sm:flex-none'>
                   ADD TO CART

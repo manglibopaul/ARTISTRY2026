@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -98,6 +98,7 @@ const SellerDashboard = () => {
   const [existingImages, setExistingImages] = useState([])
   const [newImages, setNewImages] = useState([])
   const [isImageDropActive, setIsImageDropActive] = useState(false)
+  const imageInputRef = useRef(null)
 
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
@@ -837,7 +838,7 @@ const SellerDashboard = () => {
               <div className='col-span-1 md:col-span-2'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
                   Product Images <span className='text-red-500'>*</span>
-                  <span className='text-xs text-gray-500 font-normal ml-2'>(drag and drop or pick multiple files)</span>
+                  <span className='text-xs text-gray-500 font-normal ml-2'>(drag and drop or tap Browse Images)</span>
                 </label>
                 <div
                   className={`rounded-lg border-2 border-dashed px-4 py-5 transition-colors ${isImageDropActive ? 'border-black bg-gray-50' : 'border-gray-300 bg-white'}`}
@@ -847,14 +848,27 @@ const SellerDashboard = () => {
                   onDrop={handleImageDrop}
                 >
                   <input
+                    ref={imageInputRef}
                     id='product-images'
                     type='file'
                     multiple
                     accept='image/*'
                     onChange={handleImageChange}
-                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                    className='hidden'
                   />
-                  <p className='text-xs text-gray-500 mt-2'>You can drag in several images at once, or use the picker to add more. Recommended: upload at least 3 different angles.</p>
+                  <div className='flex flex-col sm:flex-row gap-3 sm:items-center'>
+                    <button
+                      type='button'
+                      onClick={() => imageInputRef.current?.click()}
+                      className='bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 text-sm'
+                    >
+                      Browse Images
+                    </button>
+                    <p className='text-xs text-gray-500'>
+                      On phone, tap Browse Images and pick multiple photos from your gallery, or keep tapping Browse Images to add more.
+                    </p>
+                  </div>
+                  <p className='text-xs text-gray-500 mt-3'>You can also drag in several images on desktop. Recommended: upload at least 3 different angles.</p>
                 </div>
                 {imagePreview.length > 0 && (
                   <div className='mt-3'>
