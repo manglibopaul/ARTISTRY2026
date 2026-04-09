@@ -1,6 +1,8 @@
 import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 
+let hasWarnedCloudinaryMissing = false;
+
 const normalizePathToPublicUpload = (filePath, filename, fallbackFolder = 'images') => {
   if (!filePath) return filename ? `/uploads/${fallbackFolder}/${filename}` : null;
   if (String(filePath).startsWith('http')) return filePath;
@@ -44,6 +46,10 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
   const localUrl = normalizePathToPublicUpload(file.path, file.filename, 'images');
 
   if (!hasCloudinaryConfig()) {
+    if (process.env.NODE_ENV === 'production' && !hasWarnedCloudinaryMissing) {
+      console.warn('Cloudinary is not configured in production. Falling back to local /uploads URLs.');
+      hasWarnedCloudinaryMissing = true;
+    }
     return {
       url: localUrl,
       filename: file.filename || null,
@@ -80,6 +86,10 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
   const localUrl = normalizePathToPublicUpload(file.path, file.filename, 'models');
 
   if (!hasCloudinaryConfig()) {
+    if (process.env.NODE_ENV === 'production' && !hasWarnedCloudinaryMissing) {
+      console.warn('Cloudinary is not configured in production. Falling back to local /uploads URLs.');
+      hasWarnedCloudinaryMissing = true;
+    }
     return {
       url: localUrl,
       filename: file.filename || null,

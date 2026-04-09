@@ -2,11 +2,72 @@ import Product from '../models/Product.js';
 import { Op } from 'sequelize';
 import { uploadImage, uploadModel } from '../utils/media.js';
 
+const normalizeImageEntry = (entry) => {
+  if (!entry) return null;
+
+  if (typeof entry === 'string') {
+    const trimmed = entry.trim();
+    if (!trimmed) return null;
+
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return normalizeImageEntry(parsed);
+      } catch {
+        // Keep going and treat it as a plain string URL/path.
+      }
+    }
+
+    if (trimmed.startsWith('http')) return { url: trimmed };
+    if (trimmed.startsWith('//')) return { url: `https:${trimmed}` };
+    if (trimmed.startsWith('/')) return { url: trimmed };
+    return { url: `/uploads/images/${trimmed}` };
+  }
+
+  if (typeof entry === 'object') {
+    const candidate = entry.url || entry.secure_url || entry.path || null;
+    if (typeof candidate === 'string' && candidate.trim()) {
+      const value = candidate.trim();
+      if (value.startsWith('//')) return { ...entry, url: `https:${value}` };
+      if (value.startsWith('http') || value.startsWith('/')) return { ...entry, url: value };
+      return { ...entry, url: `/uploads/images/${value}` };
+    }
+    return null;
+  }
+
+  return null;
+};
+
+const normalizeProductImages = (imageValue) => {
+  if (!imageValue) return [];
+
+  let parsed = imageValue;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      parsed = [parsed];
+    }
+  }
+
+  if (!Array.isArray(parsed)) parsed = [parsed];
+
+  return parsed
+    .map(normalizeImageEntry)
+    .filter(Boolean);
+};
+
+const normalizeProductPayload = (product) => {
+  const plain = typeof product?.toJSON === 'function' ? product.toJSON() : { ...product };
+  plain.image = normalizeProductImages(plain.image);
+  return plain;
+};
+
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.findAll();
-    res.json(products);
+    res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -19,7 +80,7 @@ export const getProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    res.json(product);
+    res.json(normalizeProductPayload(product));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -30,7 +91,7 @@ export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
     const products = await Product.findAll({ where: { category } });
-    res.json(products);
+    res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -41,7 +102,7 @@ export const getSellerProducts = async (req, res) => {
   try {
     const sellerId = req.seller.id;
     const products = await Product.findAll({ where: { sellerId } });
-    res.json(products);
+    res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -114,7 +175,7 @@ export const createProduct = async (req, res) => {
     }
 
     const newProduct = await Product.create(productData);
-    res.status(201).json(newProduct);
+    res.status(201).json(normalizeProductPayload(newProduct));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -220,7 +281,7 @@ export const updateProduct = async (req, res) => {
     }
 
     await product.update(updateData);
-    res.json(product);
+    res.json(normalizeProductPayload(product));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -258,7 +319,7 @@ export const searchProducts = async (req, res) => {
         ],
       },
     });
-    res.json(products);
+    res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

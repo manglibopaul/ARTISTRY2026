@@ -1,12 +1,14 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
 import { useNavigate } from 'react-router-dom';
+import { assets } from '../assets/assets';
 
 const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}) => {
 
     const navigate = useNavigate()
     const { currency } = useShop();
     const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
+    const fallbackImage = assets.p_img7
     const [sellerData, setSellerData] = useState(null)
     const [, setLoadingSeller] = useState(false)
 
@@ -33,16 +35,22 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
       }
     }, [sellerId, sellerName, artisanType, fetchSellerData])
 
-    // Handle both array of strings and array of objects for images
-    let imageUrl = '/path/to/placeholder.jpg';
+    // Handle array of strings and object formats returned by different API versions.
+    let imageUrl = fallbackImage;
     
     if (Array.isArray(image) && image.length > 0) {
       const firstImage = image[0];
-      if (typeof firstImage === 'object' && firstImage.url) {
-        // If URL is relative, make it absolute
-        imageUrl = firstImage.url.startsWith('http') 
-          ? firstImage.url 
-          : `${apiUrl}${firstImage.url}`;
+      if (typeof firstImage === 'object' && firstImage !== null) {
+        const candidate = firstImage.url || firstImage.path || firstImage.filename || '';
+        if (typeof candidate === 'string' && candidate) {
+          if (candidate.startsWith('http')) {
+            imageUrl = candidate;
+          } else if (candidate.startsWith('/')) {
+            imageUrl = `${apiUrl}${candidate}`;
+          } else {
+            imageUrl = `${apiUrl}/uploads/images/${candidate}`;
+          }
+        }
       } else if (typeof firstImage === 'string') {
           // If it's a string, normalize relative paths.
           if (firstImage.startsWith('http')) {
@@ -70,6 +78,11 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
               src={imageUrl}
               alt={name}
               loading='lazy'
+              onError={(e) => {
+                if (e.currentTarget.src !== fallbackImage) {
+                  e.currentTarget.src = fallbackImage
+                }
+              }}
             />
           </div>
           <div className='pt-2 flex flex-col gap-0.5 text-center'>

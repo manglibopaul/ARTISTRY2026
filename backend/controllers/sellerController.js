@@ -10,15 +10,48 @@ import { uploadImage } from '../utils/media.js';
 
 const SUPPORT_SELLER_EMAIL = 'admin.support@artistry.local';
 
+const normalizePickupLocations = (raw) => {
+  let parsed = raw;
+
+  if (typeof parsed === 'string') {
+    const trimmed = parsed.trim();
+    if (!trimmed) return [];
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      parsed = trimmed.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
+  if (!Array.isArray(parsed)) {
+    parsed = parsed ? [parsed] : [];
+  }
+
+  return parsed
+    .map((entry) => {
+      if (!entry) return null;
+      if (typeof entry === 'string') return entry.trim();
+      if (typeof entry === 'object') {
+        return String(
+          entry.label || entry.address || entry.name || ''
+        ).trim();
+      }
+      return String(entry).trim();
+    })
+    .filter(Boolean);
+};
+
+const normalizeSellerPayload = (seller) => {
+  const plain = typeof seller?.toJSON === 'function' ? seller.toJSON() : { ...seller };
+  plain.pickupLocations = normalizePickupLocations(plain.pickupLocations);
+  return plain;
+};
+
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
     const { name, email, password, storeName, artisanType, phone, address } = req.body;
-    let pickupLocations = req.body.pickupLocations;
-    if (typeof pickupLocations === 'string') {
-      try { pickupLocations = JSON.parse(pickupLocations); } catch { pickupLocations = [pickupLocations]; }
-    }
-    if (!Array.isArray(pickupLocations)) pickupLocations = [];
+    const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
 
     let proofOfArtisan = null;
     if (req.file) {
@@ -80,7 +113,7 @@ export const registerSeller = async (req, res) => {
         storeName: seller.storeName,
         isVerified: !!seller.isVerified,
         artisanType: seller.artisanType,
-        pickupLocations: seller.pickupLocations,
+        pickupLocations: normalizePickupLocations(seller.pickupLocations),
         proofOfArtisan: seller.proofOfArtisan,
       },
     });
@@ -147,7 +180,7 @@ export const getSellerProfile = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found' });
     }
 
-    res.status(200).json(seller);
+    res.status(200).json(normalizeSellerPayload(seller));
   } catch (error) {
     console.error('Error fetching profile:', error);
     res.status(500).json({ message: 'Error fetching profile', error: error.message });
@@ -178,6 +211,9 @@ export const updateSellerProfile = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found' });
     }
 
+    const hasPickupLocationsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupLocations');
+    const normalizedPickupLocations = normalizePickupLocations(pickupLocations);
+
     await seller.update({
       name: name || seller.name,
       storeName: storeName || seller.storeName,
@@ -188,7 +224,7 @@ export const updateSellerProfile = async (req, res) => {
       expertise: Array.isArray(expertise) ? expertise : (seller.expertise || []),
       bio: bio || seller.bio,
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
-      pickupLocations: Array.isArray(pickupLocations) ? pickupLocations : (seller.pickupLocations || []),
+      pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
     });
 
     // Also update shippingSettings and returnPolicy if provided
@@ -294,7 +330,7 @@ export const getAllSellers = async (req, res) => {
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
     });
-    res.json(sellers);
+    res.json(sellers.map(normalizeSellerPayload));
   } catch (error) {
     console.error('getAllSellers', error);
     res.status(500).json({ message: 'Failed to load sellers' });
@@ -390,7 +426,7 @@ export const getSeller = async (req, res) => {
       attributes: { exclude: ['password'] },
     });
     if (!seller) return res.status(404).json({ message: 'Seller not found' });
-    res.json(seller);
+    res.json(normalizeSellerPayload(seller));
   } catch (error) {
     console.error('getSeller', error);
     res.status(500).json({ message: 'Failed to load seller' });
@@ -409,7 +445,7 @@ export const getAllSellersPublic = async (req, res) => {
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
     });
-    res.json(sellers);
+    res.json(sellers.map(normalizeSellerPayload));
   } catch (error) {
     console.error('getAllSellersPublic', error);
     res.status(500).json({ message: 'Failed to load sellers' });

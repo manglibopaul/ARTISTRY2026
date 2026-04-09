@@ -58,6 +58,23 @@ const ArtisanProfile = () => {
     return sellerProducts.filter(p => getProductCategory(p) === category).length
   }
 
+  const pickupLocations = (() => {
+    const raw = seller?.pickupLocations
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw.map((loc) => String(loc || '').trim()).filter(Boolean)
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed)
+          ? parsed.map((loc) => String(loc || '').trim()).filter(Boolean)
+          : [String(parsed || '').trim()].filter(Boolean)
+      } catch {
+        return raw.split(/\r?\n|,/).map((loc) => loc.trim()).filter(Boolean)
+      }
+    }
+    return []
+  })()
+
   const avatarUrl = seller?.avatar
     ? (seller.avatar.startsWith('http') ? seller.avatar : `${apiUrl}${seller.avatar}`)
     : ''
@@ -143,11 +160,11 @@ const ArtisanProfile = () => {
                 {seller.phone && (
                   <p className='text-gray-700'>📞 {seller.phone}</p>
                 )}
-                {Array.isArray(seller.pickupLocations) && seller.pickupLocations.length > 0 && (
+                {pickupLocations.length > 0 && (
                   <div className='mt-3 pt-3 border-t border-gray-200'>
                     <p className='font-bold text-gray-900 text-xs uppercase tracking-wide mb-1'>Pickup Locations</p>
                     <ul className='space-y-1'>
-                      {seller.pickupLocations.map((loc, idx) => (
+                      {pickupLocations.map((loc, idx) => (
                         <li key={idx} className='text-gray-700'>📍 {loc}</li>
                       ))}
                     </ul>
