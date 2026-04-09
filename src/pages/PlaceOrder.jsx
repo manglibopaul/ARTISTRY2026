@@ -20,6 +20,32 @@ const parseCartKey = (key) => {
   return { id: key, color: null, size: null };
 }
 
+const normalizePickupLocations = (seller) => {
+  const raw = seller?.pickupLocations
+  let normalized = []
+
+  if (Array.isArray(raw)) {
+    normalized = raw
+  } else if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) normalized = parsed
+      else if (typeof parsed === 'string') normalized = [parsed]
+    } catch {
+      normalized = raw.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean)
+    }
+  }
+
+  normalized = normalized.map((s) => String(s || '').trim()).filter(Boolean)
+
+  if (normalized.length === 0 && seller?.address) {
+    const fallback = String(seller.address).trim()
+    if (fallback) normalized = [fallback]
+  }
+
+  return [...new Set(normalized)]
+}
+
 // Helper to build items from cart
 const buildItemsFromCart = (cartsItems, products) => {
   const items = [];
@@ -223,7 +249,7 @@ const PlaceOrder = () => {
           if (res.ok) {
             const seller = await res.json()
             // Pickup locations
-            const locs = Array.isArray(seller.pickupLocations) ? seller.pickupLocations : []
+            const locs = normalizePickupLocations(seller)
             locs.forEach(loc => {
               if (!allLocations.some(l => l.location === loc && l.sellerId === sid)) {
                 allLocations.push({ location: loc, sellerId: sid, storeName: seller.storeName || 'Seller' })

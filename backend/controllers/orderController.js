@@ -3,6 +3,31 @@ import Product from '../models/Product.js';
 import Seller from '../models/Seller.js';
 import Notification from '../models/Notification.js';
 import { useCoupon } from './couponController.js';
+const normalizePickupLocations = (seller) => {
+  const raw = seller?.pickupLocations
+  let locations = []
+
+  if (Array.isArray(raw)) {
+    locations = raw
+  } else if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) locations = parsed
+      else if (typeof parsed === 'string') locations = [parsed]
+    } catch {
+      locations = raw.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean)
+    }
+  }
+
+  locations = locations.map((loc) => String(loc || '').trim()).filter(Boolean)
+  if (locations.length === 0 && seller?.address) {
+    const fallback = String(seller.address).trim()
+    if (fallback) locations = [fallback]
+  }
+
+  return [...new Set(locations)]
+}
+
 import { sendEmail } from '../utils/email.js';
 
 const PLACEHOLDER_PATTERN = /\b(test|asdf|qwe|zxc|n\/?a|na|none|unknown|sample|dummy|fake|12345|1111)\b/i;
@@ -195,7 +220,7 @@ export const createOrder = async (req, res) => {
       for (const sid of sellerIds) {
         const selectedLocation = pickupLocationsBySeller[String(sid)] || pickupLocationsBySeller[sid];
         const seller = sellerMap[sid];
-        const allowedLocations = Array.isArray(seller?.pickupLocations) ? seller.pickupLocations : [];
+        const allowedLocations = normalizePickupLocations(seller);
 
         if (!selectedLocation) {
           return res.status(400).json({ message: 'Please select a pickup location for each seller.' });
