@@ -220,9 +220,7 @@ const SellerChat = () => {
         </div>
 
         <div className='flex gap-2 items-center mb-3'>
-          <button className={`px-3 py-2 rounded-md text-sm ${'bg-white shadow-sm'}`}>Conversations</button>
-          <button className='px-3 py-2 rounded-md text-sm text-gray-500'>Handoffs</button>
-          <button className='px-3 py-2 rounded-md text-sm text-gray-500'>Closed</button>
+          <button className='px-3 py-2 rounded-md text-sm bg-white shadow-sm'>Conversations</button>
         </div>
 
         <div className='mt-3 mb-3'>
