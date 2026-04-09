@@ -63,6 +63,18 @@ const Product = () => {
     return [];
   };
 
+  const getAvailableSizes = (product) => {
+    if (!product) return [];
+    if (Array.isArray(product.sizes)) return product.sizes.filter(Boolean);
+    if (typeof product.sizes === 'string') {
+      return product.sizes.split(',').map(size => size.trim()).filter(Boolean);
+    }
+    if (typeof product.size === 'string' && product.size.trim()) {
+      return [product.size.trim()];
+    }
+    return [];
+  };
+
   const getImageUrl = useCallback((img) => {
     if (!img) return '/path/to/placeholder.jpg';
 
@@ -389,6 +401,22 @@ const Product = () => {
                     >
                       {color}
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {getAvailableSizes(productData).length > 0 && (
+              <div>
+                <p className='text-sm font-medium mb-2'>Available Sizes:</p>
+                <div className='flex flex-wrap gap-2'>
+                  {getAvailableSizes(productData).map((size) => (
+                    <span
+                      key={size}
+                      className='px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border border-gray-300 bg-white'
+                    >
+                      {size}
+                    </span>
                   ))}
                 </div>
               </div>

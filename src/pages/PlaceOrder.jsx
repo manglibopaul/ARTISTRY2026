@@ -688,7 +688,8 @@ const PlaceOrder = () => {
                   </div>
                   <div className='flex-1'>
                     <h3 className='font-medium text-sm sm:text-base'>{productData.name}</h3>
-                    {productData.size && <p className='text-xs sm:text-sm text-gray-600'>Size: {productData.size}</p>}
+                      {Array.isArray(productData.sizes) && productData.sizes.length > 0 && <p className='text-xs sm:text-sm text-gray-600'>Sizes: {productData.sizes.join(', ')}</p>}
+                      {typeof productData.size === 'string' && productData.size && <p className='text-xs sm:text-sm text-gray-600'>Size: {productData.size}</p>}
                     {item.color && <p className='text-xs sm:text-sm text-gray-600'>Color: {item.color}</p>}
                     <p className='text-xs sm:text-sm text-gray-600 mt-1'>{currency}{productData.price}</p>
                   </div>

@@ -169,7 +169,10 @@ const CartSlideout = ({ isOpen, onClose }) => {
                             {color && (
                               <p className='text-xs text-gray-500 mt-1'>Color: {color}</p>
                             )}
-                            {productData.size && (
+                            {Array.isArray(productData.sizes) && productData.sizes.length > 0 && (
+                              <p className='text-xs text-gray-500 mt-1'>Sizes: {productData.sizes.join(', ')}</p>
+                            )}
+                            {typeof productData.size === 'string' && productData.size && (
                               <p className='text-xs text-gray-500 mt-1'>Size: {productData.size}</p>
                             )}
                           </div>

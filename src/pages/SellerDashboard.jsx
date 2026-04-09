@@ -88,6 +88,7 @@ const SellerDashboard = () => {
     category: 'Flowers',
     subCategory: '',
     colors: '',
+    sizes: '',
     stock: '',
     image: [],
     model: null,
@@ -443,6 +444,9 @@ const SellerDashboard = () => {
       if (formData.colors) {
         uploadData.append('colors', formData.colors)
       }
+      if (formData.sizes) {
+        uploadData.append('sizes', formData.sizes)
+      }
       uploadData.append('stock', formData.stock)
 
       // Send existing images to backend if editing
@@ -564,6 +568,7 @@ const SellerDashboard = () => {
       category: product.category,
       subCategory: product.subCategory || '',
       colors: Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || ''),
+        sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || product.size || ''),
       stock: product.stock,
       image: product.image || [],
       model: null,
@@ -604,6 +609,7 @@ const SellerDashboard = () => {
       category: 'Flowers',
       subCategory: '',
       colors: '',
+        sizes: '',
       stock: '',
       image: [],
       model: null,
@@ -771,6 +777,16 @@ const SellerDashboard = () => {
                 name='colors'
                 placeholder='Available Colors (comma-separated)'
                 value={formData.colors}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+              />
+
+              <input
+                type='text'
+                name='sizes'
+                placeholder='Available Sizes (comma-separated)'
+                value={formData.sizes}
                 onChange={handleChange}
                 disabled={isSubmitting}
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'

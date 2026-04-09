@@ -68,6 +68,22 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    if (req.body.sizes) {
+      let sizes = req.body.sizes;
+      if (typeof sizes === 'string') {
+        try {
+          sizes = JSON.parse(sizes);
+        } catch {
+          sizes = sizes.split(',').map(size => size.trim()).filter(Boolean);
+        }
+      }
+      if (Array.isArray(sizes)) {
+        productData.sizes = sizes.filter(Boolean);
+      }
+    } else if (req.body.size && !req.body.sizes) {
+      productData.sizes = [req.body.size].filter(Boolean);
+    }
+
     // Handle file uploads
     if (req.files) {
       // Handle multiple images
@@ -132,6 +148,22 @@ export const updateProduct = async (req, res) => {
       if (Array.isArray(colors)) {
         updateData.colors = colors.filter(Boolean);
       }
+    }
+
+    if (req.body.sizes) {
+      let sizes = req.body.sizes;
+      if (typeof sizes === 'string') {
+        try {
+          sizes = JSON.parse(sizes);
+        } catch {
+          sizes = sizes.split(',').map(size => size.trim()).filter(Boolean);
+        }
+      }
+      if (Array.isArray(sizes)) {
+        updateData.sizes = sizes.filter(Boolean);
+      }
+    } else if (req.body.size && !req.body.sizes) {
+      updateData.sizes = [req.body.size].filter(Boolean);
     }
 
     // Handle existing images passed from frontend (for removal/reordering)

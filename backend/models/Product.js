@@ -37,6 +37,10 @@ const Product = sequelize.define('Product', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
+  sizes: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
   modelUrl: {
     type: DataTypes.STRING,
   },
