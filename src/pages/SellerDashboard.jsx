@@ -97,6 +97,7 @@ const SellerDashboard = () => {
   const [imagePreview, setImagePreview] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [newImages, setNewImages] = useState([])
+  const [isImageDropActive, setIsImageDropActive] = useState(false)
 
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
@@ -364,21 +365,18 @@ const SellerDashboard = () => {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleImageChange = async (e) => {
-    const files = Array.from(e.target.files || [])
-    console.log('Files selected:', files.length, files)
-    
-    if (files.length > 0) {
+  const handleImageFiles = async (files, inputElement = null) => {
+    const imageFiles = Array.from(files || [])
+    console.log('Files selected:', imageFiles.length, imageFiles)
+
+    if (imageFiles.length > 0) {
       toast.info('Compressing images...')
       try {
-        // Compress all images
         const compressedImages = await Promise.all(
-          files.map(file => compressImage(file))
+          imageFiles.map(file => compressImage(file))
         )
-        // Append to existing new images
         setNewImages(prev => [...prev, ...compressedImages])
-        
-        // Create preview for new images and combine with existing
+
         const newPreviews = compressedImages.map(file => URL.createObjectURL(file))
         setImagePreview(prev => [...prev, ...newPreviews])
         toast.success(`${compressedImages.length} image(s) compressed and ready`)
@@ -387,11 +385,23 @@ const SellerDashboard = () => {
         toast.error('Failed to compress images')
       }
     }
-    
-    // Reset input after setting state
-    setTimeout(() => {
-      e.target.value = ''
-    }, 0)
+
+    if (inputElement) {
+      setTimeout(() => {
+        inputElement.value = ''
+      }, 0)
+    }
+  }
+
+  const handleImageChange = async (e) => {
+    await handleImageFiles(e.target.files, e.target)
+  }
+
+  const handleImageDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsImageDropActive(false)
+    await handleImageFiles(e.dataTransfer.files)
   }
 
   const removeImage = (index) => {
@@ -827,17 +837,25 @@ const SellerDashboard = () => {
               <div className='col-span-1 md:col-span-2'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
                   Product Images <span className='text-red-500'>*</span>
-                  <span className='text-xs text-gray-500 font-normal ml-2'>(Add 3 or more images)</span>
+                  <span className='text-xs text-gray-500 font-normal ml-2'>(drag and drop or pick multiple files)</span>
                 </label>
-                <input
-                  id='product-images'
-                  type='file'
-                  multiple
-                  accept='image/*'
-                  onChange={handleImageChange}
-                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
-                />
-                <p className='text-xs text-gray-500 mt-1'>Recommended: Upload at least 3 different angles of your product</p>
+                <div
+                  className={`rounded-lg border-2 border-dashed px-4 py-5 transition-colors ${isImageDropActive ? 'border-black bg-gray-50' : 'border-gray-300 bg-white'}`}
+                  onDragEnter={(e) => { e.preventDefault(); setIsImageDropActive(true) }}
+                  onDragOver={(e) => { e.preventDefault(); setIsImageDropActive(true) }}
+                  onDragLeave={(e) => { e.preventDefault(); setIsImageDropActive(false) }}
+                  onDrop={handleImageDrop}
+                >
+                  <input
+                    id='product-images'
+                    type='file'
+                    multiple
+                    accept='image/*'
+                    onChange={handleImageChange}
+                    className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                  />
+                  <p className='text-xs text-gray-500 mt-2'>You can drag in several images at once, or use the picker to add more. Recommended: upload at least 3 different angles.</p>
+                </div>
                 {imagePreview.length > 0 && (
                   <div className='mt-3'>
                     <p className='text-sm text-gray-600 mb-2'>

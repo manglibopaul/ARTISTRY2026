@@ -7,7 +7,7 @@ const SellerChat = () => {
   const [selectedConv, setSelectedConv] = useState(null)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedImages, setSelectedImages] = useState([])
   const [loading, setLoading] = useState(false)
   const [devMessages, setDevMessages] = useState([])
 
@@ -126,31 +126,45 @@ const SellerChat = () => {
     setSelectedConv(conv)
   }
 
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files || [])
+    setSelectedImages(files)
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
   const sendMessage = async () => {
     if (!selectedConv) {
       toast.info('Select a conversation first.')
       return
     }
-    if (!text.trim() && !selectedImage) {
+    if (!text.trim() && selectedImages.length === 0) {
       toast.info('Type a message or attach an image first.')
       return
     }
     try {
       const key = selectedConv.userId ? selectedConv.userId : selectedConv.guestId
-      const formData = new FormData()
-      if (text.trim()) formData.append('text', text.trim())
-      if (selectedImage) formData.append('image', selectedImage)
-      if (!selectedConv.userId) {
-        formData.append('guestId', selectedConv.guestId)
-        if (selectedConv.name) formData.append('guestName', selectedConv.name)
+      const attachments = selectedImages.length > 0 ? selectedImages : [null]
+      let firstSent = null
+
+      for (const [index, imageFile] of attachments.entries()) {
+        const formData = new FormData()
+        const messageText = index === 0 ? text.trim() : ''
+        if (messageText) formData.append('text', messageText)
+        if (imageFile) formData.append('image', imageFile)
+        if (!selectedConv.userId) {
+          formData.append('guestId', selectedConv.guestId)
+          if (selectedConv.name) formData.append('guestName', selectedConv.name)
+        }
+
+        const res = await axios.post(`${apiUrl}/api/chat/seller/${encodeURIComponent(key)}/message`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!firstSent) firstSent = res.data
       }
-      const res = await axios.post(`${apiUrl}/api/chat/seller/${encodeURIComponent(key)}/message`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
       setText('')
-      setSelectedImage(null)
+      setSelectedImages([])
       if (imageInputRef.current) imageInputRef.current.value = ''
-      setMessages(prev => [...prev, res.data])
+      if (firstSent) setMessages(prev => [...prev, firstSent])
       setTimeout(() => scrollToBottom(), 50)
       fetchConversations()
     } catch (err) {
@@ -281,16 +295,17 @@ const SellerChat = () => {
               <input
                 ref={imageInputRef}
                 type='file'
+                multiple
                 accept='image/*'
                 className='hidden'
-                onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+                onChange={handleImageChange}
               />
-              {selectedImage && (
-                <div className='mb-2 text-xs text-gray-600 flex items-center justify-between'>
-                  <span className='truncate mr-2'>Attached: {selectedImage.name}</span>
+              {selectedImages.length > 0 && (
+                <div className='mb-2 text-xs text-gray-600 flex items-center justify-between gap-3'>
+                  <span className='truncate mr-2'>Attached: {selectedImages.length} file{selectedImages.length !== 1 ? 's' : ''}</span>
                   <button
                     onClick={() => {
-                      setSelectedImage(null)
+                      setSelectedImages([])
                       if (imageInputRef.current) imageInputRef.current.value = ''
                     }}
                     className='text-red-600 hover:underline'
