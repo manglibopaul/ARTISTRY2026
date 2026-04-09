@@ -12,11 +12,20 @@ const Orders = () => {
 
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
+  const parseJsonSafe = async (res) => {
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      return res.json()
+    }
+    const txt = await res.text()
+    throw new Error(txt || 'Server returned a non-JSON response')
+  }
+
   const cancelOrder = async (orderId) => {
     const token = localStorage.getItem('token') || localStorage.getItem('userToken');
     if (!token) return navigate('/login');
     try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+      const res = await fetch(`${apiUrl}/api/orders/${orderId}/cancel`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -49,7 +58,7 @@ const Orders = () => {
           return;
         }
 
-        const res = await fetch('/api/orders/my-orders', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${apiUrl}/api/orders/my-orders`, { headers: { Authorization: `Bearer ${token}` } });
 
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
@@ -63,7 +72,7 @@ const Orders = () => {
           return;
         }
 
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
 
         // Augment items with product images when missing
         const augmented = await Promise.all((data || []).map(async (order) => {
