@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}) => {
 
@@ -58,10 +58,18 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
     }
 
   const resolvedProductId = id != null ? String(id) : ''
+  const goToProduct = () => {
+    if (!resolvedProductId) {
+      navigate('/collection')
+      return
+    }
+    navigate(`/product/${resolvedProductId}`)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
 
   return (
     <div className='text-gray cursor-pointer block h-full group'>
-      <Link to={resolvedProductId ? `/product/${resolvedProductId}` : '/collection'} className='block'>
+      <button type='button' onClick={goToProduct} className='block w-full text-left'>
         <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
           <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center'>
             <img
@@ -76,7 +84,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
             <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
           </div>
         </div>
-      </Link>
+      </button>
 
       {/* Seller Info */}
       {sellerData && (
