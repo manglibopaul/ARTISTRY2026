@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { ShopContext } from '../context/ShopContext'
 import ProductItem from '../components/ProductItem'
+import { toArtisanSlug } from '../utils/artisanUrl'
 
 const ArtisanProfile = () => {
   const navigate = useNavigate()
@@ -138,10 +139,12 @@ const ArtisanProfile = () => {
               </div>
               <button
                 onClick={() => {
-                  const qs = new URLSearchParams()
-                  qs.set('sellerId', String(seller?.id || ''))
-                  if (seller?.storeName) qs.set('sellerName', seller.storeName)
-                  navigate(`/chat?${qs.toString()}`)
+                  const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
+                  if (sellerSlug) {
+                    navigate(`/chat/${encodeURIComponent(sellerSlug)}`)
+                  } else {
+                    navigate('/chat')
+                  }
                 }}
                 className='w-full bg-black text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition text-sm mt-4'
               >
