@@ -460,8 +460,8 @@ const SellerDashboard = () => {
       }
       uploadData.append('stock', formData.stock)
 
-      // Send existing images to backend if editing
-      if (editingProduct && existingImages.length > 0) {
+      // Always send existing images when editing, including [] when user removed all old photos.
+      if (editingProduct) {
         uploadData.append('existingImages', JSON.stringify(existingImages))
       }
 
@@ -876,18 +876,28 @@ const SellerDashboard = () => {
                       Selected images: <span className='font-medium text-green-600'>{imagePreview.length}</span>
                       {imagePreview.length < 3 && <span className='text-xs text-orange-600 ml-2'>(Recommended: 3+)</span>}
                     </p>
+                    {editingProduct && existingImages.length > 0 && (
+                      <p className='text-xs text-gray-500 mb-2'>
+                        Existing photos: <span className='font-medium'>{existingImages.length}</span>. Use Remove old to delete them before updating.
+                      </p>
+                    )}
                     <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
                       {imagePreview.map((preview, idx) => (
                         <div key={idx} className='relative group'>
                           <img src={preview} alt={`Preview ${idx}`} className='w-full h-24 object-cover rounded border border-gray-200' />
+                          {idx < existingImages.length ? (
+                            <span className='absolute bottom-1 left-1 bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded'>Old</span>
+                          ) : (
+                            <span className='absolute bottom-1 left-1 bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded'>New</span>
+                          )}
                           <span className='absolute top-1 right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center'>{idx + 1}</span>
                           <button
                             type='button'
                             onClick={() => removeImage(idx)}
-                            className='absolute top-0 left-0 bg-red-500 hover:bg-red-600 text-white text-sm rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
-                            title='Remove image'
+                            className='absolute top-1 left-1 bg-red-500 hover:bg-red-600 text-white text-[10px] rounded px-2 py-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'
+                            title={idx < existingImages.length ? 'Remove old image' : 'Remove new image'}
                           >
-                            ×
+                            {idx < existingImages.length ? 'Remove old' : 'Remove'}
                           </button>
                         </div>
                       ))}
