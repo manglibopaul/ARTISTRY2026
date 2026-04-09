@@ -4,6 +4,7 @@ import { ShopContext } from '../context/ShopContext';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductChat from '../components/ProductChat'
 import { getArtisanPath } from '../utils/artisanUrl'
+import { getProductPath } from '../utils/productUrl'
 
 const Product = () => {
 
@@ -117,7 +118,10 @@ const Product = () => {
     setLoadingProduct(true)
     setProductError('')
     const ref = String(productRef || '').trim()
-    const isNumericRef = /^\d+$/.test(ref)
+    const idSuffixMatch = ref.match(/-p(\d+)$/i)
+    const refId = idSuffixMatch ? idSuffixMatch[1] : null
+    const slugRef = (idSuffixMatch ? ref.replace(/-p\d+$/i, '') : ref).toLowerCase()
+    const isNumericRef = /^\d+$/.test(ref) || Boolean(refId)
 
     if (!ref) {
       setProductError('Product not found')
@@ -129,7 +133,7 @@ const Product = () => {
     let found = null
     for (const item of products) {
       const id = item._id || item.id
-      if (isNumericRef && String(id) === ref) {
+      if (isNumericRef && String(id) === String(refId || ref)) {
         found = item
         break
       }
@@ -141,7 +145,7 @@ const Product = () => {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
-        if (localSlug === ref.toLowerCase()) {
+        if (localSlug === slugRef) {
           found = item
           break
         }
@@ -150,6 +154,12 @@ const Product = () => {
 
     if (found) {
       console.log('Product found in context', found)
+      if (refId == null && !/^\d+$/.test(ref)) {
+        const canonicalPath = getProductPath(found)
+        if (canonicalPath && canonicalPath !== `/product/${encodeURIComponent(ref)}`) {
+          navigate(canonicalPath, { replace: true })
+        }
+      }
       setProductData(found)
       if (Array.isArray(found.image) && found.image.length > 0) {
         const imageUrl = getImageUrl(found.image[0])
@@ -186,13 +196,19 @@ const Product = () => {
     let resolvedProductId = null
     try {
       const endpoint = isNumericRef
-        ? `${apiUrl}/api/products/${ref}`
-        : `${apiUrl}/api/products/by-name/${encodeURIComponent(ref)}`
+        ? `${apiUrl}/api/products/${refId || ref}`
+        : `${apiUrl}/api/products/by-name/${encodeURIComponent(slugRef)}`
       const res = await fetch(endpoint)
       console.log('Fallback product fetch', res.status, res.statusText)
       if (res.ok) {
         const data = await res.json()
         console.log('Fetched single product', data)
+        if (refId == null && !/^\d+$/.test(ref)) {
+          const canonicalPath = getProductPath(data)
+          if (canonicalPath && canonicalPath !== `/product/${encodeURIComponent(ref)}`) {
+            navigate(canonicalPath, { replace: true })
+          }
+        }
         setProductData(data)
         resolvedProductId = data?.id || data?._id || null
         if (Array.isArray(data.image) && data.image.length > 0) setImage(getImageUrl(data.image[0]))
@@ -245,7 +261,7 @@ const Product = () => {
     }
 
     // no eligibility/form fetching here — reviews can be submitted from Order view only
-  }, [apiUrl, productRef, products, fetchSellerData, getImageUrl])
+  }, [apiUrl, productRef, products, fetchSellerData, getImageUrl, navigate])
 
   useEffect(()=>{
     fetchProductData();

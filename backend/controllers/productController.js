@@ -104,7 +104,17 @@ export const getProductByName = async (req, res) => {
       return res.status(400).json({ message: 'Product name is required' });
     }
 
-    const wantedSlug = toProductSlug(decodeURIComponent(name));
+    const decodedName = decodeURIComponent(name);
+    const idSuffixMatch = decodedName.match(/-p(\d+)$/i);
+    if (idSuffixMatch) {
+      const productById = await Product.findByPk(idSuffixMatch[1]);
+      if (!productById) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      return res.json(normalizeProductPayload(productById));
+    }
+
+    const wantedSlug = toProductSlug(decodedName);
     const products = await Product.findAll();
     const match = products.find((p) => toProductSlug(p.name) === wantedSlug);
 
