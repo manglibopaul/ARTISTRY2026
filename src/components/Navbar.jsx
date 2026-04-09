@@ -9,6 +9,8 @@ const Navbar = () => {
     const [visible,setVisible] = useState(false);
     const [cartOpen, setCartOpen] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const [customerSessionReady, setCustomerSessionReady] = useState(false);
+    const [customerSessionValid, setCustomerSessionValid] = useState(false);
     const navigate = useNavigate();
     const sellerToken = localStorage.getItem('sellerToken');
     const sellerRaw = localStorage.getItem('seller')
@@ -40,12 +42,53 @@ const Navbar = () => {
     }
 
   const handleCustomerProfileClick = () => {
-    if (userToken) {
+    if (customerSessionValid) {
       navigate('/profile')
       return
     }
     navigate('/login')
   }
+
+  useEffect(() => {
+    const verifyCustomerSession = async () => {
+      const token = localStorage.getItem('token') || localStorage.getItem('userToken')
+      if (!token) {
+        setCustomerSessionValid(false)
+        setCustomerSessionReady(true)
+        return
+      }
+
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
+        const res = await fetch(`${apiUrl}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('userToken')
+          localStorage.removeItem('user')
+          setCustomerSessionValid(false)
+          setCustomerSessionReady(true)
+          return
+        }
+
+        const data = await res.json()
+        if (data) {
+          localStorage.setItem('user', JSON.stringify(data))
+          setCustomerSessionValid(true)
+        } else {
+          setCustomerSessionValid(false)
+        }
+      } catch {
+        setCustomerSessionValid(false)
+      } finally {
+        setCustomerSessionReady(true)
+      }
+    }
+
+    verifyCustomerSession()
+  }, [userToken])
 
   useEffect(() => {
     const fetchUnreadNotifications = async () => {
@@ -129,7 +172,7 @@ const Navbar = () => {
               </Link>
             )}
 
-            {userObj ? (
+            {customerSessionReady && customerSessionValid ? (
               <>
                 <button type='button' onClick={handleCustomerProfileClick} className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Profile'>
                   <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>

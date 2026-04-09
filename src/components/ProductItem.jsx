@@ -57,9 +57,11 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
       }
     }
 
+  const resolvedProductId = id != null ? String(id) : ''
+
   return (
     <div className='text-gray cursor-pointer block h-full group'>
-      <Link to={`/product/${id}`} className='block'>
+      <Link to={resolvedProductId ? `/product/${resolvedProductId}` : '/collection'} className='block'>
         <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
           <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center'>
             <img

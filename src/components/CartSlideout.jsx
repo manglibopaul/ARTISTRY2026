@@ -172,12 +172,6 @@ const CartSlideout = ({ isOpen, onClose }) => {
                             {size && (
                               <p className='text-xs text-gray-500 mt-1'>Size: {size}</p>
                             )}
-                            {Array.isArray(productData.sizes) && productData.sizes.length > 0 && (
-                              <p className='text-xs text-gray-500 mt-1'>Sizes: {productData.sizes.join(', ')}</p>
-                            )}
-                            {typeof productData.size === 'string' && productData.size && (
-                              <p className='text-xs text-gray-500 mt-1'>Size: {productData.size}</p>
-                            )}
                           </div>
                           {/* Quantity Controls */}
                           <div className='flex items-center gap-2 mt-2'>

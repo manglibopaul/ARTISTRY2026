@@ -44,7 +44,7 @@ const FeaturedCollections = () => {
                                 className='snap-start shrink-0 w-[70%] sm:w-[45%] md:w-[30%] lg:w-[24%]'
                             >
                                 <ProductItem
-                                    id={item.id}
+                                    id={item._id || item.id}
                                     image={item.image}
                                     name={item.name}
                                     price={item.price}
