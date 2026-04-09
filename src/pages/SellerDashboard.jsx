@@ -1705,7 +1705,9 @@ const SellerDashboard = () => {
                   <div className='text-xs text-gray-500'>{viewOrder.email}</div>
                   {viewOrder.phone && <div className='text-sm mt-1'>Phone: {viewOrder.phone}</div>}
 
-                  <h4 className='font-medium mt-4'>Pickup / Shipping</h4>
+                  <h4 className='font-medium mt-4'>
+                    {viewOrder.paymentMethod === 'pickup' ? 'Pickup Details' : 'Shipping Details'}
+                  </h4>
                   {viewOrder.paymentMethod === 'pickup' ? (
                     <div className='text-sm'>
                       <div>Pickup Location: {viewOrder.pickupLocation || 'N/A'}</div>
