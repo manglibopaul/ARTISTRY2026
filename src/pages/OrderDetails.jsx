@@ -7,6 +7,7 @@ import { geocodeAddress } from '../utils/geocoding'
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,6 +19,15 @@ const OrderDetails = () => {
   const [deliveryMapLon, setDeliveryMapLon] = useState(null);
   const [pickupMapLat, setPickupMapLat] = useState(null);
   const [pickupMapLon, setPickupMapLon] = useState(null);
+
+  const parseJsonSafe = async (res) => {
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      return res.json()
+    }
+    const txt = await res.text()
+    throw new Error(txt || 'Server returned a non-JSON response')
+  }
 
   const openInfoModal = (title, message) => {
     setInfoModal({ open: true, title, message });
@@ -40,7 +50,7 @@ const OrderDetails = () => {
     if (!token) return navigate('/login');
     openConfirmModal('Cancel Order', 'Are you sure you want to cancel this order?', async () => {
       try {
-        const res = await fetch(`/api/orders/${id}/cancel`, {
+        const res = await fetch(`${apiUrl}/api/orders/${id}/cancel`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -49,7 +59,7 @@ const OrderDetails = () => {
           openInfoModal('Cancel Failed', txt || 'Failed to cancel order');
           return;
         }
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
         setOrder(data);
         navigate('/orders');
       } catch (err) {
@@ -63,7 +73,7 @@ const OrderDetails = () => {
     if (!token) return navigate('/login');
     openConfirmModal('Mark as Received', 'Confirm you have received this order?', async () => {
       try {
-        const res = await fetch(`/api/orders/${id}/received`, {
+        const res = await fetch(`${apiUrl}/api/orders/${id}/received`, {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -72,7 +82,7 @@ const OrderDetails = () => {
           openInfoModal('Action Failed', txt || 'Failed to mark as received');
           return;
         }
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
         setOrder(data);
         navigate('/orders');
       } catch (err) {
@@ -87,7 +97,7 @@ const OrderDetails = () => {
       setError(null);
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('userToken');
-        const res = await fetch(`/api/orders/${id}`, {
+        const res = await fetch(`${apiUrl}/api/orders/${id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
@@ -104,19 +114,19 @@ const OrderDetails = () => {
           return;
         }
 
-        const data = await res.json();
+        const data = await parseJsonSafe(res);
         // If items lack images, try to fetch product info for each
         try {
           const items = Array.isArray(data.items) ? data.items : JSON.parse(data.items || '[]');
-          const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
+          const apiBase = apiUrl;
           // If token present, attempt to fetch current user profile to check review eligibility
           const token = localStorage.getItem('token') || localStorage.getItem('userToken');
           let userId = null;
           if (token) {
             try {
-              const up = await fetch(`${apiBase}/api/users/profile`, { headers: { Authorization: `Bearer ${token}` } });
+                const up = await fetch(`${apiBase}/api/users/profile`, { headers: { Authorization: `Bearer ${token}` } });
               if (up.ok) {
-                const userData = await up.json();
+                  const userData = await parseJsonSafe(up);
                 setCurrentUser(userData);
                 userId = userData.id;
               }
@@ -133,7 +143,7 @@ const OrderDetails = () => {
               try {
                 const pRes = await fetch(`${apiBase}/api/products/${prodId}`);
                 if (pRes.ok) {
-                  const prod = await pRes.json();
+                  const prod = await parseJsonSafe(pRes);
                   if (prod && prod.image) items[i] = { ...it, image: prod.image };
                 }
               } catch {
@@ -147,7 +157,7 @@ const OrderDetails = () => {
               try {
                 const rRes = await fetch(`${apiBase}/api/reviews/product/${prodId}`);
                 if (rRes.ok) {
-                  rdata = await rRes.json();
+                  rdata = await parseJsonSafe(rRes);
                   items[i] = { ...items[i], reviews: rdata };
                   const hasUserReview = userId
                     ? rdata.some(r => Number(r.userId) === Number(userId) && Number(r.orderId) === Number(data.id))
@@ -185,7 +195,7 @@ const OrderDetails = () => {
     };
 
     fetchOrder();
-  }, [id]);
+  }, [apiUrl, id]);
 
   // Geocode delivery address when order loads
   useEffect(() => {
@@ -300,7 +310,7 @@ const OrderDetails = () => {
         setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
         return;
       }
-      const newReview = await res.json();
+      const newReview = await parseJsonSafe(res);
       // Update local order state to include the new review and prevent additional reviews
       setOrder(prev => {
         const items = Array.isArray(prev.items) ? prev.items.map(it => {
@@ -320,8 +330,6 @@ const OrderDetails = () => {
       setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
     }
   };
-
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
   const resolveImage = (image) => {
     let imageUrl = '/path/to/placeholder.jpg';
