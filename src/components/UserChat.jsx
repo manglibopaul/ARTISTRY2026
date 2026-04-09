@@ -195,9 +195,9 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
 
   return (
     <div className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden' style={{ height: 'calc(100vh - 140px)', minHeight: '300px' }}>
-      <div className='grid grid-cols-1 md:grid-cols-[320px_1fr] h-full'>
+      <div className='grid grid-cols-1 md:grid-cols-[320px_1fr] h-full min-h-0'>
         {/* ===== LEFT SIDEBAR ===== */}
-        <div className='border-r border-gray-200 flex flex-col h-full'>
+        <div className='border-r border-gray-200 flex flex-col h-full min-h-0'>
           {/* Header */}
           <div className='px-4 py-3 border-b border-gray-100 flex items-center justify-between'>
             <h2 className='text-xl font-bold text-[#c8102e]'>Chat</h2>
@@ -253,7 +253,10 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
           </div>
 
           {/* Conversation List */}
-          <div className='flex-1 overflow-y-auto'>
+          <div
+            className='flex-1 overflow-y-auto min-h-0'
+            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+          >
             {loading ? (
               <div className='flex items-center justify-center py-12'>
                 <div className='animate-spin w-6 h-6 border-2 border-gray-300 border-t-[#c8102e] rounded-full' />
@@ -310,7 +313,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
         </div>
 
         {/* ===== RIGHT PANEL ===== */}
-        <div className='flex flex-col h-full bg-white'>
+        <div className='flex flex-col h-full min-h-0 bg-white'>
           {!selectedSeller ? (
             /* Empty / Welcome state */
             <div className='flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-50'>
@@ -370,7 +373,11 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
               </div>
 
               {/* Messages area */}
-              <div ref={scrollRef} className='flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50'>
+              <div
+                ref={scrollRef}
+                className='flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-3 bg-gray-50'
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+              >
                 {messages.length === 0 ? (
                   <div className='flex items-center justify-center h-full'>
                     <p className='text-sm text-gray-400'>No messages yet. Say hi!</p>
