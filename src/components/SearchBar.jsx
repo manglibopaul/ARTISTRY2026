@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
+import { getProductPath } from '../utils/productUrl';
 
 const SearchBar = () => {
 
@@ -47,8 +48,8 @@ const SearchBar = () => {
         }
     }, [search, products]);
 
-    const handleProductClick = (productId) => {
-        navigate(`/product/${productId}`);
+    const handleProductClick = (product) => {
+        navigate(getProductPath(product));
         setShowSearch(false);
         setSearch('');
     };
@@ -97,7 +98,7 @@ const SearchBar = () => {
                                 {searchResults.map((product) => (
                                     <button
                                         key={product.id || product._id}
-                                        onClick={() => handleProductClick(product.id || product._id)}
+                                        onClick={() => handleProductClick(product)}
                                         className='flex items-center gap-3 p-3 bg-white rounded-lg hover:bg-gray-100 transition text-left border border-gray-100 hover:border-gray-300'
                                     >
                                         <img

@@ -2,6 +2,8 @@ import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
 import { useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
+import { getArtisanPath } from '../utils/artisanUrl';
+import { getProductPath } from '../utils/productUrl';
 
 const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}) => {
 
@@ -65,8 +67,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
       }
     }
 
-  const resolvedProductId = id != null ? String(id) : ''
-  const productHref = resolvedProductId ? `/product/${resolvedProductId}` : '/collection'
+  const productHref = getProductPath({ id, name })
 
   return (
     <div className='text-gray cursor-pointer block h-full group'>
@@ -97,7 +98,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
         <button
           onClick={(e) => {
             e.preventDefault()
-            navigate(`/artisan/${sellerData.id}`)
+            navigate(getArtisanPath(sellerData))
           }}
           className='mt-2 w-full text-left p-2 bg-gray-50 rounded border border-gray-200 hover:border-black hover:bg-white transition text-xs'
         >

@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getArtisanPath } from '../utils/artisanUrl'
 import { ShopContext } from '../context/ShopContext'
 
 const CartSlideout = ({ isOpen, onClose }) => {
@@ -212,7 +213,7 @@ const CartSlideout = ({ isOpen, onClose }) => {
                         onClick={(e) => {
                           e.preventDefault()
                           onClose()
-                          navigate(`/artisan/${productData.sellerId}`)
+                          navigate(getArtisanPath(sellers[productData.sellerId]))
                         }}
                         className='mt-3 w-full text-left p-3 bg-gray-50 rounded border border-gray-200 hover:border-black hover:bg-white transition'
                       >

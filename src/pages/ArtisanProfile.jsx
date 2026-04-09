@@ -6,7 +6,7 @@ import ProductItem from '../components/ProductItem'
 
 const ArtisanProfile = () => {
   const navigate = useNavigate()
-  const { sellerId } = useParams()
+  const { sellerRef } = useParams()
   const { products } = useContext(ShopContext)
   const [seller, setSeller] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -18,7 +18,19 @@ const ArtisanProfile = () => {
     try {
       setLoading(true)
       setError('')
-      const res = await axios.get(`${apiUrl}/api/sellers/${sellerId}`)
+      const ref = String(sellerRef || '').trim()
+      if (!ref) {
+        setError('Artisan not found')
+        return
+      }
+
+      let resolvedId = ref
+      if (!/^\d+$/.test(ref)) {
+        const byName = await axios.get(`${apiUrl}/api/sellers/by-name/${encodeURIComponent(ref)}`)
+        resolvedId = String(byName?.data?.id || '')
+      }
+
+      const res = await axios.get(`${apiUrl}/api/sellers/${resolvedId}`)
       
       if (!res.data) {
         setError('Artisan not found')
@@ -32,7 +44,7 @@ const ArtisanProfile = () => {
     } finally {
       setLoading(false)
     }
-  }, [apiUrl, sellerId])
+  }, [apiUrl, sellerRef])
 
   useEffect(() => {
     fetchSellerProfile()
@@ -40,7 +52,7 @@ const ArtisanProfile = () => {
 
   const sellerProducts = products.filter(p => {
     const pid = p.sellerId || p.id
-    return Number(pid) === Number(sellerId)
+    return Number(pid) === Number(seller?.id)
   })
 
   const getProductCategory = (product) => product?.subCategory || product?.category || 'Other'
@@ -127,7 +139,7 @@ const ArtisanProfile = () => {
               <button
                 onClick={() => {
                   const qs = new URLSearchParams()
-                  qs.set('sellerId', String(sellerId))
+                  qs.set('sellerId', String(seller?.id || ''))
                   if (seller?.storeName) qs.set('sellerName', seller.storeName)
                   navigate(`/chat?${qs.toString()}`)
                 }}

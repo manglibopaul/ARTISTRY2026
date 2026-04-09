@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title'
+import { getArtisanPath } from '../utils/artisanUrl'
 
 const ArtisanDirectory = () => {
   const navigate = useNavigate()
@@ -174,7 +175,7 @@ const ArtisanDirectory = () => {
               {filteredSellers.map(seller => (
                 <div
                   key={seller.id}
-                  onClick={() => navigate(`/artisan/${seller.id}`)}
+                  onClick={() => navigate(getArtisanPath(seller))}
                   className='group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-300 cursor-pointer'
                 >
                   {/* Card Header with Avatar */}

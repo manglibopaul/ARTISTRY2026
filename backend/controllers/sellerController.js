@@ -41,6 +41,16 @@ const normalizePickupLocations = (raw) => {
     .filter(Boolean);
 };
 
+const toStoreSlug = (value) => {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
 const normalizeSellerPayload = (seller) => {
   const plain = typeof seller?.toJSON === 'function' ? seller.toJSON() : { ...seller };
   plain.pickupLocations = normalizePickupLocations(plain.pickupLocations);
@@ -192,7 +202,15 @@ export const findSellerByName = async (req, res) => {
   try {
     const { name } = req.params
     if (!name) return res.status(400).json({ message: 'Name required' })
-    const seller = await Seller.findOne({ where: { storeName: name } })
+    const decoded = decodeURIComponent(name)
+    let seller = await Seller.findOne({ where: { storeName: decoded } })
+
+    if (!seller) {
+      const allSellers = await Seller.findAll({ attributes: ['id', 'storeName', 'name'] })
+      const wanted = toStoreSlug(decoded)
+      seller = allSellers.find((s) => toStoreSlug(s.storeName) === wanted) || null
+    }
+
     if (!seller) return res.status(404).json({ message: 'Seller not found' })
     return res.json({ id: seller.id, storeName: seller.storeName, name: seller.name })
   } catch (error) {

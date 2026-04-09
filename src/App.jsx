@@ -50,7 +50,7 @@ const App = () => {
         <Route path='/' element={<Home/>} />
         <Route path='/collection' element={<Collection/>} />
         <Route path='/about' element={<About/>} />
-        <Route path='/product/:productId' element={<Product/>} />
+        <Route path='/product/:productRef' element={<Product/>} />
         <Route path='/cart' element={<Cart/>} />
         <Route path='/ar-view' element={<ArView/>} />
         <Route path='/login' element={<Login/>} />
@@ -66,7 +66,7 @@ const App = () => {
         <Route path='/support' element={<SupportChat/>} />
         <Route path='/place-order' element={<PlaceOrder/>} />
         <Route path='/artisans' element={<ArtisanDirectory/>} />
-        <Route path='/artisan/:sellerId' element={<ArtisanProfile/>} />
+        <Route path='/artisan/:sellerRef' element={<ArtisanProfile/>} />
         {/* Full page Chat removed; use floating ChatWidget instead */}
         <Route path='/seller/login' element={<SellerLogin/>} />
         <Route path='/seller/forgot-password' element={<SellerForgotPassword/>} />

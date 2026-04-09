@@ -63,6 +63,16 @@ const normalizeProductPayload = (product) => {
   return plain;
 };
 
+const toProductSlug = (value) => {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
@@ -83,6 +93,28 @@ export const getProduct = async (req, res) => {
     res.json(normalizeProductPayload(product));
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Find single product by name slug (public)
+export const getProductByName = async (req, res) => {
+  try {
+    const { name } = req.params;
+    if (!name) {
+      return res.status(400).json({ message: 'Product name is required' });
+    }
+
+    const wantedSlug = toProductSlug(decodeURIComponent(name));
+    const products = await Product.findAll();
+    const match = products.find((p) => toProductSlug(p.name) === wantedSlug);
+
+    if (!match) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.json(normalizeProductPayload(match));
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 

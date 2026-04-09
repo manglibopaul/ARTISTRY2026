@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductChat from '../components/ProductChat'
+import { getArtisanPath } from '../utils/artisanUrl'
 
 const Product = () => {
 
-  const {productId} = useParams();
+  const { productRef } = useParams();
   const navigate = useNavigate()
   const {products, currency, addToCart} = useContext(ShopContext);
   // Use localhost fallback only in development; production must use configured API URL.
@@ -115,13 +116,35 @@ const Product = () => {
   const fetchProductData = useCallback(async () => {
     setLoadingProduct(true)
     setProductError('')
+    const ref = String(productRef || '').trim()
+    const isNumericRef = /^\d+$/.test(ref)
+
+    if (!ref) {
+      setProductError('Product not found')
+      setLoadingProduct(false)
+      return
+    }
+
     // Try to find product in context first (fast)
     let found = null
     for (const item of products) {
       const id = item._id || item.id
-      if (String(id) === String(productId)) {
+      if (isNumericRef && String(id) === ref) {
         found = item
         break
+      }
+      if (!isNumericRef) {
+        const localSlug = String(item?.name || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+        if (localSlug === ref.toLowerCase()) {
+          found = item
+          break
+        }
       }
     }
 
@@ -139,17 +162,39 @@ const Product = () => {
         fetchSellerData(found.sellerId)
       }
       setLoadingProduct(false)
+      // fetch reviews for this product
+      try {
+        const foundId = found._id || found.id
+        const res = await fetch(`${apiUrl}/api/reviews/product/${foundId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setReviews(data || [])
+          if (data && data.length) {
+            const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1)
+            setAvgRating(avg)
+          } else {
+            setAvgRating(null)
+          }
+        }
+      } catch {
+        // ignore
+      }
       return
     }
 
     // Fallback: fetch single product from backend if not present in context
+    let resolvedProductId = null
     try {
-      const res = await fetch(`${apiUrl}/api/products/${productId}`)
+      const endpoint = isNumericRef
+        ? `${apiUrl}/api/products/${ref}`
+        : `${apiUrl}/api/products/by-name/${encodeURIComponent(ref)}`
+      const res = await fetch(endpoint)
       console.log('Fallback product fetch', res.status, res.statusText)
       if (res.ok) {
         const data = await res.json()
         console.log('Fetched single product', data)
         setProductData(data)
+        resolvedProductId = data?.id || data?._id || null
         if (Array.isArray(data.image) && data.image.length > 0) setImage(getImageUrl(data.image[0]))
         else setImage('/path/to/placeholder.jpg')
         // Fetch seller data if available
@@ -169,7 +214,8 @@ const Product = () => {
     setLoadingProduct(false)
     // fetch reviews for this product
     try {
-      const res = await fetch(`${apiUrl}/api/reviews/product/${productId}`);
+      if (!resolvedProductId) throw new Error('Missing product id for reviews')
+      const res = await fetch(`${apiUrl}/api/reviews/product/${resolvedProductId}`);
       if (res.ok) {
         const data = await res.json();
         setReviews(data || []);
@@ -199,7 +245,7 @@ const Product = () => {
     }
 
     // no eligibility/form fetching here — reviews can be submitted from Order view only
-  }, [apiUrl, productId, products, fetchSellerData, getImageUrl])
+  }, [apiUrl, productRef, products, fetchSellerData, getImageUrl])
 
   useEffect(()=>{
     fetchProductData();
@@ -480,7 +526,7 @@ const Product = () => {
               <div className='flex items-start justify-between gap-4'>
                 <div className='flex-1'>
                   <button
-                    onClick={() => navigate(`/artisan/${sellerData.id}`)}
+                    onClick={() => navigate(getArtisanPath(sellerData))}
                     className='hover:text-black transition'
                   >
                     <h3 className='font-bold text-lg text-left text-gray-900 hover:underline'>
@@ -501,7 +547,7 @@ const Product = () => {
                   )}
                 </div>
                 <button
-                  onClick={() => navigate(`/artisan/${sellerData.id}`)}
+                  onClick={() => navigate(getArtisanPath(sellerData))}
                   className='text-sm font-medium text-black hover:bg-black hover:text-white px-4 py-2 rounded border border-black transition'
                 >
                   View Shop →
@@ -515,7 +561,7 @@ const Product = () => {
             <h3 className='font-semibold mb-2'>Chat with seller</h3>
             <div className='border rounded p-3'>
               <ProductChat
-                productId={productId}
+                productId={productData?.id || productData?._id || productRef}
                 sellerId={productData.sellerId || productData.seller?.id || sellerData?.id || null}
                 sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Seller'}
               />
