@@ -30,14 +30,9 @@ const Navbar = () => {
     const {setShowSearch , getCartCount} = useContext(ShopContext);
 
     const navigateWithHardFallback = (path) => {
-      navigate(path)
       setVisible(false)
-      // If route UI gets stuck due stale client state, force a full navigation.
-      window.setTimeout(() => {
-        if (window.location.pathname !== path) {
-          window.location.assign(path)
-        }
-      }, 120)
+      if (window.location.pathname === path) return
+      window.location.assign(path)
     }
 
     const handleSupportClick = () => {
