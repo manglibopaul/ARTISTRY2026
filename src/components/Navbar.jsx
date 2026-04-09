@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react' 
 import {assets} from '../assets/assets'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import CartSlideout from './CartSlideout';
 
@@ -28,6 +28,17 @@ const Navbar = () => {
     if (!userToken && userRaw) localStorage.removeItem('user')
 
     const {setShowSearch , getCartCount} = useContext(ShopContext);
+
+    const navigateWithHardFallback = (path) => {
+      navigate(path)
+      setVisible(false)
+      // If route UI gets stuck due stale client state, force a full navigation.
+      window.setTimeout(() => {
+        if (window.location.pathname !== path) {
+          window.location.assign(path)
+        }
+      }, 120)
+    }
 
     const handleSupportClick = () => {
       if (userToken) {
@@ -124,22 +135,22 @@ const Navbar = () => {
       
       <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
 
-        <NavLink to='/'className='flex flex-col items-center gap-1'>
+        <button type='button' onClick={() => navigateWithHardFallback('/')} className='flex flex-col items-center gap-1'>
             <p>HOME</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </NavLink>
-        <NavLink to='/collection'className='flex flex-col items-center gap-1'>
+        </button>
+        <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='flex flex-col items-center gap-1'>
           <p>PRODUCTS</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </NavLink>
-        <NavLink to='/artisans'className='flex flex-col items-center gap-1'>
+        </button>
+        <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='flex flex-col items-center gap-1'>
             <p>ARTISANS</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </NavLink>
-        <NavLink to='/about'className='flex flex-col items-center gap-1'>
+        </button>
+        <button type='button' onClick={() => navigateWithHardFallback('/about')} className='flex flex-col items-center gap-1'>
           <p>ABOUT US</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </NavLink>
+        </button>
         <button onClick={handleSupportClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
           <p>SUPPORT</p>
           <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
@@ -215,10 +226,10 @@ const Navbar = () => {
                      <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="" />
                      <p className='font-medium'>Back</p>
                 </div>
-                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/'>HOME</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/collection'>PRODUCTS</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/artisans'>ARTISANS</NavLink>
-                <NavLink onClick={()=>setVisible(false)} className='py-4 pl-6 border-b text-base active:bg-gray-100' to='/about'>ABOUT US</NavLink>
+                <button type='button' onClick={() => navigateWithHardFallback('/')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>HOME</button>
+                <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>PRODUCTS</button>
+                <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ARTISANS</button>
+                <button type='button' onClick={() => navigateWithHardFallback('/about')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ABOUT US</button>
                 <button onClick={() => { setVisible(false); handleSupportClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SUPPORT</button>
             </div>
         </div>
