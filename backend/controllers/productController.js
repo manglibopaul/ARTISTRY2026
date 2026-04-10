@@ -296,10 +296,6 @@ export const updateProduct = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const modelFile = req.files.find(f => f.fieldname === 'model');
       const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
-      const fileSizeError = validateModelFileSizes({ modelFile, iosModelFile });
-      if (fileSizeError) {
-        return res.status(400).json({ message: fileSizeError });
-      }
 
       // Handle multiple images - append new images to existing ones
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
