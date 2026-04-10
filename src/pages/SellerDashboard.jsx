@@ -7,6 +7,9 @@ import { ShopContext } from '../context/ShopContext'
 import SellerChat from '../components/SellerChat'
 import SellerAdminChat from '../components/SellerAdminChat'
 
+const MAX_GLTF_FILE_BYTES = 25 * 1024 * 1024
+const MAX_USDZ_FILE_BYTES = 10 * 1024 * 1024
+
 // Helper: Compress image before upload
 const compressImage = (file) => {
   return new Promise((resolve) => {
@@ -71,6 +74,13 @@ const SellerDashboard = () => {
     shippingRates: [{ name: 'Standard Shipping', price: 40, estimatedDays: '5-7 business days' }],
     processingTime: '1-3 business days',
     shipsFrom: '',
+  })
+  const [paymentSettings, setPaymentSettings] = useState({
+    acceptsCOD: true,
+    acceptsGCash: true,
+    gcashAccountName: '',
+    gcashNumber: '',
+    gcashQr: '',
   })
   // Return policy state
   const [returnPolicy, setReturnPolicy] = useState({
@@ -257,6 +267,67 @@ const SellerDashboard = () => {
     }
   }
 
+  // Payment settings
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/api/sellers/payment-settings`, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.data) {
+        setPaymentSettings({
+          acceptsCOD: res.data.acceptsCOD !== false,
+          acceptsGCash: res.data.acceptsGCash !== false,
+          gcashAccountName: res.data.gcashAccountName || '',
+          gcashNumber: res.data.gcashNumber || '',
+          gcashQr: res.data.gcashQr || '',
+        })
+      }
+    } catch (err) {
+      console.error('fetchPaymentSettings', err)
+    }
+  }
+
+  const savePaymentSettings = async () => {
+    try {
+      setLoading(true)
+      await axios.put(`${apiUrl}/api/sellers/payment-settings`, paymentSettings, { headers: { Authorization: `Bearer ${token}` } })
+      toast.success('Payment settings saved')
+    } catch (err) {
+      console.error('savePaymentSettings', err)
+      toast.error('Failed to save payment settings')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const uploadGcashQr = async (file) => {
+    if (!file) return
+    try {
+      setLoading(true)
+      const form = new FormData()
+      form.append('image', file)
+      const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      if (res.data?.paymentSettings) {
+        setPaymentSettings({
+          acceptsCOD: res.data.paymentSettings.acceptsCOD !== false,
+          acceptsGCash: res.data.paymentSettings.acceptsGCash !== false,
+          gcashAccountName: res.data.paymentSettings.gcashAccountName || '',
+          gcashNumber: res.data.paymentSettings.gcashNumber || '',
+          gcashQr: res.data.paymentSettings.gcashQr || '',
+        })
+      }
+      toast.success('GCash QR uploaded')
+    } catch (err) {
+      console.error('uploadGcashQr', err)
+      toast.error(err.response?.data?.message || 'Failed to upload GCash QR')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Return policy
   const fetchReturnPolicy = async () => {
     try {
@@ -314,7 +385,10 @@ const SellerDashboard = () => {
     if (selectedTab === 'chat') {
       fetchSellerConversations()
     }
-    if (selectedTab === 'shipping') fetchShippingSettings()
+    if (selectedTab === 'shipping') {
+      fetchShippingSettings()
+      fetchPaymentSettings()
+    }
     if (selectedTab === 'returns') {
       fetchReturnPolicy()
       fetchReturnRequests()
@@ -422,6 +496,20 @@ const SellerDashboard = () => {
   const handleModelChange = (e) => {
     const file = e.target.files[0]
     const fieldName = e.target.name // 'model' or 'iosModel'
+    if (!file) {
+      setFormData(prev => ({ ...prev, [fieldName]: null }))
+      return
+    }
+
+    const maxBytes = fieldName === 'iosModel' ? MAX_USDZ_FILE_BYTES : MAX_GLTF_FILE_BYTES
+    const limitLabel = fieldName === 'iosModel' ? '10MB' : '25MB'
+    if (file.size > maxBytes) {
+      toast.error(`Selected file is too large. ${fieldName === 'iosModel' ? 'USDZ' : 'GLB/GLTF'} must be ${limitLabel} or smaller.`)
+      e.target.value = ''
+      setFormData(prev => ({ ...prev, [fieldName]: null }))
+      return
+    }
+
     setFormData(prev => ({ ...prev, [fieldName]: file }))
   }
 
@@ -919,6 +1007,7 @@ const SellerDashboard = () => {
                   {formData.model && (
                     <p className='mt-2 text-sm text-green-600'>✓ {formData.model.name}</p>
                   )}
+                  <p className='mt-1 text-xs text-gray-500'>Maximum file size: 25MB</p>
                 </div>
 
                 <div>
@@ -933,6 +1022,7 @@ const SellerDashboard = () => {
                   {formData.iosModel && (
                     <p className='mt-2 text-sm text-green-600'>✓ {formData.iosModel.name}</p>
                   )}
+                  <p className='mt-1 text-xs text-gray-500'>Maximum file size: 10MB</p>
                 </div>
               </div>
 
@@ -1535,6 +1625,77 @@ const SellerDashboard = () => {
                 <button onClick={saveShippingSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
                   Save Shipping Settings
                 </button>
+              </div>
+
+              <div className='pt-6 border-t'>
+                <h3 className='text-lg font-semibold mb-4'>Payment Settings</h3>
+
+                <div className='space-y-4'>
+                  <div className='flex flex-col sm:flex-row gap-3'>
+                    <label className='flex items-center gap-2 text-sm'>
+                      <input
+                        type='checkbox'
+                        checked={paymentSettings.acceptsCOD}
+                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsCOD: e.target.checked }))}
+                      />
+                      Accept Cash on Delivery (COD)
+                    </label>
+                    <label className='flex items-center gap-2 text-sm'>
+                      <input
+                        type='checkbox'
+                        checked={paymentSettings.acceptsGCash}
+                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsGCash: e.target.checked }))}
+                      />
+                      Accept GCash
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Account Name</label>
+                    <input
+                      type='text'
+                      value={paymentSettings.gcashAccountName || ''}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashAccountName: e.target.value }))}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                      placeholder='e.g., Juan Dela Cruz'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Number</label>
+                    <input
+                      type='text'
+                      value={paymentSettings.gcashNumber || ''}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashNumber: e.target.value }))}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                      placeholder='09XXXXXXXXX'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash QR Code</label>
+                    <input
+                      type='file'
+                      accept='image/*'
+                      onChange={(e) => uploadGcashQr(e.target.files?.[0])}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>Upload a clear QR image so buyers can scan during checkout.</p>
+                    {paymentSettings.gcashQr && (
+                      <img
+                        src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
+                        alt='GCash QR'
+                        className='mt-2 w-36 h-36 object-contain border rounded bg-white p-1'
+                      />
+                    )}
+                  </div>
+
+                  <div className='pt-2'>
+                    <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
+                      Save Payment Settings
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

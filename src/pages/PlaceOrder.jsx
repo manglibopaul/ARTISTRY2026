@@ -127,7 +127,8 @@ const buildPickupGeocodeQueries = (location) => {
 
 const PlaceOrder = () => {
 
-  const [method,setMethod] = useState('cod')
+  const [method,setMethod] = useState('delivery')
+  const [paymentOption, setPaymentOption] = useState('cod')
 
   const {navigate} = useContext(ShopContext);
   const { products, cartsItems, refreshProducts, getCartAmount, currency, clearCart } = useContext(ShopContext);
@@ -152,9 +153,10 @@ const PlaceOrder = () => {
   const [appliedCoupon] = useState(null)
   const [cartData, setCartData] = React.useState([])
   const [isLoggedIn, setIsLoggedIn] = React.useState(false)
-  const [shippingRates, setShippingRates] = React.useState([])
   const [selectedShippingRate, setSelectedShippingRate] = React.useState(null)
   const [sellerShippingInfo, setSellerShippingInfo] = React.useState({})
+  const [sellerPaymentInfo, setSellerPaymentInfo] = React.useState({})
+  const [availablePaymentMethods, setAvailablePaymentMethods] = React.useState({ cod: true, gcash: true })
   const [modalState, setModalState] = React.useState({
     open: false,
     title: '',
@@ -248,11 +250,17 @@ const PlaceOrder = () => {
         const prod = (products || []).find(p => String(p._id || p.id) === String(id))
         if (prod?.sellerId) sellerIds.add(prod.sellerId)
       }
-      if (sellerIds.size === 0) { setSellerPickupLocations([]); setShippingRates([]); return }
+      if (sellerIds.size === 0) {
+        setSellerPickupLocations([])
+        setSellerPaymentInfo({})
+        setAvailablePaymentMethods({ cod: true, gcash: true })
+        return
+      }
 
       const allLocations = []
       const allRates = []
       const shippingInfo = {}
+      const paymentInfo = {}
       for (const sid of sellerIds) {
         try {
           const res = await fetch(`${apiUrl}/api/sellers/${sid}`)
@@ -280,6 +288,17 @@ const PlaceOrder = () => {
               freeShippingMinimum: Number(settings.freeShippingMinimum) || 0,
               storeName: seller.storeName || 'Seller',
             }
+
+            const paymentSettings = seller.paymentSettings || {}
+            paymentInfo[sid] = {
+              sellerId: Number(sid),
+              storeName: seller.storeName || 'Seller',
+              acceptsCOD: paymentSettings.acceptsCOD !== false,
+              acceptsGCash: paymentSettings.acceptsGCash !== false,
+              gcashAccountName: String(paymentSettings.gcashAccountName || '').trim(),
+              gcashNumber: String(paymentSettings.gcashNumber || '').trim(),
+              gcashQr: String(paymentSettings.gcashQr || '').trim(),
+            }
           }
         } catch (e) { console.error('Failed to fetch seller data', e) }
       }
@@ -296,14 +315,24 @@ const PlaceOrder = () => {
       }
       // Set shipping rates — if sellers have custom rates use them, otherwise default
       if (allRates.length > 0) {
-        setShippingRates(allRates)
         if (!selectedShippingRate) setSelectedShippingRate(allRates[0])
       } else {
         const defaultRates = [{ name: 'Standard Shipping', price: 40, estimatedDays: '5-7 business days' }]
-        setShippingRates(defaultRates)
         if (!selectedShippingRate) setSelectedShippingRate(defaultRates[0])
       }
       setSellerShippingInfo(shippingInfo)
+      setSellerPaymentInfo(paymentInfo)
+
+      const paymentValues = Object.values(paymentInfo)
+      const canUseCOD = paymentValues.length === 0 ? true : paymentValues.every((info) => info.acceptsCOD)
+      const canUseGCash = paymentValues.length === 0 ? true : paymentValues.every((info) => info.acceptsGCash)
+      setAvailablePaymentMethods({ cod: canUseCOD, gcash: canUseGCash })
+
+      setPaymentOption((prev) => {
+        if (prev === 'cod' && !canUseCOD) return canUseGCash ? 'gcash' : 'cod'
+        if (prev === 'gcash' && !canUseGCash) return canUseCOD ? 'cod' : 'gcash'
+        return prev
+      })
     }
     fetchSellerData()
   }, [cartsItems, products, apiUrl, selectedShippingRate])
@@ -616,35 +645,77 @@ const PlaceOrder = () => {
                 </div>
               )}
 
-              {/* Shipping Rate Selection */}
-              {shippingRates.length > 0 && (
+              {/* Payment Method Selection */}
+              {(
                 <div className='mt-2'>
                   <h3 className='text-sm font-semibold mb-2 text-gray-700'>Payment Methods</h3>
+                  {!availablePaymentMethods.cod && !availablePaymentMethods.gcash && (
+                    <p className='text-xs text-red-600 mb-2'>No common payment method is available for all sellers in your cart. Please edit your cart and try again.</p>
+                  )}
                   <div className='space-y-2'>
-                    {shippingRates.map((rate, idx) => (
-                      <label key={idx} className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
-                        selectedShippingRate?.name === rate.name && selectedShippingRate?.price === rate.price
-                          ? 'border-black bg-gray-50' : 'border-gray-300 hover:bg-gray-50'
-                      }`}>
-                        <div className='flex items-center gap-3'>
-                          <input
-                            type='radio'
-                            name='shippingRate'
-                            checked={selectedShippingRate?.name === rate.name && selectedShippingRate?.price === rate.price}
-                            onChange={() => setSelectedShippingRate(rate)}
-                            className='w-4 h-4'
-                          />
-                          <div>
-                            <span className='text-sm font-medium'>{rate.name}</span>
-                            {rate.estimatedDays && <span className='text-xs text-gray-500 ml-2'>({rate.estimatedDays})</span>}
-                          </div>
+                    <label className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                      paymentOption === 'gcash' ? 'border-black bg-gray-50' : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
+                      <div className='flex items-center gap-3'>
+                        <input
+                          type='radio'
+                          name='paymentOption'
+                          checked={paymentOption === 'gcash'}
+                          onChange={() => setPaymentOption('gcash')}
+                          disabled={!availablePaymentMethods.gcash}
+                          className='w-4 h-4'
+                        />
+                        <div>
+                          <span className='text-sm font-medium'>GCash</span>
+                          {!availablePaymentMethods.gcash && <span className='text-xs text-red-600 ml-2'>(Unavailable for one or more sellers)</span>}
                         </div>
-                        <span className='text-sm font-medium'>
-                          ₱{rate.price.toFixed(2)}
-                        </span>
-                      </label>
-                    ))}
+                      </div>
+                    </label>
+                    <label className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                      paymentOption === 'cod' ? 'border-black bg-gray-50' : 'border-gray-300 hover:bg-gray-50'
+                    }`}>
+                      <div className='flex items-center gap-3'>
+                        <input
+                          type='radio'
+                          name='paymentOption'
+                          checked={paymentOption === 'cod'}
+                          onChange={() => setPaymentOption('cod')}
+                          disabled={!availablePaymentMethods.cod}
+                          className='w-4 h-4'
+                        />
+                        <div>
+                          <span className='text-sm font-medium'>Cash on Delivery (COD)</span>
+                          {!availablePaymentMethods.cod && <span className='text-xs text-red-600 ml-2'>(Unavailable for one or more sellers)</span>}
+                        </div>
+                      </div>
+                    </label>
                   </div>
+
+                  {paymentOption === 'gcash' && availablePaymentMethods.gcash && Object.values(sellerPaymentInfo).length > 0 && (
+                    <div className='mt-3 space-y-3'>
+                      <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s GCash account. Use the details below:</p>
+                      {Object.values(sellerPaymentInfo).map((info) => {
+                        const qrUrl = info.gcashQr
+                          ? (info.gcashQr.startsWith('http')
+                            ? info.gcashQr
+                            : `${apiUrl}${info.gcashQr.startsWith('/') ? info.gcashQr : `/${info.gcashQr}`}`)
+                          : ''
+                        return (
+                          <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
+                            <p className='text-sm font-medium text-gray-800 mb-1'>{info.storeName}</p>
+                            <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
+                            <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
+                            {qrUrl ? (
+                              <img src={qrUrl} alt={`${info.storeName} GCash QR`} className='mt-2 w-32 h-32 object-contain border rounded bg-white p-1' />
+                            ) : (
+                              <p className='text-xs text-amber-700 mt-2'>QR code not uploaded yet. Contact the seller in chat for payment instructions.</p>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
                   <p className='text-xs text-gray-500 mt-2'>
                     Delivery fee is calculated per seller in your cart.
                   </p>
@@ -795,8 +866,8 @@ const PlaceOrder = () => {
                 <input type="radio" name="payment" checked={method === 'pickup'} onChange={() => setMethod('pickup')} className='w-4 h-4' />
                 <span className='font-medium text-sm sm:text-base'>Pick Up</span>
               </label>
-              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('cod')}>
-                <input type="radio" name="payment" checked={method === 'cod'} onChange={() => setMethod('cod')} className='w-4 h-4' />
+              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('delivery')}>
+                <input type="radio" name="payment" checked={method === 'delivery'} onChange={() => setMethod('delivery')} className='w-4 h-4' />
                 <span className='font-medium text-sm sm:text-base'>Delivery</span>
               </label>
             </div>
@@ -823,6 +894,19 @@ const PlaceOrder = () => {
                 const missingSellerPickup = sellerIdsInCart.filter((sid) => !pickupLocationsBySeller[sid])
                 if (missingSellerPickup.length > 0) {
                   openModal('Pickup Location Required', 'Please select a pickup location for every seller in your order.')
+                  return
+                }
+              } else {
+                if (!availablePaymentMethods.cod && !availablePaymentMethods.gcash) {
+                  openModal('Payment Method Unavailable', 'No common payment method is available for all sellers in your cart. Please remove conflicting items or use pickup.')
+                  return
+                }
+                if (paymentOption === 'cod' && !availablePaymentMethods.cod) {
+                  openModal('COD Not Available', 'At least one seller in your cart does not accept Cash on Delivery. Please choose GCash.')
+                  return
+                }
+                if (paymentOption === 'gcash' && !availablePaymentMethods.gcash) {
+                  openModal('GCash Not Available', 'At least one seller in your cart does not accept GCash. Please choose COD.')
                   return
                 }
               }
@@ -862,7 +946,7 @@ const PlaceOrder = () => {
                 await axios.post(`${apiUrl}/api/orders`, {
                   items: itemsWithPickup,
                   address,
-                  paymentMethod: method,
+                  paymentMethod: method === 'pickup' ? 'pickup' : paymentOption,
                   subtotal,
                   shippingFee: computedShippingFee,
                   shippingMethod: selectedShippingRate?.name || 'Standard Shipping',

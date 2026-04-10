@@ -1,6 +1,34 @@
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
 import { uploadImage, uploadModel } from '../utils/media.js';
+import fs from 'fs';
+
+const MAX_GLTF_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_USDZ_FILE_BYTES = 10 * 1024 * 1024;
+
+const cleanupUploadedTempFile = (file) => {
+  try {
+    if (file?.path && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+  } catch {
+    // Best effort cleanup only.
+  }
+};
+
+const validateModelFileSizes = ({ modelFile, iosModelFile }) => {
+  if (modelFile && Number(modelFile.size) > MAX_GLTF_FILE_BYTES) {
+    cleanupUploadedTempFile(modelFile);
+    return 'Android model file must be 25MB or smaller.';
+  }
+
+  if (iosModelFile && Number(iosModelFile.size) > MAX_USDZ_FILE_BYTES) {
+    cleanupUploadedTempFile(iosModelFile);
+    return 'iOS USDZ file must be 10MB or smaller.';
+  }
+
+  return null;
+};
 
 const normalizeImageEntry = (entry) => {
   if (!entry) return null;
@@ -189,6 +217,13 @@ export const createProduct = async (req, res) => {
 
     // Handle file uploads
     if (req.files) {
+      const modelFile = req.files.find(f => f.fieldname === 'model');
+      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
+      const fileSizeError = validateModelFileSizes({ modelFile, iosModelFile });
+      if (fileSizeError) {
+        return res.status(400).json({ message: fileSizeError });
+      }
+
       // Handle multiple images
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
       if (imageFiles.length > 0) {
@@ -202,14 +237,12 @@ export const createProduct = async (req, res) => {
       }
 
       // Handle model file (GLB)
-      const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
         productData.modelUrl = uploadedModel?.url || null;
       }
 
       // Handle iOS model file (USDZ)
-      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
       if (iosModelFile) {
         const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
         productData.iosModel = uploadedIosModel?.url || null;
@@ -287,6 +320,13 @@ export const updateProduct = async (req, res) => {
 
     // Handle file uploads
     if (req.files && req.files.length > 0) {
+      const modelFile = req.files.find(f => f.fieldname === 'model');
+      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
+      const fileSizeError = validateModelFileSizes({ modelFile, iosModelFile });
+      if (fileSizeError) {
+        return res.status(400).json({ message: fileSizeError });
+      }
+
       // Handle multiple images - append new images to existing ones
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
       if (imageFiles.length > 0) {
@@ -305,14 +345,12 @@ export const updateProduct = async (req, res) => {
       }
 
       // Handle model file (GLB)
-      const modelFile = req.files.find(f => f.fieldname === 'model');
       if (modelFile) {
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
         updateData.modelUrl = uploadedModel?.url || null;
       }
 
       // Handle iOS model file (USDZ)
-      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
       if (iosModelFile) {
         const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
         updateData.iosModel = uploadedIosModel?.url || null;

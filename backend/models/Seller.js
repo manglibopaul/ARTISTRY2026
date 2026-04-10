@@ -99,6 +99,17 @@ const Seller = sequelize.define('Seller', {
     },
     comment: 'Seller shipping configuration: rates, free shipping threshold, processing time',
   },
+  paymentSettings: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      acceptsCOD: true,
+      acceptsGCash: true,
+      gcashAccountName: '',
+      gcashNumber: '',
+      gcashQr: '',
+    },
+    comment: 'Seller payment preferences and GCash information',
+  },
   returnPolicy: {
     type: DataTypes.JSON,
     defaultValue: {

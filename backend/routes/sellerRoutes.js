@@ -19,6 +19,9 @@ import {
   resetSellerPassword,
   getShippingSettings,
   updateShippingSettings,
+  getPaymentSettings,
+  updatePaymentSettings,
+  uploadPaymentQr,
   getReturnPolicy,
   updateReturnPolicy,
 } from '../controllers/sellerController.js';
@@ -51,6 +54,11 @@ router.get('/orders', verifySeller, getSellerOrders);
 // Shipping settings
 router.get('/shipping-settings', verifySeller, getShippingSettings);
 router.put('/shipping-settings', verifySeller, updateShippingSettings);
+
+// Payment settings
+router.get('/payment-settings', verifySeller, getPaymentSettings);
+router.put('/payment-settings', verifySeller, updatePaymentSettings);
+router.put('/payment-settings/qr', verifySeller, upload.single('image'), uploadPaymentQr);
 
 // Return policy
 router.get('/return-policy', verifySeller, getReturnPolicy);

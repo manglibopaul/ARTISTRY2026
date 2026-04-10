@@ -60,6 +60,17 @@ const normalizeSellerPayload = (seller) => {
   return plain;
 };
 
+const normalizePaymentSettings = (raw) => {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    acceptsCOD: source.acceptsCOD !== undefined ? Boolean(source.acceptsCOD) : true,
+    acceptsGCash: source.acceptsGCash !== undefined ? Boolean(source.acceptsGCash) : true,
+    gcashAccountName: String(source.gcashAccountName || '').trim(),
+    gcashNumber: String(source.gcashNumber || '').trim(),
+    gcashQr: String(source.gcashQr || '').trim(),
+  };
+};
+
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
@@ -589,6 +600,71 @@ export const updateShippingSettings = async (req, res) => {
   } catch (error) {
     console.error('updateShippingSettings', error);
     res.status(500).json({ message: 'Failed to update shipping settings' });
+  }
+};
+
+// Get seller payment settings
+export const getPaymentSettings = async (req, res) => {
+  try {
+    const seller = await Seller.findByPk(req.seller.id);
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
+    res.json(normalizePaymentSettings(seller.paymentSettings));
+  } catch (error) {
+    console.error('getPaymentSettings', error);
+    res.status(500).json({ message: 'Failed to load payment settings' });
+  }
+};
+
+// Update seller payment settings
+export const updatePaymentSettings = async (req, res) => {
+  try {
+    const seller = await Seller.findByPk(req.seller.id);
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
+
+    const previous = normalizePaymentSettings(seller.paymentSettings);
+    const incoming = req.body || {};
+    const merged = normalizePaymentSettings({
+      ...previous,
+      ...incoming,
+    });
+
+    await seller.update({ paymentSettings: merged });
+    res.json({ message: 'Payment settings updated', paymentSettings: merged });
+  } catch (error) {
+    console.error('updatePaymentSettings', error);
+    res.status(500).json({ message: 'Failed to update payment settings' });
+  }
+};
+
+// Upload or replace seller GCash QR image
+export const uploadPaymentQr = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file uploaded' });
+    }
+
+    const seller = await Seller.findByPk(req.seller.id);
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found' });
+    }
+
+    const uploaded = await uploadImage(req.file, 'artistry/seller-gcash-qr');
+    const qrUrl = uploaded?.url || '';
+
+    const nextPaymentSettings = normalizePaymentSettings({
+      ...(seller.paymentSettings || {}),
+      gcashQr: qrUrl,
+    });
+
+    await seller.update({ paymentSettings: nextPaymentSettings });
+
+    return res.status(200).json({
+      message: 'GCash QR uploaded successfully',
+      paymentSettings: nextPaymentSettings,
+    });
+  } catch (error) {
+    console.error('uploadPaymentQr', error);
+    return res.status(500).json({ message: 'Failed to upload GCash QR' });
   }
 };
 

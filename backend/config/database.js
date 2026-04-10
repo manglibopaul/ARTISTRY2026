@@ -116,6 +116,24 @@ const ensureOrdersCompletedAtColumn = async () => {
   }
 };
 
+const ensureSellersPaymentSettingsColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Sellers');
+  if (!table.paymentSettings) {
+    await qi.addColumn('Sellers', 'paymentSettings', {
+      type: Sequelize.JSON,
+      allowNull: false,
+      defaultValue: {
+        acceptsCOD: true,
+        acceptsGCash: true,
+        gcashAccountName: '',
+        gcashNumber: '',
+        gcashQr: '',
+      },
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -127,6 +145,7 @@ const connectDB = async () => {
     await ensureReviewsOrderIdColumn();
     await ensureProductsSizesColumn();
     await ensureOrdersCompletedAtColumn();
+    await ensureSellersPaymentSettingsColumn();
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;

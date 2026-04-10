@@ -86,6 +86,14 @@ const createNotificationSafe = async (payload) => {
   }
 };
 
+const normalizePaymentSettings = (raw) => {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    acceptsCOD: source.acceptsCOD !== undefined ? Boolean(source.acceptsCOD) : true,
+    acceptsGCash: source.acceptsGCash !== undefined ? Boolean(source.acceptsGCash) : true,
+  };
+};
+
 // Create order
 export const createOrder = async (req, res) => {
   try {
@@ -99,6 +107,10 @@ export const createOrder = async (req, res) => {
     }
 
     if (!isPickup) {
+      if (!['cod', 'gcash'].includes(paymentMethod)) {
+        return res.status(400).json({ message: 'Invalid payment method for delivery.' });
+      }
+
       const addressErrors = validateDeliveryAddress(address);
       if (addressErrors.length) {
         return res.status(400).json({
@@ -162,6 +174,31 @@ export const createOrder = async (req, res) => {
           .map((it) => Number(it.sellerId))
           .filter((id) => Number.isFinite(id) && id > 0)
       )];
+
+      if (sellerIds.length > 0) {
+        const sellers = await Seller.findAll({ where: { id: sellerIds } });
+        const sellerMap = sellers.reduce((acc, seller) => {
+          acc[Number(seller.id)] = seller;
+          return acc;
+        }, {});
+
+        const unsupportedSellers = sellerIds
+          .filter((sid) => {
+            const seller = sellerMap[sid];
+            const paymentSettings = normalizePaymentSettings(seller?.paymentSettings);
+            if (paymentMethod === 'cod') return !paymentSettings.acceptsCOD;
+            if (paymentMethod === 'gcash') return !paymentSettings.acceptsGCash;
+            return true;
+          })
+          .map((sid) => sellerMap[sid]?.storeName || `Seller #${sid}`);
+
+        if (unsupportedSellers.length > 0) {
+          const methodLabel = paymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery';
+          return res.status(400).json({
+            message: `${methodLabel} is not accepted by: ${unsupportedSellers.join(', ')}. Please choose another payment method.`,
+          });
+        }
+      }
 
       // Calculate each seller subtotal to support seller-level free shipping thresholds.
       const sellerSubtotals = normalizedItems.reduce((acc, it) => {
@@ -376,11 +413,17 @@ export const createOrder = async (req, res) => {
       const orderIdList = createdOrders.map((o) => `#${o.id}`).join(', ');
       const combinedTotal = createdOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
+      const paymentLabel = paymentMethod === 'pickup'
+        ? 'Pickup'
+        : paymentMethod === 'gcash'
+          ? 'GCash'
+          : 'Cash on Delivery';
+
       try {
         await sendEmail({
           to: orderEmail,
           subject: `Aninaya — Order ${orderIdList} Confirmed`,
-          text: `Your order ${orderIdList} has been placed successfully!\n\nTotal: ₱${combinedTotal.toFixed(2)}\nPayment: ${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}\n\nThank you for shopping with Aninaya!`,
+          text: `Your order ${orderIdList} has been placed successfully!\n\nTotal: ₱${combinedTotal.toFixed(2)}\nPayment: ${paymentLabel}\n\nThank you for shopping with Aninaya!`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333;">Order Confirmed! 🎉</h2>
@@ -393,7 +436,7 @@ export const createOrder = async (req, res) => {
               ${discount > 0 ? `<p>Discount: <strong>-₱${discount.toFixed(2)}</strong></p>` : ''}
               <p>Shipping: <strong>₱${shippingFee.toFixed(2)}</strong></p>
               <p style="font-size: 18px;">Total: <strong>₱${combinedTotal.toFixed(2)}</strong></p>
-              <p>Payment Method: <strong>${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}</strong></p>
+              <p>Payment Method: <strong>${paymentLabel}</strong></p>
               ${isPickup && pickupLocation ? `<p>Pickup Location: <strong>${pickupLocation}</strong></p>` : ''}
               <hr style="border: 1px solid #eee;" />
               <p style="color: #666; font-size: 14px;">Thank you for shopping with Aninaya!</p>
