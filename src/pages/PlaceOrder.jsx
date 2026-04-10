@@ -706,7 +706,9 @@ const PlaceOrder = () => {
                             <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
                             <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
                             {qrUrl ? (
-                              <img src={qrUrl} alt={`${info.storeName} GCash QR`} className='mt-2 w-32 h-32 object-contain border rounded bg-white p-1' />
+                              <a href={qrUrl} target="_blank" rel="noopener noreferrer">
+                                <img src={qrUrl} alt={`${info.storeName} GCash QR`} className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer' />
+                              </a>
                             ) : (
                               <p className='text-xs text-amber-700 mt-2'>QR code not uploaded yet. Contact the seller in chat for payment instructions.</p>
                             )}
