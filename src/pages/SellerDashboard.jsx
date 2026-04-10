@@ -1497,8 +1497,80 @@ const SellerDashboard = () => {
         {/* ===== SHIPPING SETTINGS TAB ===== */}
         {selectedTab === 'shipping' && (
           <div className='bg-white rounded-lg shadow-lg p-6'>
-            <h2 className='text-2xl font-bold mb-6'>Shipping Settings</h2>
+            {/* Payment Settings FIRST for priority */}
+            <h2 className='text-2xl font-bold mb-6'>Payment Settings</h2>
+            <div className='space-y-6'>
+              <div>
+                <div className='space-y-4'>
+                  <div className='flex flex-col sm:flex-row gap-3'>
+                    <label className='flex items-center gap-2 text-sm'>
+                      <input
+                        type='checkbox'
+                        checked={paymentSettings.acceptsCOD}
+                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsCOD: e.target.checked }))}
+                      />
+                      Accept Cash on Delivery (COD)
+                    </label>
+                    <label className='flex items-center gap-2 text-sm'>
+                      <input
+                        type='checkbox'
+                        checked={paymentSettings.acceptsGCash}
+                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsGCash: e.target.checked }))}
+                      />
+                      Accept GCash
+                    </label>
+                  </div>
 
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Account Name</label>
+                    <input
+                      type='text'
+                      value={paymentSettings.gcashAccountName || ''}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashAccountName: e.target.value }))}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                      placeholder='e.g., Juan Dela Cruz'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Number</label>
+                    <input
+                      type='text'
+                      value={paymentSettings.gcashNumber || ''}
+                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashNumber: e.target.value }))}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                      placeholder='09XXXXXXXXX'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash QR Code</label>
+                    <input
+                      type='file'
+                      accept='image/*'
+                      onChange={(e) => uploadGcashQr(e.target.files?.[0])}
+                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>Upload a clear QR image so buyers can scan during checkout.</p>
+                    {paymentSettings.gcashQr && (
+                      <img
+                        src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
+                        alt='GCash QR'
+                        className='mt-2 w-36 h-36 object-contain border rounded bg-white p-1'
+                      />
+                    )}
+                  </div>
+
+                  <div className='pt-2'>
+                    <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
+                      Save Payment Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h2 className='text-2xl font-bold mb-6 mt-10'>Shipping Settings</h2>
             <div className='space-y-6'>
               {/* Ships From */}
               <div>
@@ -1627,76 +1699,6 @@ const SellerDashboard = () => {
                 </button>
               </div>
 
-              <div className='pt-6 border-t'>
-                <h3 className='text-lg font-semibold mb-4'>Payment Settings</h3>
-
-                <div className='space-y-4'>
-                  <div className='flex flex-col sm:flex-row gap-3'>
-                    <label className='flex items-center gap-2 text-sm'>
-                      <input
-                        type='checkbox'
-                        checked={paymentSettings.acceptsCOD}
-                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsCOD: e.target.checked }))}
-                      />
-                      Accept Cash on Delivery (COD)
-                    </label>
-                    <label className='flex items-center gap-2 text-sm'>
-                      <input
-                        type='checkbox'
-                        checked={paymentSettings.acceptsGCash}
-                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsGCash: e.target.checked }))}
-                      />
-                      Accept GCash
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Account Name</label>
-                    <input
-                      type='text'
-                      value={paymentSettings.gcashAccountName || ''}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashAccountName: e.target.value }))}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      placeholder='e.g., Juan Dela Cruz'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Number</label>
-                    <input
-                      type='text'
-                      value={paymentSettings.gcashNumber || ''}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashNumber: e.target.value }))}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      placeholder='09XXXXXXXXX'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash QR Code</label>
-                    <input
-                      type='file'
-                      accept='image/*'
-                      onChange={(e) => uploadGcashQr(e.target.files?.[0])}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                    />
-                    <p className='text-xs text-gray-500 mt-1'>Upload a clear QR image so buyers can scan during checkout.</p>
-                    {paymentSettings.gcashQr && (
-                      <img
-                        src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
-                        alt='GCash QR'
-                        className='mt-2 w-36 h-36 object-contain border rounded bg-white p-1'
-                      />
-                    )}
-                  </div>
-
-                  <div className='pt-2'>
-                    <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
-                      Save Payment Settings
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
