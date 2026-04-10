@@ -3,32 +3,8 @@ import { Op } from 'sequelize';
 import { uploadImage, uploadModel } from '../utils/media.js';
 import fs from 'fs';
 
-const MAX_GLTF_FILE_BYTES = 25 * 1024 * 1024;
-const MAX_USDZ_FILE_BYTES = 10 * 1024 * 1024;
 
-const cleanupUploadedTempFile = (file) => {
-  try {
-    if (file?.path && fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
-    }
-  } catch {
-    // Best effort cleanup only.
-  }
-};
-
-const validateModelFileSizes = ({ modelFile, iosModelFile }) => {
-  if (modelFile && Number(modelFile.size) > MAX_GLTF_FILE_BYTES) {
-    cleanupUploadedTempFile(modelFile);
-    return 'Android model file must be 25MB or smaller.';
-  }
-
-  if (iosModelFile && Number(iosModelFile.size) > MAX_USDZ_FILE_BYTES) {
-    cleanupUploadedTempFile(iosModelFile);
-    return 'iOS USDZ file must be 10MB or smaller.';
-  }
-
-  return null;
-};
+// Removed file size validation for GLB and USDZ model uploads
 
 const normalizeImageEntry = (entry) => {
   if (!entry) return null;
@@ -219,10 +195,8 @@ export const createProduct = async (req, res) => {
     if (req.files) {
       const modelFile = req.files.find(f => f.fieldname === 'model');
       const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
-      const fileSizeError = validateModelFileSizes({ modelFile, iosModelFile });
-      if (fileSizeError) {
-        return res.status(400).json({ message: fileSizeError });
-      }
+
+      // No file size validation for model uploads
 
       // Handle multiple images
       const imageFiles = req.files.filter(f => f.fieldname === 'image');
