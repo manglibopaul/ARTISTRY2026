@@ -47,6 +47,12 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
 
   if (!hasCloudinaryConfig()) {
     if (process.env.NODE_ENV === 'production') {
+      console.error('[Cloudinary] Config missing in production:', {
+        CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+        NODE_ENV: process.env.NODE_ENV,
+      });
       throw new Error('Cloudinary is not configured in production. Image uploads are disabled.');
     }
     // In development, fallback to local uploads for convenience
@@ -73,6 +79,13 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
     };
   } catch (err) {
     if (process.env.NODE_ENV === 'production') {
+      console.error('[Cloudinary] Upload failed in production:', {
+        CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+        NODE_ENV: process.env.NODE_ENV,
+        error: err && err.message,
+      });
       throw new Error('Cloudinary upload failed in production. Image uploads are disabled.');
     }
     // In development, fallback to local uploads for convenience
