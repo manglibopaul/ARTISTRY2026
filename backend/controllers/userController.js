@@ -368,8 +368,9 @@ export const forgotPassword = async (req, res) => {
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
     const user = await User.findOne({ where: { email } });
-    // Always respond success to prevent email enumeration
-    if (!user) return res.json({ message: 'If that email exists, a reset link was sent.' });
+    if (!user) {
+      return res.status(404).json({ message: 'Email is not registered.' });
+    }
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -386,7 +387,7 @@ export const forgotPassword = async (req, res) => {
       html: `<p>Click the link below to reset your password:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>This link expires in 1 hour.</p>`,
     });
 
-    res.json({ message: 'If that email exists, a reset link was sent.' });
+    res.json({ message: 'Reset link sent to your registered email.' });
   } catch (error) {
     console.error('forgotPassword error:', error);
     res.status(500).json({ message: 'Failed to process request' });

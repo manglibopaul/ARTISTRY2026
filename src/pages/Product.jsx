@@ -20,6 +20,7 @@ const Product = () => {
   const [sellerData, setSellerData] = useState(null)
   const [image,setImage] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [quantityInput, setQuantityInput] = useState('1')
   const [showAR, setShowAR] = useState(false);
   const modelViewerRef = useRef(null);
   const [reviews, setReviews] = useState([]);
@@ -287,6 +288,10 @@ const Product = () => {
     }
   }, [productData])
 
+  useEffect(() => {
+    setQuantityInput(String(quantity));
+  }, [quantity]);
+
   
 
   const resolvedModelUrl = productData?.modelUrl
@@ -312,7 +317,10 @@ const Product = () => {
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     viewer.setAttribute('camera-controls', '');
-    viewer.setAttribute('auto-rotate', '');
+    viewer.setAttribute('loading', 'eager');
+    if (image) {
+      viewer.setAttribute('poster', image);
+    }
     // Allow the model to load immediately so the preview appears
     viewer.setAttribute('reveal', 'auto');
     viewer.setAttribute('interaction-prompt', 'auto');
@@ -345,7 +353,7 @@ const Product = () => {
       viewer.removeEventListener('load', handleLoad);
       viewer.removeEventListener('error', handleError);
     };
-  }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl]);
+  }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
   useEffect(() => {
     if (selectedColor && modelViewerElementRef.current) {
@@ -511,8 +519,26 @@ const Product = () => {
                 <input
                   type='number'
                   min={1}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+                  value={quantityInput}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setQuantityInput(next);
+                    if (next === '') return;
+                    const parsed = Number(next);
+                    if (Number.isFinite(parsed) && parsed >= 1) {
+                      setQuantity(Math.floor(parsed));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (quantityInput === '' || Number(quantityInput) < 1) {
+                      setQuantity(1);
+                      setQuantityInput('1');
+                      return;
+                    }
+                    const parsed = Math.floor(Number(quantityInput));
+                    setQuantity(parsed);
+                    setQuantityInput(String(parsed));
+                  }}
                   className='w-24 sm:w-20 px-3 py-3 border rounded text-sm min-h-[44px]'
                   aria-label='Quantity'
                 />

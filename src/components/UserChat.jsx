@@ -15,8 +15,6 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
   const token = localStorage.getItem('token') || localStorage.getItem('userToken')
   // guest fields
   const [guestId, setGuestId] = useState(localStorage.getItem('guestChatId') || '')
-  const [guestName, setGuestName] = useState(localStorage.getItem('guestName') || '')
-  const [guestEmail, setGuestEmail] = useState(localStorage.getItem('guestEmail') || '')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
   const scrollRef = useRef(null)
   const imageInputRef = useRef(null)
@@ -127,8 +125,6 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
         if (imageFile) formData.append('image', imageFile)
         if (!token) {
           formData.append('guestId', guestId)
-          if (guestName) formData.append('guestName', guestName)
-          if (guestEmail) formData.append('guestEmail', guestEmail)
         }
 
         const res = await axios.post(`${apiUrl}/api/chat/user/${sellerId}/message`, formData, {
@@ -180,8 +176,6 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     if (!name) return 'A'
     return name.charAt(0).toUpperCase()
   }
-
-  const isGuest = !token
 
   // Filter conversations by search query
   const filteredConversations = conversations.filter((c) => {
@@ -406,32 +400,6 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
                   ))
                 )}
               </div>
-
-              {/* Guest info bar */}
-              {isGuest && (
-                <div className='px-4 py-2 bg-amber-50 border-t border-amber-100'>
-                  <div className='flex items-center gap-2'>
-                    <input
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      className='flex-1 px-2.5 py-1.5 border border-amber-200 rounded text-xs bg-white focus:outline-none focus:border-amber-300'
-                      placeholder='Your name'
-                    />
-                    <input
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      className='flex-1 px-2.5 py-1.5 border border-amber-200 rounded text-xs bg-white focus:outline-none focus:border-amber-300'
-                      placeholder='Email'
-                    />
-                    <button
-                      onClick={() => { localStorage.setItem('guestName', guestName); localStorage.setItem('guestEmail', guestEmail); toast.success('Info saved') }}
-                      className='px-3 py-1.5 bg-amber-500 text-white text-xs rounded hover:bg-amber-600 transition-colors'
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Message input */}
               <div className='px-4 py-3 border-t border-gray-200 bg-white'>

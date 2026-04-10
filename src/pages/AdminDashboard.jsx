@@ -521,6 +521,7 @@ const AdminDashboard = () => {
                     <th className="text-left p-3 font-semibold">Mode of Delivery</th>
                     <th className="text-left p-3 font-semibold">Status</th>
                     <th className="text-left p-3 font-semibold">Created</th>
+                    <th className="text-left p-3 font-semibold">Completed</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -554,6 +555,7 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="p-3">{new Date(o.createdAt).toLocaleString()}</td>
+                        <td className="p-3">{o.completedAt ? new Date(o.completedAt).toLocaleString() : '-'}</td>
                       </tr>
                     );
                   })}

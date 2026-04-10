@@ -88,7 +88,7 @@ const validateDeliveryAddress = ({ fullName, phone, regionProvinceCityBarangay, 
   const errors = [];
 
   const name = String(fullName || '').trim();
-  if (!name || name.length < 5 || !/\s+/.test(name) || !hasMinLetters(name, 4) || isLikelyPlaceholderText(name)) {
+  if (!name || name.length < 3 || !hasMinLetters(name, 3) || isLikelyPlaceholderText(name)) {
     errors.push('Use your real full name (first and last name).');
   }
 
@@ -99,12 +99,12 @@ const validateDeliveryAddress = ({ fullName, phone, regionProvinceCityBarangay, 
 
   const location = String(regionProvinceCityBarangay || '').trim();
   const locationParts = location.split(/[/,]/).map((x) => x.trim()).filter(Boolean);
-  if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
+  if (!location || location.length < 5 || !hasMinLetters(location, 4) || locationParts.length < 1 || isLikelyPlaceholderText(location)) {
     errors.push('Provide a valid Region/Province/City/Barangay.');
   }
 
   const streetAddress = String(street || '').trim();
-  if (!streetAddress || streetAddress.length < 8 || !/[A-Za-z]/.test(streetAddress) || !/\d/.test(streetAddress) || isLikelyPlaceholderText(streetAddress)) {
+  if (!streetAddress || streetAddress.length < 5 || !/[A-Za-z]/.test(streetAddress) || isLikelyPlaceholderText(streetAddress)) {
     errors.push('Provide a complete street address with house/building number.');
   }
 

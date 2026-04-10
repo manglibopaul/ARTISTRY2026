@@ -10,6 +10,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+const createSvgMarkerIcon = (color) => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="42" viewBox="0 0 28 42">
+      <path d="M14 1C7.4 1 2 6.4 2 13c0 8.7 10.2 23.7 11.3 25.3a1 1 0 0 0 1.4 0C15.8 36.7 26 21.7 26 13 26 6.4 20.6 1 14 1z" fill="${color}" stroke="#2d2d2d" stroke-width="1.5"/>
+      <circle cx="14" cy="13" r="5" fill="#fff"/>
+    </svg>
+  `.trim();
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+};
+
 /**
  * MapPin Component - Display a map with delivery or pickup location
  * @param {number} lat - Latitude
@@ -55,11 +65,11 @@ const MapPin = ({ lat, lon, label, address, isPickup = false }) => {
       });
 
       // Add marker with color based on type
-      const markerColor = isPickup ? 'gold' : 'red';
+      const markerColor = isPickup ? '#f59e0b' : '#dc2626';
       const icon = L.icon({
-        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-${markerColor}.png`,
+        iconUrl: createSvgMarkerIcon(markerColor),
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
+        iconSize: [28, 42],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
         shadowSize: [41, 41],

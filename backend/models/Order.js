@@ -88,6 +88,10 @@ const Order = sequelize.define('Order', {
     defaultValue: 'pending',
   },
   trackingNumber: DataTypes.STRING,
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   timestamps: true,
 });

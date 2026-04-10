@@ -12,6 +12,12 @@ const Orders = () => {
 
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
+  const formatStatus = (status) => {
+    if (!status) return 'pending';
+    if (status === 'ready_for_pickup') return 'ready for pickup';
+    return status;
+  };
+
   const parseJsonSafe = async (res) => {
     const contentType = res.headers.get('content-type') || ''
     if (contentType.includes('application/json')) {
@@ -173,7 +179,7 @@ const Orders = () => {
                 <p className='text-xs sm:text-sm text-gray-500'>Date: {new Date(order.createdAt).toLocaleString()}</p>
               </div>
               <div className='sm:text-right'>
-                <p className='font-medium text-sm sm:text-base'>{order.orderStatus || 'pending'}</p>
+                <p className='font-medium text-sm sm:text-base'>{formatStatus(order.orderStatus)}</p>
                 <p className='text-sm text-gray-500'>Total: ₱{order.total}</p>
               </div>
             </div>

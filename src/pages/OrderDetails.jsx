@@ -361,6 +361,7 @@ const OrderDetails = () => {
   }
 
   const isPickupOrder = order?.paymentMethod === 'pickup' || order?.method === 'pickup'
+  const statusLabel = order?.orderStatus === 'ready_for_pickup' ? 'ready for pickup' : (order?.orderStatus || 'pending')
 
   if (loading) return <div className='pt-16'><p className='text-sm text-gray-500'>Loading order…</p></div>
   if (error) return <div className='pt-16'><p className='text-sm text-red-500'>{error}</p></div>
@@ -382,7 +383,7 @@ const OrderDetails = () => {
           </div>
           <div className='text-right'>
             <p className='text-sm text-gray-500'>Status</p>
-            <p className='font-medium'>{order.orderStatus || 'pending'}</p>
+            <p className='font-medium'>{statusLabel}</p>
           </div>
         </div>
 

@@ -105,6 +105,17 @@ const ensureProductsSizesColumn = async () => {
   }
 };
 
+const ensureOrdersCompletedAtColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Orders');
+  if (!table.completedAt) {
+    await qi.addColumn('Orders', 'completedAt', {
+      type: Sequelize.DATE,
+      allowNull: true,
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -115,6 +126,7 @@ const connectDB = async () => {
     await ensureReviewsImageUrlColumn();
     await ensureReviewsOrderIdColumn();
     await ensureProductsSizesColumn();
+    await ensureOrdersCompletedAtColumn();
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;

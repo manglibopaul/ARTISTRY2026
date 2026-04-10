@@ -58,7 +58,7 @@ const validateDeliveryAddress = (address = {}) => {
   const street = String(address.street || '').trim();
   const zipcode = String(address.zipcode || '').trim();
 
-  if (!fullName || fullName.length < 5 || !/\s+/.test(fullName) || !hasMinLetters(fullName, 4) || isLikelyPlaceholderText(fullName)) {
+  if (!fullName || fullName.length < 3 || !hasMinLetters(fullName, 3) || isLikelyPlaceholderText(fullName)) {
     errors.push('Enter your real full name (first and last name).');
   }
 
@@ -68,11 +68,11 @@ const validateDeliveryAddress = (address = {}) => {
   }
 
   const locationParts = location.split(/[/,]/).map((x) => x.trim()).filter(Boolean);
-  if (!location || location.length < 8 || !hasMinLetters(location, 5) || locationParts.length < 2 || isLikelyPlaceholderText(location)) {
+  if (!location || location.length < 5 || !hasMinLetters(location, 4) || locationParts.length < 1 || isLikelyPlaceholderText(location)) {
     errors.push('Enter a valid Region/Province/City/Barangay address.');
   }
 
-  if (!street || street.length < 8 || !/[A-Za-z]/.test(street) || !/\d/.test(street) || isLikelyPlaceholderText(street)) {
+  if (!street || street.length < 5 || !/[A-Za-z]/.test(street) || isLikelyPlaceholderText(street)) {
     errors.push('Enter a complete street address with house/building number.');
   }
 
@@ -157,6 +157,7 @@ export const createOrder = async (req, res) => {
     // Determine shipping fee and initial status for pickup vs delivery.
     // Delivery shipping is summed per seller in the cart.
     let shippingFee = 0;
+    const shippingFeeBySeller = {};
     const shippingMethod = req.body.shippingMethod || 'Standard Shipping';
     const initialStatus = 'pending';
 
@@ -190,6 +191,7 @@ export const createOrder = async (req, res) => {
           sellerFee = 0;
         }
 
+        shippingFeeBySeller[sid] = sellerFee;
         shippingFee += sellerFee;
       }
 
@@ -274,44 +276,80 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    const order = await Order.create({
-      userId: req.user.id,
-      items: normalizedItems,
-      firstName,
-      lastName,
-      email,
-      street: address?.street,
-      city: address?.regionProvinceCityBarangay || address?.city,
-      state: address?.state,
-      zipcode: address?.zipcode,
-      country: address?.country,
-      phone: address?.phone,
-      pickupLocation: pickupLocation,
-      reservationDateTime,
-      reservationNote,
-      paymentMethod,
-      subtotal,
-      commission,
-      shippingFee,
-      discount,
-      couponCode,
-      total: Math.max(0, subtotal + shippingFee + commission - discount),
-      paymentStatus: 'pending',
-      orderStatus: initialStatus,
-    });
+    const groupedBySeller = normalizedItems.reduce((acc, item) => {
+      const sid = Number(item.sellerId);
+      const key = Number.isFinite(sid) && sid > 0 ? String(sid) : 'unspecified';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
 
-    await createNotificationSafe({
-      userId: req.user.id,
-      orderId: order.id,
-      type: 'order-placed',
-      title: 'Order Placed',
-      message: `Your order #${order.id} has been placed successfully.`,
-      meta: {
-        orderStatus: order.orderStatus,
-        paymentMethod: order.paymentMethod,
-        total: order.total,
-      },
-    });
+    const sellerGroupKeys = Object.keys(groupedBySeller);
+    const shouldSplitBySeller = sellerGroupKeys.length > 1;
+
+    const createdOrders = [];
+    for (const groupKey of sellerGroupKeys) {
+      const itemsForOrder = groupedBySeller[groupKey];
+      const sellerSpecificSubtotal = itemsForOrder.reduce((sum, it) => {
+        return sum + ((Number(it.price) || 0) * (Number(it.quantity) || 1));
+      }, 0);
+
+      const numericSellerId = Number(groupKey);
+      const sellerSpecificShipping = isPickup
+        ? 0
+        : (Number.isFinite(numericSellerId) && shippingFeeBySeller[numericSellerId] !== undefined
+          ? Number(shippingFeeBySeller[numericSellerId])
+          : (shouldSplitBySeller ? 40 : shippingFee));
+
+      const sellerSpecificPickupLocation = isPickup
+        ? (itemsForOrder[0]?.pickupLocation || null)
+        : null;
+
+      const sellerSpecificDiscount = shouldSplitBySeller
+        ? 0
+        : discount;
+
+      const created = await Order.create({
+        userId: req.user.id,
+        items: itemsForOrder,
+        firstName,
+        lastName,
+        email,
+        street: address?.street,
+        city: address?.regionProvinceCityBarangay || address?.city,
+        state: address?.state,
+        zipcode: address?.zipcode,
+        country: address?.country,
+        phone: address?.phone,
+        pickupLocation: sellerSpecificPickupLocation,
+        reservationDateTime,
+        reservationNote,
+        paymentMethod,
+        subtotal: sellerSpecificSubtotal,
+        commission,
+        shippingFee: sellerSpecificShipping,
+        discount: sellerSpecificDiscount,
+        couponCode,
+        total: Math.max(0, sellerSpecificSubtotal + sellerSpecificShipping + commission - sellerSpecificDiscount),
+        paymentStatus: 'pending',
+        orderStatus: initialStatus,
+      });
+
+      createdOrders.push(created);
+
+      await createNotificationSafe({
+        userId: req.user.id,
+        orderId: created.id,
+        type: 'order-placed',
+        title: 'Order Placed',
+        message: `Your order #${created.id} has been placed successfully.`,
+        meta: {
+          orderStatus: created.orderStatus,
+          paymentMethod: created.paymentMethod,
+          total: created.total,
+        },
+      });
+    }
 
     // Increment coupon usage if one was applied
     if (couponCode) {
@@ -334,29 +372,32 @@ export const createOrder = async (req, res) => {
     }
 
     // Send order confirmation email
-    const orderEmail = address?.email || order.email;
+    const orderEmail = address?.email || createdOrders[0]?.email;
     if (orderEmail) {
       const itemsList = normalizedItems.map(it =>
         `<li>${it.name || 'Item'} x${it.quantity || 1}${it.color ? ` (${it.color})` : ''} — ₱${((it.price || 0) * (it.quantity || 1)).toFixed(2)}</li>`
       ).join('');
 
+      const orderIdList = createdOrders.map((o) => `#${o.id}`).join(', ');
+      const combinedTotal = createdOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
       try {
         await sendEmail({
           to: orderEmail,
-          subject: `Aninaya — Order #${order.id} Confirmed`,
-          text: `Your order #${order.id} has been placed successfully!\n\nTotal: ₱${order.total.toFixed(2)}\nPayment: ${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}\n\nThank you for shopping with Aninaya!`,
+          subject: `Aninaya — Order ${orderIdList} Confirmed`,
+          text: `Your order ${orderIdList} has been placed successfully!\n\nTotal: ₱${combinedTotal.toFixed(2)}\nPayment: ${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}\n\nThank you for shopping with Aninaya!`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #333;">Order Confirmed! 🎉</h2>
               <p>Hi${address?.firstName ? ' ' + address.firstName : ''},</p>
-              <p>Your order <strong>#${order.id}</strong> has been placed successfully.</p>
+              <p>Your order(s) <strong>${orderIdList}</strong> have been placed successfully.</p>
               <h3>Order Summary</h3>
               <ul>${itemsList}</ul>
               <hr style="border: 1px solid #eee;" />
               <p>Subtotal: <strong>₱${subtotal.toFixed(2)}</strong></p>
               ${discount > 0 ? `<p>Discount: <strong>-₱${discount.toFixed(2)}</strong></p>` : ''}
               <p>Shipping: <strong>₱${shippingFee.toFixed(2)}</strong></p>
-              <p style="font-size: 18px;">Total: <strong>₱${order.total.toFixed(2)}</strong></p>
+              <p style="font-size: 18px;">Total: <strong>₱${combinedTotal.toFixed(2)}</strong></p>
               <p>Payment Method: <strong>${paymentMethod === 'pickup' ? 'Pickup' : 'Cash on Delivery'}</strong></p>
               ${isPickup && pickupLocation ? `<p>Pickup Location: <strong>${pickupLocation}</strong></p>` : ''}
               <hr style="border: 1px solid #eee;" />
@@ -369,7 +410,14 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    res.status(201).json(order);
+    if (createdOrders.length === 1) {
+      return res.status(201).json(createdOrders[0]);
+    }
+
+    return res.status(201).json({
+      message: 'Orders created per seller',
+      orders: createdOrders,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -417,7 +465,13 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     const previousStatus = order.orderStatus;
-    await order.update({ orderStatus, trackingNumber });
+    const updateData = { orderStatus, trackingNumber };
+    if (orderStatus === 'completed') {
+      updateData.completedAt = new Date();
+    } else if (orderStatus) {
+      updateData.completedAt = null;
+    }
+    await order.update(updateData);
 
     if (orderStatus && previousStatus !== orderStatus) {
       await createNotificationSafe({
@@ -530,6 +584,12 @@ export const updateOrderStatusBySeller = async (req, res) => {
         
         updateData.estimatedReadyDate = currentDate;
       }
+    }
+
+    if (orderStatus === 'completed') {
+      updateData.completedAt = new Date();
+    } else if (orderStatus) {
+      updateData.completedAt = null;
     }
 
     // Update the orderStatus but don't allow sellers to set arbitrary admin-only fields
