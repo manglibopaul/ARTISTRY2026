@@ -110,6 +110,21 @@ const validateDeliveryAddress = ({ fullName, phone, regionProvinceCityBarangay, 
   return errors;
 };
 
+const buildPickupGeocodeQueries = (location) => {
+  const base = String(location || '').trim();
+  if (!base) return [];
+
+  const withoutCountry = base.replace(/\s*,\s*philippines\s*$/i, '').trim();
+  const withoutZip = withoutCountry.replace(/\b\d{4}\b/g, '').replace(/\s+,/g, ',').replace(/,{2,}/g, ',').replace(/\s{2,}/g, ' ').replace(/\s+,/g, ', ').trim();
+
+  return [
+    base,
+    withoutCountry,
+    withoutZip,
+    `${withoutZip || withoutCountry || base}, Philippines`,
+  ].filter((value, index, array) => value && array.indexOf(value) === index);
+};
+
 const PlaceOrder = () => {
 
   const [method,setMethod] = useState('cod')
@@ -376,7 +391,12 @@ const PlaceOrder = () => {
         if (!selectedLocation) continue
 
         try {
-          const coords = await geocodeQuery(`${selectedLocation}, Philippines`)
+          const queryCandidates = buildPickupGeocodeQueries(selectedLocation)
+          let coords = null
+          for (const query of queryCandidates) {
+            coords = await geocodeQuery(query)
+            if (coords) break
+          }
           if (coords) {
             nextLocations[String(seller.sellerId)] = {
               lat: coords.lat,
@@ -384,6 +404,8 @@ const PlaceOrder = () => {
               label: seller.storeName || 'Pickup Location',
               address: selectedLocation,
             }
+          } else {
+            console.warn('Could not geocode pickup location:', selectedLocation)
           }
         } catch (error) {
           console.error('Geocoding pickup location failed:', error)

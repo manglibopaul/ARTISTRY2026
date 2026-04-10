@@ -14,6 +14,8 @@ export const geocodeQuery = async (query) => {
       `${NOMINATIM_URL}?` + new URLSearchParams({
         q: cleanQuery,
         format: 'json',
+        addressdetails: '1',
+        countrycodes: 'ph',
         limit: 1,
       })
     );
