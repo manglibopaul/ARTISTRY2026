@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react' 
 import {assets} from '../assets/assets'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import CartSlideout from './CartSlideout';
 
@@ -13,6 +13,7 @@ const Navbar = () => {
     const [customerSessionValid, setCustomerSessionValid] = useState(false);
     const [sellerSessionReady, setSellerSessionReady] = useState(false);
     const [sellerSessionValid, setSellerSessionValid] = useState(false);
+    const location = useLocation();
     const navigate = useNavigate();
     const sellerToken = localStorage.getItem('sellerToken');
     const sellerRaw = localStorage.getItem('seller')
@@ -28,6 +29,7 @@ const Navbar = () => {
     if (!userToken && userRaw) localStorage.removeItem('user')
 
     const {setShowSearch , getCartCount} = useContext(ShopContext);
+    const isSellerRoute = location.pathname.startsWith('/seller/');
 
     const navigateWithHardFallback = (path) => {
       setVisible(false)
@@ -225,7 +227,7 @@ const Navbar = () => {
                 </button>
                 {/* Logout moved to Profile page */}
               </>
-            ) : sellerSessionReady && sellerSessionValid ? (
+            ) : isSellerRoute && sellerSessionReady && sellerSessionValid ? (
               <>
                 <Link to='/seller/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Seller Profile'>
                   <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
