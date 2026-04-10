@@ -57,7 +57,7 @@ import qr_code from './qr_code.png';
     qr_code,
     // 3D model paths
     tulip_model,
-    sunflower_model,
+    sunflower_model
 };
 export const products = [];
 
