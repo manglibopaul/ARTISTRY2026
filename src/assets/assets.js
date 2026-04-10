@@ -6,7 +6,7 @@ const sunflower_model = '/models/sunflower.usdz';
 
 
 
-import logo from './logo.png';
+// import logo from './logo.png'; // File deleted, remove reference
 import add_icon from './add_icon.png';
 import order_icon from './order_icon.png';
 import upload_area from './upload_area.png';
@@ -32,8 +32,7 @@ import qr_code from './qr_code.png';
 
 // Removed deleted asset imports
 
-export const assets = {
-    logo,
+    // logo, // File deleted
     add_icon,
     order_icon,
     upload_area,
