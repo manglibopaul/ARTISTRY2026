@@ -1,14 +1,34 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
+
+const resolveSellerProofUrl = (rawValue, uploadBaseUrl) => {
+  const value = String(rawValue || '').trim();
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+
+  const normalized = value.replace(/\\/g, '/');
+  const marker = '/uploads/';
+  const markerIndex = normalized.lastIndexOf(marker);
+
+  let relative = '';
+  if (markerIndex >= 0) {
+    relative = normalized.slice(markerIndex);
+  } else if (normalized.startsWith('uploads/')) {
+    relative = `/${normalized}`;
+  } else if (normalized.startsWith('/')) {
+    relative = normalized;
+  } else {
+    relative = `/uploads/images/${normalized}`;
+  }
+
+  return uploadBaseUrl ? `${uploadBaseUrl}${relative}` : relative;
+};
+
 // Modal to view and verify seller
 function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }) {
   if (!open || !seller) return null;
-  // Resolve uploads against backend host in production/local.
-  let proofUrl = seller.proofOfArtisan || '';
-  if (proofUrl && proofUrl.startsWith('/') && uploadBaseUrl) {
-    proofUrl = `${uploadBaseUrl}${proofUrl}`;
-  }
+  const proofUrl = resolveSellerProofUrl(seller.proofOfArtisan, uploadBaseUrl);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg p-6 min-w-[340px] max-w-[95vw]">
