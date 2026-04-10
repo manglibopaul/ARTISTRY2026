@@ -46,10 +46,10 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
   const localUrl = normalizePathToPublicUpload(file.path, file.filename, 'images');
 
   if (!hasCloudinaryConfig()) {
-    if (process.env.NODE_ENV === 'production' && !hasWarnedCloudinaryMissing) {
-      console.warn('Cloudinary is not configured in production. Falling back to local /uploads URLs.');
-      hasWarnedCloudinaryMissing = true;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Cloudinary is not configured in production. Image uploads are disabled.');
     }
+    // In development, fallback to local uploads for convenience
     return {
       url: localUrl,
       filename: file.filename || null,
@@ -71,7 +71,11 @@ export const uploadImage = async (file, folder = 'artistry/images') => {
       url: uploaded.secure_url,
       filename: uploaded.public_id,
     };
-  } catch {
+  } catch (err) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Cloudinary upload failed in production. Image uploads are disabled.');
+    }
+    // In development, fallback to local uploads for convenience
     return {
       url: localUrl,
       filename: file.filename || null,
