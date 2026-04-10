@@ -20,11 +20,6 @@ const normalizePickupLocations = (seller) => {
   }
 
   locations = locations.map((loc) => String(loc || '').trim()).filter(Boolean)
-  if (locations.length === 0 && seller?.address) {
-    const fallback = String(seller.address).trim()
-    if (fallback) locations = [fallback]
-  }
-
   return [...new Set(locations)]
 }
 
