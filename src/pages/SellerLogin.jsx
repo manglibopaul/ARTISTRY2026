@@ -11,6 +11,12 @@ const formatAddressFromParts = (address) => {
   return [street || locality, locality && street ? locality : '', region].filter(Boolean).join('\n')
 }
 
+const normalizeLocationText = (value) => String(value || '')
+  .toLowerCase()
+  .replace(/\s+/g, ' ')
+  .replace(/[.,]/g, '')
+  .trim()
+
 const SellerLogin = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -85,10 +91,15 @@ const SellerLogin = () => {
       let dataToSend = formData
       let config = { timeout: 30000 }
       if (!isLogin) {
+        const sellerAddressText = normalizeLocationText(formData.address)
+        const filteredPickupLocations = formData.pickupLocations.filter((location) => (
+          normalizeLocationText(location) && normalizeLocationText(location) !== sellerAddressText
+        ))
+
         dataToSend = new FormData()
         Object.entries(formData).forEach(([key, value]) => {
           if (key === 'pickupLocations') {
-            dataToSend.append('pickupLocations', JSON.stringify(value))
+            dataToSend.append('pickupLocations', JSON.stringify(filteredPickupLocations))
           } else if (key === 'proofOfArtisan' && value) {
             dataToSend.append('proofOfArtisan', value)
           } else {
