@@ -341,6 +341,7 @@ export const createOrder = async (req, res) => {
         ? 0
         : discount;
 
+
       const created = await Order.create({
         userId: req.user.id,
         items: itemsForOrder,
