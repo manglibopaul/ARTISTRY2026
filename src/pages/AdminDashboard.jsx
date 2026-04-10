@@ -57,6 +57,24 @@ function SuccessModal({ open, onClose, message }) {
   );
 }
 
+function ErrorModal({ open, onClose, title = 'Error', message = 'Something went wrong.' }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-[92vw]">
+        <div className="text-center">
+          <div className="mb-4 text-5xl text-red-600">!</div>
+          <div className="mb-2 text-lg font-semibold text-gray-800">{title}</div>
+          <div className="mb-4 text-sm text-gray-700 whitespace-pre-line">{message}</div>
+        </div>
+        <div className="flex justify-center mt-4">
+          <button onClick={onClose} className="px-6 py-2 rounded bg-red-600 text-white">OK</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Simple Modal Components
 function ConfirmModal({ open, onClose, onConfirm, message, buttonLabel = 'Delete', buttonColor = 'bg-red-600' }) {
   if (!open) return null;
@@ -136,6 +154,15 @@ const AdminDashboard = () => {
     const [verificationModalOpen, setVerificationModalOpen] = useState(false);
     const [successModalOpen, setSuccessModalOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorModalTitle, setErrorModalTitle] = useState('Error');
+    const [errorModalMessage, setErrorModalMessage] = useState('');
+
+    const openErrorModal = (title, message) => {
+      setErrorModalTitle(title || 'Error');
+      setErrorModalMessage(message || 'Something went wrong.');
+      setErrorModalOpen(true);
+    };
 
     // Delete customer
     const deleteCustomer = async (id) => {
@@ -144,7 +171,7 @@ const AdminDashboard = () => {
         if (!res.ok) throw new Error(await res.text());
         setCustomers((c) => c.filter(u => u.id !== id));
       } catch (err) {
-        alert('Delete failed: ' + (err.message || 'error'));
+        openErrorModal('Delete Failed', err.message || 'error');
       }
     };
 
@@ -155,7 +182,7 @@ const AdminDashboard = () => {
         if (!res.ok) throw new Error(await res.text());
         setSellers((s) => s.filter(x => x.id !== id));
       } catch (err) {
-        alert('Delete failed: ' + (err.message || 'error'));
+        openErrorModal('Delete Failed', err.message || 'error');
       }
     };
   const [selectedTab, setSelectedTab] = useState(() => {
@@ -330,7 +357,7 @@ const AdminDashboard = () => {
       setBinSellers((s) => s.filter(x => x.id !== id));
       fetchSellers(); // Refresh sellers list
     } catch (err) {
-      alert('Restore failed: ' + (err.message || 'error'));
+      openErrorModal('Restore Failed', err.message || 'error');
     }
   };
 
@@ -341,7 +368,7 @@ const AdminDashboard = () => {
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinSellers((s) => s.filter(x => x.id !== id));
     } catch (err) {
-      alert('Permanent delete failed: ' + (err.message || 'error'));
+      openErrorModal('Permanent Delete Failed', err.message || 'error');
     }
   };
 
@@ -353,7 +380,7 @@ const AdminDashboard = () => {
       setBinCustomers((u) => u.filter(x => x.id !== id));
       fetchCustomers();
     } catch (err) {
-      alert('Restore failed: ' + (err.message || 'error'));
+      openErrorModal('Restore Failed', err.message || 'error');
     }
   };
 
@@ -364,7 +391,7 @@ const AdminDashboard = () => {
       if (!res.ok) throw new Error(await readErrorMessage(res));
       setBinCustomers((u) => u.filter(x => x.id !== id));
     } catch (err) {
-      alert('Permanent delete failed: ' + (err.message || 'error'));
+      openErrorModal('Permanent Delete Failed', err.message || 'error');
     }
   };
 
@@ -671,6 +698,12 @@ const AdminDashboard = () => {
       <ConfirmModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmAction} message={confirmMessage} buttonLabel={confirmButtonLabel} buttonColor={confirmButtonColor} />
       <ConfirmModal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)} onConfirm={() => { handleVerifySeller(); setVerificationModalOpen(false); }} message={`Verify seller "${viewSeller?.storeName || 'N/A'}"? This will approve them for the platform.`} buttonLabel="Verify" buttonColor="bg-green-600" />
       <SuccessModal open={successModalOpen} onClose={() => setSuccessModalOpen(false)} message={successMessage} />
+      <ErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        title={errorModalTitle}
+        message={errorModalMessage}
+      />
     </div>
   );
 }
