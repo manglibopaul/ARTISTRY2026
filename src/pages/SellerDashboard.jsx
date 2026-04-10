@@ -501,14 +501,8 @@ const SellerDashboard = () => {
       return
     }
 
-    const maxBytes = fieldName === 'iosModel' ? MAX_USDZ_FILE_BYTES : MAX_GLTF_FILE_BYTES
-    const limitLabel = fieldName === 'iosModel' ? '10MB' : '25MB'
-    if (file.size > maxBytes) {
-      toast.error(`Selected file is too large. ${fieldName === 'iosModel' ? 'USDZ' : 'GLB/GLTF'} must be ${limitLabel} or smaller.`)
-      e.target.value = ''
-      setFormData(prev => ({ ...prev, [fieldName]: null }))
-      return
-    }
+
+    // No file size validation for model uploads
 
     setFormData(prev => ({ ...prev, [fieldName]: file }))
   }
