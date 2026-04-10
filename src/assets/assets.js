@@ -32,6 +32,7 @@ import qr_code from './qr_code.png';
 
 // Removed deleted asset imports
 
+export const assets = {
     // logo, // File deleted
     add_icon,
     order_icon,
