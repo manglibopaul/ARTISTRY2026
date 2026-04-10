@@ -1,17 +1,4 @@
-import p_img7 from './p_img7.png'
-import p_img7_2 from './p_img7_2.png'
-import p_img7_3 from './p_img7_3.png'
-import p_img7_4 from './p_img7_4.png'
-import p_img7_5 from './p_img7_5.png'
-import p_img8 from './p_img8.png'
-import p_img8_2 from './p_img8_2.png'
-import p_img11 from './p_img11.png'
-
-import p_img12 from './p_img12.png'
-import p_img14 from './p_img14.png'
-import p_img15 from './p_img15.png'
-import p_img16 from './p_img16.png'
-import p_img17 from './p_img17.png'
+// Removed deleted image imports
 
 // 3D model paths (use as string paths, not imports)
 const tulip_model = '/models/tulip.usdz';
