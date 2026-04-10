@@ -2,11 +2,14 @@ import Seller from '../models/Seller.js';
 import { generateSellerToken } from '../middleware/sellerAuth.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
+import ChatMessage from '../models/ChatMessage.js';
+import ReturnRequest from '../models/ReturnRequest.js';
 import { ARTISAN_TYPES_ARRAY } from '../utils/artisanTypes.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
 import { Op } from 'sequelize';
 import { uploadImage } from '../utils/media.js';
+import { sequelize } from '../config/database.js';
 
 const SUPPORT_SELLER_EMAIL = 'admin.support@artistry.local';
 
@@ -378,11 +381,23 @@ export const hardDeleteSeller = async (req, res) => {
   try {
     const seller = await Seller.findByPk(req.params.id, { paranoid: false });
     if (!seller || !seller.deletedAt) return res.status(404).json({ message: 'Seller not found in bin' });
-    await seller.destroy({ force: true });
+
+    await sequelize.transaction(async (transaction) => {
+      // Remove dependent rows first to satisfy FK constraints.
+      await ChatMessage.destroy({ where: { sellerId: seller.id }, transaction });
+      await ReturnRequest.destroy({ where: { sellerId: seller.id }, transaction });
+      await Product.destroy({ where: { sellerId: seller.id }, transaction });
+
+      await seller.destroy({ force: true, transaction });
+    });
+
     res.json({ message: 'Seller permanently deleted' });
   } catch (error) {
     console.error('hardDeleteSeller', error);
-    res.status(500).json({ message: 'Failed to permanently delete seller' });
+    res.status(500).json({
+      message: 'Failed to permanently delete seller',
+      detail: error?.message || 'Unknown database error',
+    });
   }
 };
 
