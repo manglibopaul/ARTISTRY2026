@@ -318,16 +318,24 @@ export const updateProduct = async (req, res) => {
       if (modelFile) {
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
         updateData.modelUrl = uploadedModel?.url || null;
+      } else {
+        // No new model file, preserve existing
+        updateData.modelUrl = product.modelUrl;
       }
 
       // Handle iOS model file (USDZ)
       if (iosModelFile) {
         const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
         updateData.iosModel = uploadedIosModel?.url || null;
+      } else {
+        // No new iOS model file, preserve existing
+        updateData.iosModel = product.iosModel;
       }
     } else {
-      // If no files uploaded, use existing images
+      // If no files uploaded, use existing images and models
       updateData.image = existingImages;
+      updateData.modelUrl = product.modelUrl;
+      updateData.iosModel = product.iosModel;
     }
 
     await product.update(updateData);
