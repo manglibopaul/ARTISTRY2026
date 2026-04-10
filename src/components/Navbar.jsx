@@ -11,11 +11,11 @@ const Navbar = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [customerSessionReady, setCustomerSessionReady] = useState(false);
     const [customerSessionValid, setCustomerSessionValid] = useState(false);
+    const [sellerSessionReady, setSellerSessionReady] = useState(false);
+    const [sellerSessionValid, setSellerSessionValid] = useState(false);
     const navigate = useNavigate();
     const sellerToken = localStorage.getItem('sellerToken');
     const sellerRaw = localStorage.getItem('seller')
-    let sellerObj = null
-    try { sellerObj = sellerRaw && sellerToken ? JSON.parse(sellerRaw) : null } catch { sellerObj = null }
     // Auto-clean orphaned seller data (no token but object lingers)
     if (!sellerToken && sellerRaw) localStorage.removeItem('seller')
 
@@ -56,6 +56,44 @@ const Navbar = () => {
   }
 
   useEffect(() => {
+    const verifySellerSession = async () => {
+      const token = localStorage.getItem('sellerToken')
+      if (!token) {
+        setSellerSessionValid(false)
+        setSellerSessionReady(true)
+        return
+      }
+
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
+        const res = await fetch(`${apiUrl}/api/sellers/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) {
+          localStorage.removeItem('sellerToken')
+          localStorage.removeItem('seller')
+          setSellerSessionValid(false)
+          setSellerSessionReady(true)
+          return
+        }
+
+        const data = await res.json()
+        if (data) {
+          localStorage.setItem('seller', JSON.stringify(data))
+          setSellerSessionValid(true)
+        } else {
+          setSellerSessionValid(false)
+        }
+      } catch {
+        setSellerSessionValid(false)
+      } finally {
+        setSellerSessionReady(true)
+      }
+    }
+
+    verifySellerSession()
+
     const verifyCustomerSession = async () => {
       const token = localStorage.getItem('token') || localStorage.getItem('userToken')
       if (!token) {
@@ -187,7 +225,7 @@ const Navbar = () => {
                 </button>
                 {/* Logout moved to Profile page */}
               </>
-            ) : sellerObj ? (
+            ) : sellerSessionReady && sellerSessionValid ? (
               <>
                 <Link to='/seller/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Seller Profile'>
                   <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
