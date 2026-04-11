@@ -12,7 +12,8 @@ const ShopContextProvider = (props) => {
   const [showSearch,setShowSearch] = useState (false);
   const [cartsItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
-  const navigate = useNavigate();
+  // Remove useNavigate from top level to avoid hook error
+  // Use inside functions only if needed
   // Use localhost fallback only in development; production must use configured API URL.
   const apiUrl = import.meta.env.VITE_API_URL
     || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
