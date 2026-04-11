@@ -1,3 +1,30 @@
+// Edit a review (user can only edit their own)
+export const editReview = async (req, res) => {
+  try {
+    const reviewId = req.params.id;
+    const userId = req.user.id;
+    const review = await Review.findByPk(reviewId);
+    if (!review) return res.status(404).json({ message: 'Review not found' });
+    if (Number(review.userId) !== Number(userId)) return res.status(403).json({ message: 'You can only edit your own reviews' });
+
+    const { rating, title, comment } = req.body;
+    let images = review.images || [];
+    // If new images are uploaded, replace them
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      images = req.files.map(f => toPublicUploadPath(f.path, f.filename));
+    }
+
+    if (rating !== undefined) review.rating = rating;
+    if (title !== undefined) review.title = title;
+    if (comment !== undefined) review.comment = comment;
+    review.images = images;
+
+    await review.save();
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 import Review from '../models/Review.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
@@ -17,7 +44,11 @@ export const createReview = async (req, res) => {
   try {
     const { productId, orderId, rating, title, comment } = req.body;
     const userId = req.user.id;
-    const imageUrl = req.file ? toPublicUploadPath(req.file.path, req.file.filename) : null;
+    // Handle multiple images
+    let images = [];
+    if (req.files && Array.isArray(req.files)) {
+      images = req.files.map(f => toPublicUploadPath(f.path, f.filename));
+    }
 
     if (!productId || !rating || !comment) return res.status(400).json({ message: 'Missing required fields' });
 
@@ -67,7 +98,7 @@ export const createReview = async (req, res) => {
     const user = await User.findByPk(userId);
     const userName = user ? user.name : null;
 
-    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, imageUrl });
+    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
     res.status(201).json(review);
   } catch (err) {
     res.status(500).json({ message: err.message });

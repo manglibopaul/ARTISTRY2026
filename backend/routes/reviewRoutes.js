@@ -1,3 +1,5 @@
+// Protected: edit a review (user can only edit their own)
+router.patch('/:id', verifyUser, upload.array('images', 5), require('../controllers/reviewController.js').editReview);
 import express from 'express';
 import { createReview, getReviewsForProduct, checkReviewEligibility, getReviewsForSeller, replyToReview } from '../controllers/reviewController.js';
 import { verifyUser } from '../middleware/auth.js';
@@ -13,7 +15,7 @@ router.get('/product/:id', getReviewsForProduct);
 router.get('/product/:id/eligible', verifyUser, checkReviewEligibility);
 
 // Protected: create a review
-router.post('/', verifyUser, upload.single('image'), createReview);
+router.post('/', verifyUser, upload.array('images', 5), createReview);
 
 // Seller: get reviews for seller's products
 router.get('/seller', verifySeller, getReviewsForSeller);

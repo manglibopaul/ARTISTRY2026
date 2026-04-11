@@ -1,4 +1,77 @@
 import React, { useEffect, useState } from 'react'
+  // Edit review state
+  const [editingReview, setEditingReview] = useState(null); // {productId, reviewId, fields}
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  // Helper to open edit form for a review
+  const startEditReview = (productId, review) => {
+    setEditingReview({
+      productId,
+      reviewId: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      images: Array.isArray(review.images) ? review.images : [],
+      imageFiles: [], // new uploads
+    });
+  };
+
+  const cancelEditReview = () => setEditingReview(null);
+
+  // Handle edit form field changes
+  const handleEditReviewChange = (field, value) => {
+    setEditingReview(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Submit PATCH to backend
+  const submitEditReview = async () => {
+    if (!editingReview) return;
+    const { productId, reviewId, rating, comment, imageFiles } = editingReview;
+    if (!comment || !rating) {
+      openInfoModal('Incomplete Review', 'Please provide a rating and comment');
+      return;
+    }
+    setEditSubmitting(true);
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+      if (!token) return navigate('/login');
+      const formData = new FormData();
+      formData.append('rating', String(rating));
+      formData.append('comment', comment);
+      imageFiles.forEach(f => formData.append('images', f));
+      // PATCH endpoint: /api/reviews/:id
+      const res = await fetch(`${apiUrl}/api/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        openInfoModal('Edit Failed', txt || 'Failed to edit review');
+        setEditSubmitting(false);
+        return;
+      }
+      const updatedReview = await res.json();
+      // Update local order state
+      setOrder(prev => {
+        const items = Array.isArray(prev.items) ? prev.items.map(it => {
+          const pid = it.productId || it.id || it._id;
+          if (Number(pid) === Number(productId)) {
+            const revs = Array.isArray(it.reviews)
+              ? it.reviews.map(r => Number(r.id) === Number(reviewId) ? updatedReview : r)
+              : it.reviews;
+            return { ...it, reviews: revs };
+          }
+          return it;
+        }) : prev.items;
+        return { ...prev, items };
+      });
+      openInfoModal('Review Updated', 'Your review was updated successfully.');
+      setEditingReview(null);
+    } catch (err) {
+      openInfoModal('Edit Failed', err.message || 'Failed to edit review');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import Title from '../components/Title'
 import MapPin from '../components/MapPin'
@@ -451,15 +524,30 @@ const OrderDetails = () => {
                 address={order.pickupLocation || 'Pickup Location'}
                 isPickup={true}
               />
-            </div>
-          )}
-        </div>
-
-        <div className='border p-3 sm:p-4 rounded'>
-          <h3 className='font-medium mb-2'>Items</h3>
-          <div className='space-y-3'>
-            {Array.isArray(order.items) && order.items.map((item, i) => (
-              <div key={i} className='flex items-start gap-4'>
+                        <input
+                          type='file'
+                          accept='image/*'
+                          multiple
+                          onChange={e => {
+                            const files = Array.from(e.target.files || []);
+                            handleReviewChange(item.productId || item.id || item._id, 'imageFiles', files);
+                          }}
+                          className='w-full border px-2 py-1 mb-2 text-sm'
+                        />
+                        {Array.isArray(reviewForms[item.productId || item.id || item._id]?.imageFiles) && reviewForms[item.productId || item.id || item._id]?.imageFiles.length > 0 && (
+                          <div className='flex flex-wrap gap-2 mb-2'>
+                            {reviewForms[item.productId || item.id || item._id]?.imageFiles.map((file, idx) => (
+                              <div key={idx} className='flex flex-col items-center'>
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${file.name}`}
+                                  className='w-16 h-16 object-cover rounded border mb-1'
+                                />
+                                <span className='text-xs text-gray-600'>{file.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                 <img
                   className='w-16'
                   src={resolveImage(item.image)}
@@ -489,13 +577,18 @@ const OrderDetails = () => {
                                 className={`text-lg ${star <= current ? 'text-amber-500' : 'text-gray-300'}`}
                                 aria-label={`Set rating ${star}`}
                               >
-                                ★
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <textarea placeholder='Write your review' value={reviewForms[item.productId || item.id || item._id]?.comment || ''} onChange={e => handleReviewChange(item.productId || item.id || item._id, 'comment', e.target.value)} className='w-full border px-2 py-1 mb-2 text-sm' rows={3} />
+                            {Array.isArray(r.images) && r.images.length > 0 && (
+                              <div className='flex flex-wrap gap-2 mt-2'>
+                                {r.images.map((img, imgIdx) => (
+                                  <img
+                                    key={imgIdx}
+                                    src={resolveUploadImage(img)}
+                                    alt={`Review attachment ${imgIdx + 1}`}
+                                    className='rounded border border-gray-200 max-h-32 w-auto'
+                                  />
+                                ))}
+                              </div>
+                            )}
                       <input
                         type='file'
                         accept='image/*'
@@ -527,23 +620,112 @@ const OrderDetails = () => {
                     {Array.isArray(item.reviews) && item.reviews.length > 0 && (
                       <div className='mt-3 space-y-3'>
                         <h4 className='text-sm font-medium'>Reviews</h4>
-                        {item.reviews.map((r, idx) => (
-                          <div key={idx} className='p-3 border rounded bg-gray-50'>
-                            <div className='flex items-center justify-between'>
-                              <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
-                              <div className='text-sm'>{renderStars(r.rating)}</div>
+                        {item.reviews.map((r, idx) => {
+                          const isOwn = currentUser && Number(r.userId) === Number(currentUser.id);
+                          const isEditing = editingReview && editingReview.reviewId === r.id;
+                          return (
+                            <div key={idx} className='p-3 border rounded bg-gray-50'>
+                              <div className='flex items-center justify-between'>
+                                <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
+                                <div className='text-sm'>{renderStars(r.rating)}</div>
+                              </div>
+                              {isEditing ? (
+                                <div className='mt-2'>
+                                  <label className='text-sm block mb-1'>Rating</label>
+                                  <div className='flex gap-1 mb-2'>
+                                    {[1,2,3,4,5].map(star => (
+                                      <button
+                                        key={star}
+                                        type='button'
+                                        onClick={() => handleEditReviewChange('rating', star)}
+                                        className={`text-lg ${star <= (editingReview.rating || 5) ? 'text-amber-500' : 'text-gray-300'}`}
+                                        aria-label={`Set rating ${star}`}
+                                      >★</button>
+                                    ))}
+                                  </div>
+                                  <textarea
+                                    className='w-full border px-2 py-1 mb-2 text-sm rounded'
+                                    value={editingReview.comment}
+                                    onChange={e => handleEditReviewChange('comment', e.target.value)}
+                                    rows={2}
+                                    placeholder='Update your review...'
+                                  />
+                                  <label className='text-sm block mb-1'>Add Images</label>
+                                  <input
+                                    type='file'
+                                    accept='image/*'
+                                    multiple
+                                    onChange={e => handleEditReviewChange('imageFiles', Array.from(e.target.files || []))}
+                                    className='w-full border px-2 py-1 mb-2 text-sm'
+                                  />
+                                  {/* Preview new uploads */}
+                                  {Array.isArray(editingReview.imageFiles) && editingReview.imageFiles.length > 0 && (
+                                    <div className='flex flex-wrap gap-2 mb-2'>
+                                      {editingReview.imageFiles.map((file, idx) => (
+                                        <div key={idx} className='flex flex-col items-center'>
+                                          <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={`Preview ${file.name}`}
+                                            className='w-16 h-16 object-cover rounded border mb-1'
+                                          />
+                                          <span className='text-xs text-gray-600'>{file.name}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {/* Show existing images */}
+                                  {Array.isArray(editingReview.images) && editingReview.images.length > 0 && (
+                                    <div className='flex flex-wrap gap-2 mb-2'>
+                                      {editingReview.images.map((img, idx) => (
+                                        <img
+                                          key={idx}
+                                          src={resolveUploadImage(img)}
+                                          alt={`Review image ${idx+1}`}
+                                          className='w-16 h-16 object-cover rounded border'
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className='flex gap-2 justify-end'>
+                                    <button onClick={cancelEditReview} className='border px-3 py-1 text-sm rounded'>Cancel</button>
+                                    <button onClick={submitEditReview} className='bg-black text-white px-3 py-1 text-sm rounded' disabled={editSubmitting}>{editSubmitting ? 'Saving...' : 'Save'}</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
+                                  {/* Support multiple images */}
+                                  {Array.isArray(r.images) && r.images.length > 0 && (
+                                    <div className='flex flex-wrap gap-2 mt-2'>
+                                      {r.images.map((img, imgIdx) => (
+                                        <img
+                                          key={imgIdx}
+                                          src={resolveUploadImage(img)}
+                                          alt={`Review attachment ${imgIdx + 1}`}
+                                          className='rounded border border-gray-200 max-h-32 w-auto'
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {/* Legacy single image support */}
+                                  {r.imageUrl && !r.images && (
+                                    <img
+                                      src={resolveUploadImage(r.imageUrl)}
+                                      alt='Review attachment'
+                                      className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
+                                    />
+                                  )}
+                                  <div className='mt-2 text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
+                                  {isOwn && (
+                                    <div className='mt-2 text-right'>
+                                      <button onClick={() => startEditReview(item.productId || item.id || item._id, r)} className='text-xs px-2 py-1 border rounded'>Edit</button>
+                                    </div>
+                                  )}
+                                </>
+                              )}
                             </div>
-                            <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
-                            {r.imageUrl && (
-                              <img
-                                src={resolveUploadImage(r.imageUrl)}
-                                alt='Review attachment'
-                                className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
-                              />
-                            )}
-                            <div className='mt-2 text-xs text-gray-400'>{new Date(r.createdAt).toLocaleString()}</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                 </div>
