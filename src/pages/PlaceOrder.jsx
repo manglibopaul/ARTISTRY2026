@@ -153,6 +153,8 @@ const PlaceOrder = () => {
 
   const [method,setMethod] = useState('delivery')
   const [paymentOption, setPaymentOption] = useState('cod')
+  const [gcashReceipt, setGcashReceipt] = useState(null);
+  const [gcashReceiptError, setGcashReceiptError] = useState('');
 
   const {navigate} = useContext(ShopContext);
   const { products, cartsItems, refreshProducts, getCartAmount, currency, clearCart } = useContext(ShopContext);
@@ -718,6 +720,7 @@ const PlaceOrder = () => {
                     </label>
                   </div>
 
+
                   {paymentOption === 'gcash' && availablePaymentMethods.gcash && Object.values(sellerPaymentInfo).length > 0 && (
                     <div className='mt-3 space-y-3'>
                       <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s GCash account. Use the details below:</p>
@@ -753,6 +756,24 @@ const PlaceOrder = () => {
                           </div>
                         )
                       })}
+
+                      {/* GCash Receipt Upload */}
+                      <div className='mt-4'>
+                        <label className='block text-xs font-medium mb-1 text-gray-700'>Upload GCash Receipt <span className='text-red-600'>*</span></label>
+                        <input
+                          type='file'
+                          accept='image/*,application/pdf'
+                          onChange={e => {
+                            setGcashReceiptError('');
+                            const file = e.target.files && e.target.files[0];
+                            setGcashReceipt(file || null);
+                          }}
+                          className='block w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700'
+                        />
+                        {gcashReceiptError && <p className='text-xs text-red-600 mt-1'>{gcashReceiptError}</p>}
+                        {gcashReceipt && <p className='text-xs text-green-700 mt-1'>Selected: {gcashReceipt.name}</p>}
+                        <p className='text-xs text-gray-500 mt-1'>Attach a screenshot or PDF of your GCash payment receipt. This is required to complete your order.</p>
+                      </div>
                     </div>
                   )}
 
@@ -949,6 +970,14 @@ const PlaceOrder = () => {
                   openModal('GCash Not Available', 'At least one seller in your cart does not accept GCash. Please choose COD.')
                   return
                 }
+                // GCash receipt validation
+                if (paymentOption === 'gcash') {
+                  if (!gcashReceipt) {
+                    setGcashReceiptError('GCash receipt is required.');
+                    openModal('GCash Receipt Required', 'Please upload your GCash payment receipt to complete your order.');
+                    return;
+                  }
+                }
               }
 
               const itemsWithPickup = method === 'pickup'
@@ -983,7 +1012,7 @@ const PlaceOrder = () => {
 
               try {
                 setPlacing(true);
-                await axios.post(`${apiUrl}/api/orders`, {
+                let orderPayload = {
                   items: itemsWithPickup,
                   address,
                   paymentMethod: method === 'pickup' ? 'pickup' : paymentOption,
@@ -996,9 +1025,30 @@ const PlaceOrder = () => {
                   pickupLocationsBySeller: method === 'pickup' ? pickupLocationsBySeller : null,
                   reservationDateTime: pickupInfo?.reservationDateTime || null,
                   reservationNote: pickupInfo?.reservationNote || null,
-                }, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
+                };
+
+                // If GCash, send as multipart/form-data with receipt
+                if (paymentOption === 'gcash' && gcashReceipt) {
+                  const formData = new FormData();
+                  Object.entries(orderPayload).forEach(([key, value]) => {
+                    if (typeof value === 'object' && value !== null) {
+                      formData.append(key, JSON.stringify(value));
+                    } else {
+                      formData.append(key, value);
+                    }
+                  });
+                  formData.append('gcashReceipt', gcashReceipt);
+                  await axios.post(`${apiUrl}/api/orders`, formData, {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'multipart/form-data',
+                    },
+                  });
+                } else {
+                  await axios.post(`${apiUrl}/api/orders`, orderPayload, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                }
                 refreshProducts && refreshProducts();
                 clearCart && clearCart();
                 navigate('/orders');
