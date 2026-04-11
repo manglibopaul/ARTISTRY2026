@@ -507,13 +507,13 @@ const Product = () => {
             {/* Quantity + Add to Cart + AR Button */}
             <div className='flex flex-col sm:flex-row gap-3'>
               {/* ⭐ View AR button */}
-              {productData.modelUrl && (
-                <button 
-                  onClick={()=>setShowAR(true)} 
-                  className='border border-black px-6 py-3 text-sm w-full sm:w-auto bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md hover:from-pink-600 hover:to-yellow-500 transition-colors duration-200'>
-                  View AR
-                </button>
-              )}
+              <button 
+                onClick={()=>setShowAR(true)} 
+                className={`border border-black px-6 py-3 text-sm w-full sm:w-auto bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition-colors duration-200 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
+                disabled={!productData.modelUrl}
+              >
+                View AR
+              </button>
 
               <div className='flex items-center gap-2 w-full sm:w-auto'>
                 <input
