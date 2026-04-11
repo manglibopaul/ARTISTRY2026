@@ -302,6 +302,7 @@ const PlaceOrder = () => {
           }
         } catch (e) { console.error('Failed to fetch seller data', e) }
       }
+      console.log('DEBUG allLocations:', allLocations)
       setSellerPickupLocations(allLocations)
       if (allLocations.length > 0) {
         setPickupLocationsBySeller((prev) => {
@@ -348,7 +349,9 @@ const PlaceOrder = () => {
         grouped[sid].locations.push(loc.location)
       }
     }
-    return Object.values(grouped)
+    const result = Object.values(grouped)
+    console.log('DEBUG pickupLocationsGrouped:', result)
+    return result
   }, [sellerPickupLocations])
 
   React.useEffect(() => {
