@@ -51,7 +51,7 @@ const Footer = () => {
       {/* Bottom */}
       <div className='max-w-6xl mx-auto px-4 py-6'>
         <div className='border-t border-gray-200 pt-6 text-center text-xs text-gray-600'>
-          <p>&copy; 2024 ARTISTRY. All rights reserved.</p>
+          <p>&copy; 2026 ARTISTRY. All rights reserved.</p>
         </div>
       </div>
     </footer>
