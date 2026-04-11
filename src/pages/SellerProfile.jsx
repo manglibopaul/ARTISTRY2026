@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
+import AddressPickerMap from '../components/AddressPickerMap'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
@@ -409,6 +410,10 @@ const SellerProfile = () => {
             <label className='text-sm font-medium text-gray-600'>Pickup Locations</label>
             {isEditing ? (
               <div className='mt-2 space-y-2'>
+                {/* Map picker for pickup location */}
+                <AddressPickerMap
+                  onLocationPick={({ address }) => setNewPickupLocation(address)}
+                />
                 {formData.pickupLocations.map((loc, idx) => (
                   <div key={idx} className='flex items-center gap-2'>
                     <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>{loc}</span>
@@ -425,7 +430,7 @@ const SellerProfile = () => {
                   <input
                     value={newPickupLocation}
                     onChange={e => setNewPickupLocation(e.target.value)}
-                    placeholder='Add a pickup location...'
+                    placeholder='Add pickup location... (or pin on map)'
                     className='flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm'
                   />
                   <button

@@ -15,7 +15,7 @@ const DEFAULT_CENTER = [16.4023, 120.5960] // Baguio fallback
 const AddressPickerMap = ({ onLocationPick }) => {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
-  const markerRef = useRef(null)
+  const markersRef = useRef([])
   const [loadingAddress, setLoadingAddress] = useState(false)
 
   useEffect(() => {
@@ -33,28 +33,28 @@ const AddressPickerMap = ({ onLocationPick }) => {
       maxZoom: 19,
     }).addTo(mapInstance.current)
 
-    const setMarker = async (lat, lon) => {
+
+    const addMarker = async (lat, lon) => {
       if (!mapInstance.current) return
 
-      if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lon])
-      } else {
-        markerRef.current = L.marker([lat, lon], { draggable: true }).addTo(mapInstance.current)
-        markerRef.current.on('dragend', async (e) => {
-          const pos = e.target.getLatLng()
-          await handleReverseGeocode(pos.lat, pos.lng)
-        })
-      }
-
-      await handleReverseGeocode(lat, lon)
+      const marker = L.marker([lat, lon], { draggable: true }).addTo(mapInstance.current)
+      marker.on('dragend', async (e) => {
+        const pos = e.target.getLatLng()
+        await handleReverseGeocode(pos.lat, pos.lng, marker)
+      })
+      markersRef.current.push(marker)
+      await handleReverseGeocode(lat, lon, marker)
     }
 
-    const handleReverseGeocode = async (lat, lon) => {
+    const handleReverseGeocode = async (lat, lon, marker) => {
       setLoadingAddress(true)
       try {
         const addr = await reverseGeocode(lat, lon)
         if (onLocationPick) {
           onLocationPick({ lat, lon, address: addr })
+        }
+        if (marker) {
+          marker.bindPopup(addr).openPopup()
         }
       } finally {
         setLoadingAddress(false)
@@ -62,7 +62,7 @@ const AddressPickerMap = ({ onLocationPick }) => {
     }
 
     mapInstance.current.on('click', async (e) => {
-      await setMarker(e.latlng.lat, e.latlng.lng)
+      await addMarker(e.latlng.lat, e.latlng.lng)
     })
 
     if (navigator.geolocation) {
@@ -84,7 +84,7 @@ const AddressPickerMap = ({ onLocationPick }) => {
     return () => {
       mapInstance.current?.remove()
       mapInstance.current = null
-      markerRef.current = null
+      markersRef.current = []
     }
   }, [onLocationPick])
 
