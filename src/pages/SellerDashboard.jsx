@@ -1034,10 +1034,6 @@ const SellerDashboard = () => {
                 ) : (
                   editingProduct ? 'Update Product' : 'Create Product'
                 )}
-                {/* Debug info for why button is disabled */}
-                <span style={{fontSize:'10px',marginLeft:'8px',color:'#ff0'}}>
-                  {isSubmitting ? '[isSubmitting=true]' : '[isSubmitting=false]'}
-                </span>
               </button>
             </form>
           </div>
