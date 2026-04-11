@@ -1,3 +1,27 @@
+// Simple Modal for QR code
+function QRModal({ open, onClose, qrUrl, storeName }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg p-6 shadow-lg relative max-w-full w-80 flex flex-col items-center"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          className="absolute top-2 right-2 text-gray-500 hover:text-black text-xl font-bold"
+          onClick={onClose}
+        >
+          ×
+        </button>
+        <img src={qrUrl} alt={`${storeName} GCash QR`} className="w-64 h-64 object-contain border-2 border-blue-400 rounded bg-white p-2 mb-2" />
+        <p className="text-xs text-gray-700 text-center">Scan this QR code to pay <span className="font-semibold">{storeName}</span> via GCash.</p>
+      </div>
+    </div>
+  );
+}
 import React, { useContext, useState } from 'react'
 import Title from '../components/Title'
 import CartTotal from '../components/CartTotal'
@@ -709,9 +733,20 @@ const PlaceOrder = () => {
                             <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
                             <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
                             {qrUrl ? (
-                              <a href={qrUrl} target="_blank" rel="noopener noreferrer">
-                                <img src={qrUrl} alt={`${info.storeName} GCash QR`} className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer' />
-                              </a>
+                              <>
+                                <img
+                                  src={qrUrl}
+                                  alt={`${info.storeName} GCash QR`}
+                                  className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer'
+                                  onClick={() => setModalState({ open: true, title: info.storeName, message: qrUrl })}
+                                />
+                                <QRModal
+                                  open={modalState.open && modalState.message === qrUrl}
+                                  onClose={() => setModalState({ open: false, title: '', message: '' })}
+                                  qrUrl={qrUrl}
+                                  storeName={info.storeName}
+                                />
+                              </>
                             ) : (
                               <p className='text-xs text-amber-700 mt-2'>QR code not uploaded yet. Contact the seller in chat for payment instructions.</p>
                             )}
