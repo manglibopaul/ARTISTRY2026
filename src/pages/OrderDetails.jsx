@@ -1,7 +1,31 @@
 import React, { useEffect, useState } from 'react'
-  // Edit review state
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import Title from '../components/Title'
+import MapPin from '../components/MapPin'
+import { geocodeAddress } from '../utils/geocoding'
+
+
+
+
+const OrderDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [reviewForms, setReviewForms] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
+  const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
+  const [deliveryMapLat, setDeliveryMapLat] = useState(null);
+  const [deliveryMapLon, setDeliveryMapLon] = useState(null);
+  const [pickupMapLat, setPickupMapLat] = useState(null);
+  const [pickupMapLon, setPickupMapLon] = useState(null);
+  // Edit review state (merged from duplicate)
   const [editingReview, setEditingReview] = useState(null); // {productId, reviewId, fields}
   const [editSubmitting, setEditSubmitting] = useState(false);
+
   // Helper to open edit form for a review
   const startEditReview = (productId, review) => {
     setEditingReview({
@@ -72,26 +96,6 @@ import React, { useEffect, useState } from 'react'
       setEditSubmitting(false);
     }
   };
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import Title from '../components/Title'
-import MapPin from '../components/MapPin'
-import { geocodeAddress } from '../utils/geocoding'
-
-const OrderDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [reviewForms, setReviewForms] = useState({});
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
-  const [infoModal, setInfoModal] = useState({ open: false, title: '', message: '' });
-  const [deliveryMapLat, setDeliveryMapLat] = useState(null);
-  const [deliveryMapLon, setDeliveryMapLon] = useState(null);
-  const [pickupMapLat, setPickupMapLat] = useState(null);
-  const [pickupMapLon, setPickupMapLon] = useState(null);
 
   const parseJsonSafe = async (res) => {
     const contentType = res.headers.get('content-type') || ''
@@ -781,4 +785,4 @@ const OrderDetails = () => {
   )
 }
 
-export default OrderDetails
+export default OrderDetails;
