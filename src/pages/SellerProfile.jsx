@@ -411,17 +411,22 @@ const SellerProfile = () => {
             {isEditing ? (
               <div className='mt-2 space-y-2'>
                 {/* Map picker for pickup location */}
-                <AddressPickerMap
-                  onLocationPick={loc => {
-                    if (loc && typeof loc === 'object' && 'address' in loc) {
-                      setNewPickupLocation(String(loc.address));
-                    } else if (typeof loc === 'string') {
-                      setNewPickupLocation(typeof loc === 'object' && loc.address ? loc.address : String(loc));
-                    } else {
-                      setNewPickupLocation('');
-                    }
-                  }}
-                />
+                {React.useMemo(
+                  () => (
+                    <AddressPickerMap
+                      onLocationPick={loc => {
+                        if (loc && typeof loc === 'object' && 'address' in loc) {
+                          setNewPickupLocation(String(loc.address));
+                        } else if (typeof loc === 'string') {
+                          setNewPickupLocation(typeof loc === 'object' && loc.address ? loc.address : String(loc));
+                        } else {
+                          setNewPickupLocation('');
+                        }
+                      }}
+                    />
+                  ),
+                  []
+                )}
                 {formData.pickupLocations.map((loc, idx) => (
                   <div key={idx} className='flex items-center gap-2'>
                     <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>{loc}</span>
