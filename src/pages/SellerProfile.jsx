@@ -412,7 +412,7 @@ const SellerProfile = () => {
               <div className='mt-2 space-y-2'>
                 {/* Map picker for pickup location */}
                 <AddressPickerMap
-                  onLocationPick={({ address }) => setNewPickupLocation(address)}
+                  onLocationPick={loc => setNewPickupLocation(loc.address)}
                 />
                 {formData.pickupLocations.map((loc, idx) => (
                   <div key={idx} className='flex items-center gap-2'>
