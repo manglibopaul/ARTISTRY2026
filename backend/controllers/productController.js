@@ -157,6 +157,8 @@ export const getSellerProducts = async (req, res) => {
 // Create product (seller)
 export const createProduct = async (req, res) => {
   try {
+    console.log('CREATE PRODUCT: req.files:', req.files);
+    console.log('CREATE PRODUCT: req.body:', req.body);
     const sellerId = req.seller?.id; // From auth middleware
     const productData = { ...req.body, sellerId: sellerId || null };
 
@@ -236,6 +238,8 @@ export const createProduct = async (req, res) => {
 // Update product
 export const updateProduct = async (req, res) => {
   try {
+    console.log('UPDATE PRODUCT: req.files:', req.files);
+    console.log('UPDATE PRODUCT: req.body:', req.body);
     const product = await Product.findByPk(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
