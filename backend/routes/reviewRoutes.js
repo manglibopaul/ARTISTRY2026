@@ -1,7 +1,6 @@
-// Protected: edit a review (user can only edit their own)
-router.patch('/:id', verifyUser, upload.array('images', 5), require('../controllers/reviewController.js').editReview);
+
 import express from 'express';
-import { createReview, getReviewsForProduct, checkReviewEligibility, getReviewsForSeller, replyToReview } from '../controllers/reviewController.js';
+import { createReview, getReviewsForProduct, checkReviewEligibility, getReviewsForSeller, replyToReview, editReview } from '../controllers/reviewController.js';
 import { verifyUser } from '../middleware/auth.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
 import { upload } from '../middleware/upload.js';
@@ -22,5 +21,8 @@ router.get('/seller', verifySeller, getReviewsForSeller);
 
 // Seller: reply to a review
 router.post('/:id/reply', verifySeller, replyToReview);
+
+// Protected: edit a review (user can only edit their own)
+router.patch('/:id', verifyUser, upload.array('images', 5), editReview);
 
 export default router;
