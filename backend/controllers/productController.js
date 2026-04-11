@@ -212,8 +212,11 @@ export const createProduct = async (req, res) => {
 
       // Handle model file (GLB)
       if (modelFile) {
+        console.log('Uploading GLB model file:', modelFile.originalname);
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+        console.log('Uploaded model result:', uploadedModel);
         productData.modelUrl = uploadedModel?.url || null;
+        console.log('Set productData.modelUrl:', productData.modelUrl);
       }
 
       // Handle iOS model file (USDZ)
@@ -316,8 +319,11 @@ export const updateProduct = async (req, res) => {
 
       // Handle model file (GLB)
       if (modelFile) {
+        console.log('Uploading GLB model file (update):', modelFile.originalname);
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+        console.log('Uploaded model result (update):', uploadedModel);
         updateData.modelUrl = uploadedModel?.url || null;
+        console.log('Set updateData.modelUrl:', updateData.modelUrl);
       } else {
         // No new model file, preserve existing
         updateData.modelUrl = product.modelUrl;
