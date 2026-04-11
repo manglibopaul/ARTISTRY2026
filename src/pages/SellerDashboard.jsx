@@ -1024,6 +1024,7 @@ const SellerDashboard = () => {
                 type='submit'
                 disabled={isSubmitting}
                 className='col-span-1 md:col-span-2 bg-black text-white py-2 rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed'
+                title={isSubmitting ? 'Submitting...' : 'Ready'}
               >
                 {isSubmitting ? (
                   <>
@@ -1033,6 +1034,10 @@ const SellerDashboard = () => {
                 ) : (
                   editingProduct ? 'Update Product' : 'Create Product'
                 )}
+                {/* Debug info for why button is disabled */}
+                <span style={{fontSize:'10px',marginLeft:'8px',color:'#ff0'}}>
+                  {isSubmitting ? '[isSubmitting=true]' : '[isSubmitting=false]'}
+                </span>
               </button>
             </form>
           </div>
