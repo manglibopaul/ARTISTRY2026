@@ -35,28 +35,3 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
     return null;
   }
 };
-    const result = await cloudinary.v2.uploader.upload(file.path, {
-      folder,
-      resource_type: 'auto',
-    });
-    console.log('uploadModel: Cloudinary upload result:', result);
-    if (file.path && fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
-    }
-    return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
-  } catch (err) {
-    console.error('Cloudinary model upload error:', err);
-    if (file && file.path) {
-      console.error('File path:', file.path);
-      if (fs.existsSync(file.path)) {
-        console.error('File exists on disk.');
-      } else {
-        console.error('File does NOT exist on disk.');
-      }
-    }
-    return null;
-  }
-};
