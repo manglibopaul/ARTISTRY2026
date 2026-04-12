@@ -478,7 +478,10 @@ const SellerProfile = () => {
                   <button
                     type='button'
                     onClick={() => {
-                      const loc = newPickupLocation.trim()
+                      let loc = newPickupLocation;
+                      if (typeof loc === 'object' && loc.address) loc = loc.address;
+                      if (typeof loc !== 'string') loc = String(loc);
+                      loc = loc.trim();
                       if (loc && !formData.pickupLocations.includes(loc)) {
                         setFormData(prev => ({ ...prev, pickupLocations: [...prev.pickupLocations, loc] }))
                         setNewPickupLocation('')
