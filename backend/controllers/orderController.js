@@ -24,6 +24,7 @@ const normalizePickupLocations = (seller) => {
 }
 
 import { sendEmail } from '../utils/email.js';
+import safeFindOrderByPk from '../utils/orderUtils.js';
 
 const PLACEHOLDER_PATTERN = /\b(test|asdf|qwe|zxc|n\/?a|na|none|unknown|sample|dummy|fake|12345|1111)\b/i;
 
@@ -539,7 +540,7 @@ export const getOrder = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderStatus, trackingNumber } = req.body;
-    const order = await Order.findByPk(req.params.id);
+    const order = await safeFindOrderByPk(req.params.id);
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -638,7 +639,7 @@ export const updateOrderStatusBySeller = async (req, res) => {
   try {
     const sellerId = req.seller.id;
     const { orderStatus, workingDays, estimatedReadyDate } = req.body;
-    const order = await Order.findByPk(req.params.id);
+    const order = await safeFindOrderByPk(req.params.id);
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
@@ -746,7 +747,7 @@ export const updateOrderStatusBySeller = async (req, res) => {
 // Cancel order
 export const cancelOrder = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
+    const order = await safeFindOrderByPk(req.params.id);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
@@ -780,7 +781,7 @@ export const cancelOrder = async (req, res) => {
 // Mark order as received by the buyer
 export const markOrderReceived = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
+    const order = await safeFindOrderByPk(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // Only the buyer can mark as received
@@ -810,7 +811,7 @@ export const markOrderReceived = async (req, res) => {
 export const deleteOrderBySeller = async (req, res) => {
   try {
     const sellerId = req.seller.id;
-    const order = await Order.findByPk(req.params.id);
+    const order = await safeFindOrderByPk(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]');

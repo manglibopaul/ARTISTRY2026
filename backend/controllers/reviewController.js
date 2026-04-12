@@ -27,6 +27,7 @@ export const editReview = async (req, res) => {
 };
 import Review from '../models/Review.js';
 import Order from '../models/Order.js';
+import safeFindOrderByPk from '../utils/orderUtils.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 
@@ -55,7 +56,7 @@ export const createReview = async (req, res) => {
     const reviewOrderId = orderId ? Number(orderId) : null;
 
     if (reviewOrderId) {
-      const order = await Order.findByPk(reviewOrderId);
+      const order = await safeFindOrderByPk(reviewOrderId);
       if (!order || Number(order.userId) !== Number(userId)) {
         return res.status(403).json({ message: 'You can only review your own orders.' });
       }
@@ -125,7 +126,7 @@ export const checkReviewEligibility = async (req, res) => {
     if (!userId) return res.status(401).json({ message: 'Not authenticated' });
 
     if (orderId) {
-      const order = await Order.findByPk(orderId);
+      const order = await safeFindOrderByPk(orderId);
       if (!order || Number(order.userId) !== Number(userId) || order.orderStatus !== 'completed') {
         return res.json({ eligible: false });
       }

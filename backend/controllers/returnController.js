@@ -1,5 +1,6 @@
 import ReturnRequest from '../models/ReturnRequest.js';
 import Order from '../models/Order.js';
+import safeFindOrderByPk from '../utils/orderUtils.js';
 import Product from '../models/Product.js';
 import { sendEmail } from '../utils/email.js';
 
@@ -11,7 +12,7 @@ export const createReturnRequest = async (req, res) => {
       return res.status(400).json({ message: 'Order ID and reason are required' });
     }
 
-    const order = await Order.findByPk(orderId);
+    const order = await safeFindOrderByPk(orderId);
     if (!order) return res.status(404).json({ message: 'Order not found' });
     if (order.userId !== req.user.id) return res.status(403).json({ message: 'Not authorized' });
     if (order.orderStatus === 'cancelled') return res.status(400).json({ message: 'Cannot return a cancelled order' });
