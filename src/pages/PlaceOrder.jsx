@@ -22,6 +22,21 @@ function QRModal({ open, onClose, qrUrl, storeName }) {
     </div>
   );
 }
+// Modal to preview pickup-location photos
+function PhotoModal({ open, onClose, photoUrl, title }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={onClose}>
+      <div className="bg-white rounded-lg p-4 shadow-lg max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-semibold">{title || 'Photo preview'}</h3>
+          <button onClick={onClose} className="text-gray-600 hover:text-black">✕</button>
+        </div>
+        <img src={photoUrl} alt={title || 'pickup photo'} className="max-w-[80vw] max-h-[75vh] object-contain" />
+      </div>
+    </div>
+  )
+}
 import React, { useContext, useState } from 'react'
 import Title from '../components/Title'
 import MapPin from '../components/MapPin'
@@ -190,6 +205,7 @@ const PlaceOrder = () => {
     title: '',
     message: '',
   })
+  const [photoModal, setPhotoModal] = React.useState({ open: false, photoUrl: '', title: '' })
   const [deliveryMapLat, setDeliveryMapLat] = useState(null)
   const [deliveryMapLon, setDeliveryMapLon] = useState(null)
   const [pickupMapLocations, setPickupMapLocations] = useState({})
@@ -200,6 +216,14 @@ const PlaceOrder = () => {
 
   const closeModal = () => {
     setModalState({ open: false, title: '', message: '' })
+  }
+
+  const openPhotoModal = (url, title) => {
+    setPhotoModal({ open: true, photoUrl: url, title: title || 'Photo preview' })
+  }
+
+  const closePhotoModal = () => {
+    setPhotoModal({ open: false, photoUrl: '', title: '' })
   }
 
   React.useEffect(() => {
@@ -765,7 +789,13 @@ const PlaceOrder = () => {
                           return (
                             <div className='mt-2 flex flex-wrap gap-2'>
                               {photos.map((u, i) => (
-                                <img key={i} src={u.startsWith('http') ? u : `${apiUrl}${u}`} alt={`pickup-${seller.sellerId}-${i}`} className='w-20 h-20 object-cover rounded border' />
+                                <img
+                                  key={i}
+                                  src={u.startsWith('http') ? u : `${apiUrl}${u}`}
+                                  alt={`pickup-${seller.sellerId}-${i}`}
+                                  className='w-28 h-28 object-cover rounded border cursor-pointer hover:scale-105 transition-transform'
+                                  onClick={() => openPhotoModal(u.startsWith('http') ? u : `${apiUrl}${u}`, `${seller.storeName || 'Seller'} pickup`)}
+                                />
                               ))}
                             </div>
                           )
@@ -1037,6 +1067,13 @@ const PlaceOrder = () => {
           </div>
         </div>
       )}
+
+      <PhotoModal
+        open={photoModal.open}
+        onClose={closePhotoModal}
+        photoUrl={photoModal.photoUrl}
+        title={photoModal.title}
+      />
     </div>
   )
 }
