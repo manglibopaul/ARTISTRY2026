@@ -253,7 +253,10 @@ const SellerProfile = () => {
       const url = images.length ? images[images.length - 1] : (images[0] || '')
       if (mountedRef.current) {
         setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
-        setPickupLocationPhotos(prev => ({ ...(prev || {}), [location]: url }))
+        setPickupLocationPhotos(prev => {
+          const existing = Array.isArray(prev?.[location]) ? prev[location] : []
+          return ({ ...(prev || {}), [location]: [...existing, url] })
+        })
       }
     } catch (err) {
       console.error('Error attaching pickup photo:', err)
@@ -277,6 +280,29 @@ const SellerProfile = () => {
     } catch (err) {
       console.error('Error removing image:', err)
       setImageUploadError(err.response?.data?.message || 'Failed to remove image')
+    }
+  }
+
+  const handleRemovePickupPhoto = async (location, url) => {
+    try {
+      if (!url) return
+
+      // Remove locally first so UI updates immediately
+      setPickupLocationPhotos(prev => {
+        const next = { ...(prev || {}) }
+        const arr = Array.isArray(next[location]) ? next[location].filter(u => u !== url) : []
+        if (arr.length) next[location] = arr
+        else delete next[location]
+        return next
+      })
+
+      // If this URL exists in the seller's portfolio, remove it from the server as well
+      if (Array.isArray(seller?.portfolioImages) && seller.portfolioImages.includes(url)) {
+        await handleRemovePortfolioImage(url)
+      }
+    } catch (err) {
+      console.error('Error removing pickup photo:', err)
+      setImageUploadError(err?.response?.data?.message || 'Failed to remove pickup photo')
     }
   }
 
@@ -506,9 +532,14 @@ const SellerProfile = () => {
                     <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
                       <div className='flex-1'>
                         <span>{loc}</span>
-                        {pickupLocationPhotos[loc] && (
-                          <div className='mt-1'>
-                            <img src={pickupLocationPhotos[loc]} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border mt-2' />
+                        {Array.isArray(pickupLocationPhotos[loc]) && pickupLocationPhotos[loc].length > 0 && (
+                          <div className='mt-1 flex flex-wrap gap-2'>
+                            {pickupLocationPhotos[loc].map((u, i) => (
+                              <div key={i} className='relative'>
+                                <img src={u} alt={`pickup-${idx}-${i}`} className='w-24 h-24 object-cover rounded-md border mt-2' />
+                                <button type='button' onClick={() => handleRemovePickupPhoto(loc, u)} className='absolute top-0 right-0 bg-white text-red-500 text-xs px-1 rounded-bl'>Remove</button>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -517,7 +548,14 @@ const SellerProfile = () => {
                           <input type='file' accept='image/*' onChange={(e) => handleAttachPickupPhoto(e, loc)} className='hidden' />
                           <span className='px-2 py-1 bg-gray-100 rounded text-xs'>Attach Photo</span>
                         </label>
-                        <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                        {pickupLocationPhotos[loc] ? (
+                          <div className='flex flex-col items-end gap-1'>
+                            <button type='button' onClick={() => handleRemovePickupPhoto(loc)} className='text-red-500 text-xs'>Remove Photo</button>
+                            <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                          </div>
+                        ) : (
+                          <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                        )}
                       </div>
                     </li>
                   ))}
