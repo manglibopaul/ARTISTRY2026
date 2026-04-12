@@ -16,7 +16,7 @@ import dropdown_icon from './dropdown_icon.png';
 import cart_icon from './cart_icon.png';
 import cross_icon from './cross_icon.png';
 import exchange_icon from './exchange_icon.png';
-import hero_img from './Gemini_Generated_Image_1gy3131gy3131gy3.png';
+import hero_img from './hero_img.png';
 import menu_icon from './menu_icon.png';
 import paypal_logo from './paypal_logo.png';
 import profile_icon from './profile_icon.png';
