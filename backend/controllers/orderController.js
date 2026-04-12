@@ -97,10 +97,29 @@ const normalizePaymentSettings = (raw) => {
 // Create order
 export const createOrder = async (req, res) => {
   try {
-    const { items, address, paymentMethod, subtotal, commission } = req.body;
+    // Accept JSON strings when requests are sent as multipart/form-data (e.g., with file uploads)
+    let items = req.body.items;
+    let address = req.body.address;
+    let paymentMethod = req.body.paymentMethod;
+    let subtotal = req.body.subtotal;
+    let commission = req.body.commission;
     const couponCode = req.body.couponCode || null;
     const discount = Number(req.body.discount) || 0;
-    const isPickup = paymentMethod === 'pickup';
+    const isPickup = (String(paymentMethod || '') === 'pickup');
+
+    // If `items` was sent as a JSON string (multipart/form-data), parse it.
+    if (typeof items === 'string') {
+      try {
+        items = JSON.parse(items);
+      } catch (e) {
+        items = [];
+      }
+    }
+
+    // Try parsing address if it was JSON-stringified
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch (e) { /* keep as string fallback */ }
+    }
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Cannot place order with empty cart' });
