@@ -1,4 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
+// Simple iOS detection
+const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import RelatedProducts from '../components/RelatedProducts';
@@ -695,6 +697,23 @@ const Product = () => {
                 <div className="relative overflow-hidden">
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
+                  {/* iOS AR Quick Look Button */}
+                  {isIOS && resolvedIosModelUrl && (
+                    <div className="mt-4 flex justify-center">
+                      <a
+                        rel="ar"
+                        href={resolvedIosModelUrl}
+                        style={{ display: 'inline-block' }}
+                      >
+                        {/* You can use an official Apple badge or a simple button */}
+                        <img
+                          src="https://developer.apple.com/arkit/gallery/images/quicklook-badge.png"
+                          alt="View in AR"
+                          style={{ height: 40 }}
+                        />
+                      </a>
+                    </div>
+                  )}
                   {arError && (
                     <div className="absolute inset-0 flex items-center justify-center bg-red-50 bg-opacity-90">
                       <div className="text-red-700 text-center text-sm px-4">
