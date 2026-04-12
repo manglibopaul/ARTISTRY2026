@@ -73,12 +73,39 @@ router.put('/return-policy', verifySeller, updateReturnPolicy);
 // Admin routes
 // Public-friendly GET: if no auth header is provided, return the public sellers list.
 // If an Authorization header exists, require admin and return the admin view.
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res) => {
+  // If no auth header, return public sellers immediately
   if (!req.headers || !req.headers.authorization) {
     return getAllSellersPublic(req, res);
   }
-  return verifyAdmin(req, res, next);
-}, getAllSellers);
+
+  // Try to verify admin; if verification fails or any error occurs,
+  // fall back to the public sellers list to avoid exposing a 500.
+  try {
+    await new Promise((resolve, reject) => {
+      try {
+        verifyAdmin(req, res, (err) => {
+          if (err) return reject(err);
+          // verifyAdmin will set req.user for admin users
+          return resolve();
+        });
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  } catch (err) {
+    console.error('verifyAdmin failed for /api/sellers, returning public list:', err && err.message ? err.message : err);
+    return getAllSellersPublic(req, res);
+  }
+
+  // At this point admin verification succeeded; attempt to return admin sellers.
+  try {
+    return await getAllSellers(req, res);
+  } catch (err) {
+    console.error('getAllSellers failed, falling back to public list:', err && err.message ? err.message : err);
+    return getAllSellersPublic(req, res);
+  }
+});
 router.get('/bin', verifyAdmin, getDeletedSellers);
 router.put('/bin/:id/restore', verifyAdmin, restoreDeletedSeller);
 router.delete('/:id', verifyAdmin, deleteSeller); // soft delete
