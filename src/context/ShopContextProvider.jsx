@@ -161,6 +161,9 @@ const ShopContextProvider = (props) => {
     }
   }, [apiUrl])
 
+  // Provide a navigate helper from react-router for components that expect it
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchProducts();
     loadCartFromServer();
@@ -195,6 +198,7 @@ const ShopContextProvider = (props) => {
     search,setSearch,showSearch,setShowSearch,
     cartsItems,addToCart,clearCart,
     getCartCount,updateQuantity,getCartAmount,
+    navigate,
     parseCartKey
   };
 
