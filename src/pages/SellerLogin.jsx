@@ -40,15 +40,10 @@ const SellerLogin = () => {
   })
   const [pickupInput, setPickupInput] = useState('')
 
-  const handleSellerAddressPick = (loc) => {
-    let formatted = '';
-    if (loc && typeof loc === 'object' && 'address' in loc) {
-      formatted = formatAddressFromParts(loc.address);
-    } else if (typeof loc === 'string') {
-      formatted = loc;
-    }
+  const handleSellerAddressPick = ({ address }) => {
+    const formatted = formatAddressFromParts(address)
     if (formatted) {
-      setFormData(prev => ({ ...prev, address: formatted }));
+      setFormData(prev => ({ ...prev, address: formatted }))
     }
   }
 
