@@ -488,40 +488,7 @@ const SellerProfile = () => {
                         )}
                       </div>
 
-                      {/* Pickup Photos (portfolio) */}
-                      <div>
-                        <label className='text-sm font-medium text-gray-600'>Pickup Photos</label>
-                        {isEditing ? (
-                          <>
-                            <input
-                              type='file'
-                              accept='image/*'
-                              multiple
-                              onChange={handleUploadImages}
-                              className='mt-2 mb-2 block w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white'
-                            />
-                            {imageUploadError && <p className='text-xs text-red-600 mt-1'>{imageUploadError}</p>}
-                            <div className='flex flex-wrap gap-2 mt-2'>
-                              {(seller?.portfolioImages || []).map((img, idx) => (
-                                <div key={idx} className='relative'>
-                                  <img src={img} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border' />
-                                  <button type='button' onClick={() => handleRemovePortfolioImage(img)} className='absolute top-0 right-0 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center text-xs'>×</button>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <div className='flex flex-wrap gap-2 mt-2'>
-                            {(seller?.portfolioImages || []).length ? (
-                              (seller.portfolioImages || []).map((img, idx) => (
-                                <img key={idx} src={img} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border' />
-                              ))
-                            ) : (
-                              <p className='text-sm text-gray-500'>No pickup photos uploaded yet.</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      
                       
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
