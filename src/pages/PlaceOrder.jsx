@@ -24,6 +24,7 @@ function QRModal({ open, onClose, qrUrl, storeName }) {
 }
 import React, { useContext, useState } from 'react'
 import Title from '../components/Title'
+import MapPin from '../components/MapPin'
 import CartTotal from '../components/CartTotal'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
@@ -188,9 +189,9 @@ const PlaceOrder = () => {
     title: '',
     message: '',
   })
-  // const [deliveryMapLat, setDeliveryMapLat] = useState(null)
-  // const [deliveryMapLon, setDeliveryMapLon] = useState(null)
-  // const [pickupMapLocations, setPickupMapLocations] = useState({})
+  const [deliveryMapLat, setDeliveryMapLat] = useState(null)
+  const [deliveryMapLon, setDeliveryMapLon] = useState(null)
+  const [pickupMapLocations, setPickupMapLocations] = useState({})
 
   const openModal = (title, message) => {
     setModalState({ open: true, title, message })
