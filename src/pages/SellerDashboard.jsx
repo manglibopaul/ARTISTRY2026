@@ -542,12 +542,9 @@ const SellerDashboard = () => {
       uploadData.append('price', formData.price)
       uploadData.append('category', formData.category)
       uploadData.append('subCategory', formData.subCategory)
-      if (formData.colors) {
-        uploadData.append('colors', formData.colors)
-      }
-      if (formData.sizes) {
-        uploadData.append('sizes', formData.sizes)
-      }
+      // Always send colors and sizes fields; empty string will clear them on the server
+      uploadData.append('colors', formData.colors || '')
+      uploadData.append('sizes', formData.sizes || '')
       uploadData.append('stock', formData.stock)
 
       // Always send existing images when editing, including [] when user removed all old photos.
