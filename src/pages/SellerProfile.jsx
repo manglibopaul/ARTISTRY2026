@@ -26,6 +26,7 @@ const SellerProfile = () => {
     pickupLocations: [],
   })
   const [newPickupLocation, setNewPickupLocation] = useState('')
+  const [pickupLocationPhotos, setPickupLocationPhotos] = useState({})
   const [pickupFileError, setPickupFileError] = useState('')
   const [uploadingImages, setUploadingImages] = useState(false)
   const [imageUploadError, setImageUploadError] = useState('')
@@ -236,6 +237,32 @@ const SellerProfile = () => {
     }
   }
 
+  const handleAttachPickupPhoto = async (e, location) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImageUploadError('')
+    try {
+      setUploadingImages(true)
+      const data = new FormData()
+      data.append('images', file)
+      const res = await axios.put(`${apiUrl}/api/sellers/profile/images`, data, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      })
+      const images = res.data?.images || []
+      const url = images[0] || ''
+      if (mountedRef.current) {
+        setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
+        setPickupLocationPhotos(prev => ({ ...(prev || {}), [location]: url }))
+      }
+    } catch (err) {
+      console.error('Error attaching pickup photo:', err)
+      setImageUploadError(err.response?.data?.message || 'Failed to upload image')
+    } finally {
+      setUploadingImages(false)
+      e.target.value = ''
+    }
+  }
+
   const handleRemovePortfolioImage = async (url) => {
     try {
       const current = Array.isArray(seller?.portfolioImages) ? seller.portfolioImages : []
@@ -265,6 +292,7 @@ const SellerProfile = () => {
         bio: formData.bio.trim(),
         expertise: formData.expertise,
         pickupLocations: formData.pickupLocations,
+        pickupLocationPhotos: pickupLocationPhotos,
       }
       const res = await axios.put(`${apiUrl}/api/sellers/profile`, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -428,8 +456,21 @@ const SellerProfile = () => {
                             <ul className='list-disc pl-5 mt-2'>
                               {(Array.isArray(formData.pickupLocations) ? formData.pickupLocations : []).map((loc, idx) => (
                                 <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
-                                  <span>{loc}</span>
-                                  <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                                  <div className='flex-1'>
+                                    <span>{loc}</span>
+                                    {pickupLocationPhotos[loc] && (
+                                      <div className='mt-1'>
+                                        <img src={pickupLocationPhotos[loc]} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border mt-2' />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className='flex flex-col items-end gap-1'>
+                                    <label className='text-xs text-gray-600 cursor-pointer'>
+                                      <input type='file' accept='image/*' onChange={(e) => handleAttachPickupPhoto(e, loc)} className='hidden' />
+                                      <span className='px-2 py-1 bg-gray-100 rounded text-xs'>Attach Photo</span>
+                                    </label>
+                                    <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                                  </div>
                                 </li>
                               ))}
                             </ul>
