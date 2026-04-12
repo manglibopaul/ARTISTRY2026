@@ -224,7 +224,7 @@ const SellerProfile = () => {
       for (const f of files) data.append('images', f)
 
       const res = await axios.put(`${apiUrl}/api/sellers/profile/images`, data, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        headers: { Authorization: `Bearer ${token}` },
       })
       const images = res.data?.images || []
       if (mountedRef.current) setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
@@ -245,18 +245,20 @@ const SellerProfile = () => {
       setUploadingImages(true)
       const data = new FormData()
       data.append('images', file)
+      if (!token) throw new Error('Not authenticated')
       const res = await axios.put(`${apiUrl}/api/sellers/profile/images`, data, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        headers: { Authorization: `Bearer ${token}` },
       })
       const images = res.data?.images || []
-      const url = images[0] || ''
+      const url = images.length ? images[images.length - 1] : (images[0] || '')
       if (mountedRef.current) {
         setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
         setPickupLocationPhotos(prev => ({ ...(prev || {}), [location]: url }))
       }
     } catch (err) {
       console.error('Error attaching pickup photo:', err)
-      setImageUploadError(err.response?.data?.message || 'Failed to upload image')
+      const msg = err?.response?.data?.message || err.message || 'Failed to upload image'
+      setImageUploadError(msg)
     } finally {
       setUploadingImages(false)
       e.target.value = ''
