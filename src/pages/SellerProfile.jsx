@@ -454,7 +454,9 @@ const SellerProfile = () => {
                     }
                   }}
                 />
-                {formData.pickupLocations.map((loc, idx) => (
+                {formData.pickupLocations.map((loc, idx) => {
+                  console.log('Pickup Location Object:', loc);
+                  return (
                   <div key={idx} className='flex items-center gap-2'>
                     <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>
                       {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
@@ -467,7 +469,8 @@ const SellerProfile = () => {
                       Remove
                     </button>
                   </div>
-                ))}
+                );
+                })}
                 <div className='flex gap-2'>
                   <input
                     value={typeof newPickupLocation === 'string' ? newPickupLocation : (newPickupLocation?.address || '')}
