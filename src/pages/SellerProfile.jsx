@@ -454,12 +454,10 @@ const SellerProfile = () => {
                     }
                   }}
                 />
-                {formData.pickupLocations.map((loc, idx) => {
-                  console.log('Pickup Location Object:', loc);
-                  return (
+                {formData.pickupLocations.map((loc, idx) => (
                   <div key={idx} className='flex items-center gap-2'>
                     <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>
-                      {typeof loc === 'object' && loc.address ? loc.address : typeof loc === 'string' ? loc : ''}
+                      {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
                     </span>
                     <button
                       type='button'
@@ -469,8 +467,7 @@ const SellerProfile = () => {
                       Remove
                     </button>
                   </div>
-                );
-                })}
+                ))}
                 <div className='flex gap-2'>
                   <input
                     value={typeof newPickupLocation === 'string' ? newPickupLocation : (newPickupLocation?.address || '')}
@@ -499,7 +496,7 @@ const SellerProfile = () => {
                   <ul className='space-y-1'>
                     {seller.pickupLocations.map((loc, idx) => (
                       <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
-                        <span className='text-gray-400'>📍</span> {loc}
+                        <span className='text-gray-400'>📍</span> {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
                       </li>
                     ))}
                   </ul>
