@@ -402,21 +402,34 @@ const SellerProfile = () => {
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                       {/* Pickup Locations Upload */}
                       <div>
-                        <label className='text-sm font-medium text-gray-600'>Pickup Locations (Upload CSV, TXT, or JSON)</label>
+                        <label className='text-sm font-medium text-gray-600'>Pickup Locations (addresses)</label>
                         {isEditing ? (
                           <>
-                            <input
-                              type='file'
-                              accept='.csv,.txt,.json,text/csv,text/plain,application/json'
-                              onChange={handlePickupFileUpload}
-                              className='mt-2 mb-2 block w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white'
-                            />
+                            <div className='flex gap-2 mt-2'>
+                              <input
+                                type='text'
+                                placeholder='Add a pickup address...'
+                                value={newPickupLocation}
+                                onChange={(e) => setNewPickupLocation(e.target.value)}
+                                className='flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white'
+                              />
+                              <button
+                                type='button'
+                                onClick={() => {
+                                  const v = String(newPickupLocation || '').trim();
+                                  if (!v) return;
+                                  setFormData(prev => ({ ...prev, pickupLocations: [...(Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []), v] }));
+                                  setNewPickupLocation('');
+                                }}
+                                className='px-3 py-2 bg-black text-white rounded text-sm'
+                              >Add</button>
+                            </div>
                             {pickupFileError && <p className='text-xs text-red-600 mt-1'>{pickupFileError}</p>}
                             <ul className='list-disc pl-5 mt-2'>
-                              {formData.pickupLocations.map((loc, idx) => (
+                              {(Array.isArray(formData.pickupLocations) ? formData.pickupLocations : []).map((loc, idx) => (
                                 <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
                                   <span>{loc}</span>
-                                  <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                                  <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
                                 </li>
                               ))}
                             </ul>
