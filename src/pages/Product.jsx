@@ -175,16 +175,18 @@ const Product = () => {
       setLoadingProduct(false)
       // fetch reviews for this product
       try {
-        const foundId = found._id || found.id
-        const res = await fetch(`${apiUrl}/api/reviews/product/${foundId}`)
-        if (res.ok) {
-          const data = await res.json()
-          setReviews(data || [])
-          if (data && data.length) {
-            const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1)
-            setAvgRating(avg)
-          } else {
-            setAvgRating(null)
+        const foundId = found._id || found.id;
+        if (foundId) {
+          const res = await fetch(`${apiUrl}/api/reviews/product/${foundId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setReviews(data || []);
+            if (data && data.length) {
+              const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1);
+              setAvgRating(avg);
+            } else {
+              setAvgRating(null);
+            }
           }
         }
       } catch {
@@ -231,16 +233,17 @@ const Product = () => {
     setLoadingProduct(false)
     // fetch reviews for this product
     try {
-      if (!resolvedProductId) throw new Error('Missing product id for reviews')
-      const res = await fetch(`${apiUrl}/api/reviews/product/${resolvedProductId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data || []);
-        if (data && data.length) {
-          const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1);
-          setAvgRating(avg);
-        } else {
-          setAvgRating(null);
+      if (resolvedProductId) {
+        const res = await fetch(`${apiUrl}/api/reviews/product/${resolvedProductId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setReviews(data || []);
+          if (data && data.length) {
+            const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1);
+            setAvgRating(avg);
+          } else {
+            setAvgRating(null);
+          }
         }
       }
     } catch {
