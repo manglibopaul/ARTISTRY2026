@@ -71,7 +71,14 @@ router.get('/return-policy', verifySeller, getReturnPolicy);
 router.put('/return-policy', verifySeller, updateReturnPolicy);
 
 // Admin routes
-router.get('/', verifyAdmin, getAllSellers);
+// Public-friendly GET: if no auth header is provided, return the public sellers list.
+// If an Authorization header exists, require admin and return the admin view.
+router.get('/', (req, res, next) => {
+  if (!req.headers || !req.headers.authorization) {
+    return getAllSellersPublic(req, res);
+  }
+  return verifyAdmin(req, res, next);
+}, getAllSellers);
 router.get('/bin', verifyAdmin, getDeletedSellers);
 router.put('/bin/:id/restore', verifyAdmin, restoreDeletedSeller);
 router.delete('/:id', verifyAdmin, deleteSeller); // soft delete
