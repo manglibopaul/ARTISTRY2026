@@ -807,7 +807,9 @@ const PlaceOrder = () => {
                         >
                           <option value=''>Select pickup location</option>
                           {seller.locations.map((loc, idx) => (
-                            <option key={idx} value={loc}>{loc}</option>
+                            <option key={idx} value={typeof loc === 'object' && loc.address ? loc.address : String(loc)}>
+                              {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
+                            </option>
                           ))}
                         </select>
                         {pickupMapLocations[String(seller.sellerId)] && (
@@ -816,7 +818,7 @@ const PlaceOrder = () => {
                               lat={pickupMapLocations[String(seller.sellerId)].lat}
                               lon={pickupMapLocations[String(seller.sellerId)].lon}
                               label={`${seller.storeName} Pickup Location`}
-                              address={pickupMapLocations[String(seller.sellerId)].address}
+                              address={typeof pickupMapLocations[String(seller.sellerId)].address === 'object' && pickupMapLocations[String(seller.sellerId)].address.address ? pickupMapLocations[String(seller.sellerId)].address.address : String(pickupMapLocations[String(seller.sellerId)].address)}
                               isPickup={true}
                             />
                           </div>
