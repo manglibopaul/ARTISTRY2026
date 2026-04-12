@@ -1981,6 +1981,18 @@ const SellerDashboard = () => {
                   )}
                   <div className='text-sm'>Total: ₱{viewOrder.total}</div>
                   <div className='text-sm'>Status: {viewOrder.orderStatus}</div>
+                  {/* Show uploaded GCash receipt if present */}
+                  {viewOrder.gcashReceipt && (
+                    <div className='mt-3'>
+                      <div className='text-sm font-medium mb-1'>Customer Uploaded Receipt</div>
+                      <img
+                        src={resolveImageUrl(viewOrder.gcashReceipt)}
+                        alt={`Receipt for order ${viewOrder.id}`}
+                        className='w-40 h-40 object-contain border rounded cursor-pointer'
+                        onClick={() => window.open(resolveImageUrl(viewOrder.gcashReceipt), '_blank')}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
