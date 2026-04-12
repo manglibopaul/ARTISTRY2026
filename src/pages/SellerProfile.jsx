@@ -28,6 +28,20 @@ const SellerProfile = () => {
   const [newPickupLocation, setNewPickupLocation] = useState('')
   const [saveError, setSaveError] = useState('')
 
+  // Defensive: always ensure formData and artisanTypes are defined
+  const safeFormData = formData || {
+    name: '',
+    storeName: '',
+    phone: '',
+    address: '',
+    description: '',
+    artisanType: '',
+    bio: '',
+    expertise: [],
+    pickupLocations: [],
+  };
+  const safeArtisanTypes = Array.isArray(artisanTypes) ? artisanTypes : [];
+
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
@@ -314,7 +328,7 @@ const SellerProfile = () => {
               {isEditing ? (
                 <input
                   name='name'
-                  value={formData.name}
+                  value={safeFormData.name}
                   onChange={handleInputChange}
                   className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
                 />
@@ -327,7 +341,7 @@ const SellerProfile = () => {
               {isEditing ? (
                 <input
                   name='storeName'
-                  value={formData.storeName}
+                  value={safeFormData.storeName}
                   onChange={handleInputChange}
                   className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
                 />
@@ -344,7 +358,7 @@ const SellerProfile = () => {
               {isEditing ? (
                 <input
                   name='phone'
-                  value={formData.phone}
+                  value={safeFormData.phone}
                   onChange={handleInputChange}
                   className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
                 />
@@ -359,7 +373,7 @@ const SellerProfile = () => {
             {isEditing ? (
               <input
                 name='address'
-                value={formData.address}
+                value={safeFormData.address}
                 onChange={handleInputChange}
                 className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
               />
@@ -373,7 +387,7 @@ const SellerProfile = () => {
             {isEditing ? (
               <textarea
                 name='description'
-                value={formData.description}
+                value={safeFormData.description}
                 onChange={handleInputChange}
                 rows='4'
                 className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
@@ -391,12 +405,12 @@ const SellerProfile = () => {
               {isEditing ? (
                 <select
                   name='artisanType'
-                  value={formData.artisanType}
+                  value={safeFormData.artisanType}
                   onChange={handleInputChange}
                   className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
                 >
                   <option value=''>Select a craft type...</option>
-                  {artisanTypes.map(type => (
+                  {safeArtisanTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
@@ -411,7 +425,7 @@ const SellerProfile = () => {
             {isEditing ? (
               <textarea
                 name='bio'
-                value={formData.bio}
+                value={safeFormData.bio}
                 onChange={handleInputChange}
                 rows='3'
                 placeholder='Tell your unique story and journey as an artisan...'
