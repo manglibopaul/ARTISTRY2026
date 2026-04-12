@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect, useRef } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -30,6 +30,7 @@ const SellerProfile = () => {
   const [uploadingImages, setUploadingImages] = useState(false)
   const [imageUploadError, setImageUploadError] = useState('')
   const [saveError, setSaveError] = useState('')
+  const mountedRef = useRef(true)
 
   // Defensive: always ensure formData and artisanTypes are defined
   const safeFormData = formData || {
@@ -95,6 +96,7 @@ const SellerProfile = () => {
   }, [apiUrl, navigate, token, normalizeAvatarUrl])
 
   useEffect(() => {
+    mountedRef.current = true
     // Check for seller token - if not present, redirect immediately
     if (!token) {
       navigate('/seller/login')
@@ -102,6 +104,8 @@ const SellerProfile = () => {
     }
     fetchArtisanTypes()
     fetchProfile()
+
+    return () => { mountedRef.current = false }
   }, [token, navigate, fetchArtisanTypes, fetchProfile])
 
   if (loading) {
@@ -146,7 +150,8 @@ const SellerProfile = () => {
     try {
       setIsUploadingAvatar(true)
       const data = new FormData()
-      data.append('image', file)
+      if (file instanceof File) data.append('image', file)
+      else throw new Error('Invalid file')
 
       const res = await axios.put(`${apiUrl}/api/sellers/profile/avatar`, data, {
         headers: {
@@ -156,8 +161,10 @@ const SellerProfile = () => {
       })
 
       const nextAvatar = normalizeAvatarUrl(res.data?.avatar)
-      setSeller(prev => ({ ...(prev || {}), avatar: res.data?.avatar || prev?.avatar }))
-      setAvatarPreview(nextAvatar || localUrl)
+      if (mountedRef.current) {
+        setSeller(prev => ({ ...(prev || {}), avatar: res.data?.avatar || prev?.avatar }))
+        setAvatarPreview(nextAvatar || localUrl)
+      }
       if (nextAvatar) {
         URL.revokeObjectURL(localUrl)
       }
@@ -193,14 +200,14 @@ const SellerProfile = () => {
       } else {
         locations = text.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean);
       }
-      setFormData(prev => ({ ...prev, pickupLocations: locations }));
+      if (mountedRef.current) setFormData(prev => ({ ...prev, pickupLocations: locations }));
     } catch (err) {
       setPickupFileError('Failed to parse file. Please check the format.');
     }
   };
 
   const handleUploadImages = async (e) => {
-    const files = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || []).filter(f => f instanceof File)
     if (!files.length) return
     setImageUploadError('')
     try {
@@ -212,7 +219,7 @@ const SellerProfile = () => {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       })
       const images = res.data?.images || []
-      setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
+      if (mountedRef.current) setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
     } catch (err) {
       console.error('Error uploading images:', err)
       setImageUploadError(err.response?.data?.message || 'Failed to upload images')
@@ -230,7 +237,7 @@ const SellerProfile = () => {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
       // server returns updated seller via profile endpoint; update locally
-      setSeller(prev => ({ ...(prev || {}), portfolioImages: next }))
+      if (mountedRef.current) setSeller(prev => ({ ...(prev || {}), portfolioImages: next }))
     } catch (err) {
       console.error('Error removing image:', err)
       setImageUploadError(err.response?.data?.message || 'Failed to remove image')
@@ -266,7 +273,7 @@ const SellerProfile = () => {
           storeName: res.data.seller.storeName ?? payload.storeName,
           artisanType: res.data.seller.artisanType ?? payload.artisanType,
         }
-        setSeller(nextSeller)
+        if (mountedRef.current) setSeller(nextSeller)
         localStorage.setItem('seller', JSON.stringify({
           id: nextSeller.id,
           name: nextSeller.name,
@@ -274,7 +281,7 @@ const SellerProfile = () => {
           storeName: nextSeller.storeName,
         }))
       } else {
-        setSeller(prev => ({ ...(prev || {}), ...payload }))
+        if (mountedRef.current) setSeller(prev => ({ ...(prev || {}), ...payload }))
       }
 
       setIsEditing(false)
