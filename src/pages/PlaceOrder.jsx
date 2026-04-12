@@ -1038,8 +1038,9 @@ const PlaceOrder = () => {
                 clearCart && clearCart();
                 navigate('/orders');
               } catch (err) {
-                console.error('Place order error', err);
-                openModal('Order Failed', err.response?.data?.message || 'Failed to place order')
+                console.error('Place order error', err, err?.response?.data || err?.response);
+                const serverMsg = err?.response?.data?.message || err?.response?.data || err?.response?.statusText || err?.message || 'Failed to place order';
+                openModal('Order Failed', String(serverMsg));
               } finally {
                 setPlacing(false);
               }
