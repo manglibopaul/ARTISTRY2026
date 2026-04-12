@@ -108,6 +108,13 @@ const SellerProfile = () => {
     return () => { mountedRef.current = false }
   }, [token, navigate, fetchArtisanTypes, fetchProfile])
 
+  // Auto-dismiss non-blocking toast for profile updates
+  useEffect(() => {
+    if (!showSaveModal) return
+    const t = setTimeout(() => setShowSaveModal(false), 3000)
+    return () => clearTimeout(t)
+  }, [showSaveModal])
+
   if (loading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
@@ -299,12 +306,6 @@ const SellerProfile = () => {
     }
   }
 
-  // Auto-dismiss non-blocking toast for profile updates
-  useEffect(() => {
-    if (!showSaveModal) return
-    const t = setTimeout(() => setShowSaveModal(false), 3000)
-    return () => clearTimeout(t)
-  }, [showSaveModal])
 
   return (
     <ErrorBoundary>
