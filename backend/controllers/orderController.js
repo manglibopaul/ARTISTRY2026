@@ -496,10 +496,14 @@ export const createOrder = async (req, res) => {
 // Get user orders
 export const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.findAll({
-      where: { userId: req.user.id },
-      order: [['createdAt', 'DESC']],
-    });
+    let orders;
+    try {
+      orders = await Order.findAll({ where: { userId: req.user.id }, order: [['createdAt', 'DESC']] });
+    } catch (err) {
+      if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
+        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] }, where: { userId: req.user.id }, order: [['createdAt', 'DESC']] });
+      } else throw err;
+    }
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -509,7 +513,14 @@ export const getUserOrders = async (req, res) => {
 // Get order by id
 export const getOrder = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
+    let order;
+    try {
+      order = await Order.findByPk(req.params.id);
+    } catch (err) {
+      if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
+        order = await Order.findByPk(req.params.id, { attributes: { exclude: ['gcashReceipt'] } });
+      } else throw err;
+    }
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
@@ -567,7 +578,14 @@ export const updateOrderStatus = async (req, res) => {
 // Get all orders (admin)
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.findAll();
+    let orders;
+    try {
+      orders = await Order.findAll();
+    } catch (err) {
+      if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
+        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] } });
+      } else throw err;
+    }
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
