@@ -311,6 +311,17 @@ export const createOrder = async (req, res) => {
       reservationNote = null;
     }
 
+    // If a GCash receipt file was uploaded via multipart/form-data, record its public path
+    let gcashReceiptPath = null;
+    try {
+      if (req.file && req.file.filename) {
+        // Files are saved under uploads/images by multer configuration
+        gcashReceiptPath = `/uploads/images/${req.file.filename}`;
+      }
+    } catch (e) {
+      gcashReceiptPath = null;
+    }
+
     // If pickup and no name/email provided, use user profile
     let firstName = address?.firstName;
     let lastName = address?.lastName;
@@ -385,6 +396,7 @@ export const createOrder = async (req, res) => {
         total: Math.max(0, sellerSpecificSubtotal + sellerSpecificShipping + commission - sellerSpecificDiscount),
         paymentStatus: 'pending',
         orderStatus: initialStatus,
+        gcashReceipt: gcashReceiptPath,
       });
 
       createdOrders.push(created);

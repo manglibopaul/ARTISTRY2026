@@ -69,6 +69,10 @@ const Order = sequelize.define('Order', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  gcashReceipt: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   workingDays: {
     type: DataTypes.INTEGER,
     allowNull: true,
