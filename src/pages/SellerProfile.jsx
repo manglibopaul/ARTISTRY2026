@@ -26,8 +26,8 @@ const SellerProfile = () => {
   })
   const [newPickupLocation, setNewPickupLocation] = useState('')
   const [pickupFileError, setPickupFileError] = useState('')
-  const [pickupMapsUploading, setPickupMapsUploading] = useState(false)
-  const [pickupMapError, setPickupMapError] = useState('')
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState('')
   const [saveError, setSaveError] = useState('')
 
   // Defensive: always ensure formData and artisanTypes are defined
@@ -171,28 +171,6 @@ const SellerProfile = () => {
     }
   }
 
-  const handleMapFilesUpload = async (e) => {
-    setPickupMapError('')
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    setPickupMapsUploading(true)
-    try {
-      const data = new FormData()
-      for (const f of files) data.append('maps', f)
-      const res = await axios.put(`${apiUrl}/api/sellers/profile/pickup-maps`, data, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
-      })
-      if (res.data && Array.isArray(res.data.pickupMaps)) {
-        setSeller(prev => ({ ...(prev || {}), pickupMaps: res.data.pickupMaps }))
-      }
-    } catch (err) {
-      console.error('Map upload failed', err)
-      setPickupMapError(err.response?.data?.message || 'Failed to upload map images')
-    } finally {
-      setPickupMapsUploading(false)
-      e.target.value = ''
-    }
-  }
 
   // Handle pickup locations file upload
   const handlePickupFileUpload = async (e) => {
@@ -219,6 +197,44 @@ const SellerProfile = () => {
       setPickupFileError('Failed to parse file. Please check the format.');
     }
   };
+
+  const handleUploadImages = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setImageUploadError('')
+    try {
+      setUploadingImages(true)
+      const data = new FormData()
+      for (const f of files) data.append('images', f)
+
+      const res = await axios.put(`${apiUrl}/api/sellers/profile/images`, data, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      })
+      const images = res.data?.images || []
+      setSeller(prev => ({ ...(prev || {}), portfolioImages: images }))
+    } catch (err) {
+      console.error('Error uploading images:', err)
+      setImageUploadError(err.response?.data?.message || 'Failed to upload images')
+    } finally {
+      setUploadingImages(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemovePortfolioImage = async (url) => {
+    try {
+      const current = Array.isArray(seller?.portfolioImages) ? seller.portfolioImages : []
+      const next = current.filter((u) => u !== url)
+      const res = await axios.put(`${apiUrl}/api/sellers/profile/portfolio`, { portfolioImages: next }, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      })
+      // server returns updated seller via profile endpoint; update locally
+      setSeller(prev => ({ ...(prev || {}), portfolioImages: next }))
+    } catch (err) {
+      console.error('Error removing image:', err)
+      setImageUploadError(err.response?.data?.message || 'Failed to remove image')
+    }
+  }
 
   const handleSave = async () => {
     try {
@@ -407,49 +423,42 @@ const SellerProfile = () => {
                           </ul>
                         )}
                       </div>
-                      {/* Pickup Maps Upload */}
+
+                      {/* Pickup Photos (portfolio) */}
                       <div>
-                        <label className='text-sm font-medium text-gray-600'>Pickup Map Images</label>
+                        <label className='text-sm font-medium text-gray-600'>Pickup Photos</label>
                         {isEditing ? (
                           <>
                             <input
                               type='file'
                               accept='image/*'
                               multiple
-                              onChange={handleMapFilesUpload}
+                              onChange={handleUploadImages}
                               className='mt-2 mb-2 block w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white'
                             />
-                            {pickupMapError && <p className='text-xs text-red-600 mt-1'>{pickupMapError}</p>}
-                            {pickupMapsUploading && <p className='text-xs text-gray-500 mt-1'>Uploading images...</p>}
-                            <div className='mt-2 flex flex-wrap gap-2'>
-                              {(seller?.pickupMaps || []).map((url, idx) => (
-                                <div key={idx} className='w-24 h-20 border rounded overflow-hidden relative'>
-                                  <img src={url.startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${idx}`} className='w-full h-full object-cover' />
-                                  <button type='button' onClick={async () => {
-                                    const next = (seller.pickupMaps || []).filter((_, i) => i !== idx)
-                                    try {
-                                      await axios.put(`${apiUrl}/api/sellers/profile`, { pickupMaps: next }, { headers: { Authorization: `Bearer ${token}` } })
-                                      setSeller(prev => ({ ...(prev || {}), pickupMaps: next }))
-                                    } catch (err) {
-                                      console.error('Failed to remove map', err)
-                                    }
-                                  }} className='absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded'>x</button>
+                            {imageUploadError && <p className='text-xs text-red-600 mt-1'>{imageUploadError}</p>}
+                            <div className='flex flex-wrap gap-2 mt-2'>
+                              {(seller?.portfolioImages || []).map((img, idx) => (
+                                <div key={idx} className='relative'>
+                                  <img src={img} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border' />
+                                  <button type='button' onClick={() => handleRemovePortfolioImage(img)} className='absolute top-0 right-0 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center text-xs'>×</button>
                                 </div>
                               ))}
                             </div>
                           </>
                         ) : (
-                          <div className='mt-2 flex flex-wrap gap-2'>
-                            {(seller?.pickupMaps || []).length > 0 ? (
-                              (seller.pickupMaps || []).map((url, idx) => (
-                                <img key={idx} src={url.startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${idx}`} className='w-24 h-20 object-cover rounded border' />
+                          <div className='flex flex-wrap gap-2 mt-2'>
+                            {(seller?.portfolioImages || []).length ? (
+                              (seller.portfolioImages || []).map((img, idx) => (
+                                <img key={idx} src={img} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border' />
                               ))
                             ) : (
-                              <p className='text-sm text-gray-500'>No pickup map images uploaded.</p>
+                              <p className='text-sm text-gray-500'>No pickup photos uploaded yet.</p>
                             )}
                           </div>
                         )}
                       </div>
+                      
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
               {isEditing ? (

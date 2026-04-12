@@ -173,7 +173,6 @@ const PlaceOrder = () => {
   const [placing, setPlacing] = useState(false);
   const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
   const [sellerPickupLocations, setSellerPickupLocations] = useState([])
-  const [sellerPickupMaps, setSellerPickupMaps] = useState({})
   const [reservationDateTime] = useState('')
   const [reservationNote] = useState('')
   const [appliedDiscount] = useState(0)
@@ -293,9 +292,6 @@ const PlaceOrder = () => {
           const res = await fetch(`${apiUrl}/api/sellers/${sid}`)
             if (res.ok) {
             const seller = await res.json()
-            // store seller pickup map images
-            const maps = Array.isArray(seller.pickupMaps) ? seller.pickupMaps : []
-            setSellerPickupMaps((prev) => ({ ...prev, [sid]: maps }))
             // Pickup locations
             const locs = normalizePickupLocations(seller)
             locs.forEach(loc => {
@@ -738,13 +734,7 @@ const PlaceOrder = () => {
                             <option key={idx} value={loc}>{loc}</option>
                           ))}
                         </select>
-                        {(sellerPickupMaps[String(seller.sellerId)] || []).length > 0 && (
-                          <div className='mt-3 flex gap-2 flex-wrap'>
-                            {(sellerPickupMaps[String(seller.sellerId)] || []).map((url, i) => (
-                              <img key={i} src={(url || '').startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${i}`} className='w-28 h-20 object-cover rounded border' />
-                            ))}
-                          </div>
-                        )}
+                        {/* Map thumbnails removed per request */}
                       </div>
                     ))}
                   </div>

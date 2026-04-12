@@ -158,7 +158,7 @@ const connectDB = async () => {
     await ensureProductsSizesColumn();
     await ensureOrdersCompletedAtColumn();
     await ensureSellersPaymentSettingsColumn();
-    await ensureSellersPickupMapsColumn();
+    // pickupMaps support removed; no runtime schema-ensure needed
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;

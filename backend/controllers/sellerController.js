@@ -57,17 +57,6 @@ const toStoreSlug = (value) => {
 const normalizeSellerPayload = (seller) => {
   const plain = typeof seller?.toJSON === 'function' ? seller.toJSON() : { ...seller };
   plain.pickupLocations = normalizePickupLocations(plain.pickupLocations);
-  // Ensure pickupMaps is always an array of strings
-  try {
-    let maps = plain.pickupMaps || [];
-    if (typeof maps === 'string') {
-      maps = JSON.parse(maps);
-    }
-    if (!Array.isArray(maps)) maps = maps ? [maps] : [];
-    plain.pickupMaps = maps.map(m => String(m || '').trim()).filter(Boolean);
-  } catch (e) {
-    plain.pickupMaps = [];
-  }
   return plain;
 };
 
@@ -89,9 +78,18 @@ export const registerSeller = async (req, res) => {
     const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
 
     let proofOfArtisan = null;
-    if (req.file) {
-      const uploaded = await uploadImage(req.file, 'artistry/seller-proof');
-      proofOfArtisan = uploaded?.url || null;
+    const portfolioImages = [];
+    if (req.files) {
+      if (req.files.proofOfArtisan && req.files.proofOfArtisan[0]) {
+        const uploaded = await uploadImage(req.files.proofOfArtisan[0], 'artistry/seller-proof');
+        proofOfArtisan = uploaded?.url || null;
+      }
+      if (req.files.images && req.files.images.length) {
+        for (const f of req.files.images) {
+          const r = await uploadImage(f, 'artistry/seller-pickup');
+          if (r && r.url) portfolioImages.push(r.url);
+        }
+      }
     }
 
     if (!name || !email || !password || !storeName) {
@@ -115,6 +113,7 @@ export const registerSeller = async (req, res) => {
           address,
           pickupLocations,
           proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
+          portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
           isVerified: false,
         });
         seller = existingSeller;
@@ -133,6 +132,7 @@ export const registerSeller = async (req, res) => {
         address,
         pickupLocations,
         proofOfArtisan,
+        portfolioImages,
       });
     }
 
@@ -150,6 +150,7 @@ export const registerSeller = async (req, res) => {
         artisanType: seller.artisanType,
         pickupLocations: normalizePickupLocations(seller.pickupLocations),
         proofOfArtisan: seller.proofOfArtisan,
+        portfolioImages: Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [],
       },
     });
   } catch (error) {
@@ -247,7 +248,7 @@ export const findSellerByName = async (req, res) => {
 // Update seller profile
 export const updateSellerProfile = async (req, res) => {
   try {
-    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations, pickupMaps } = req.body;
+    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations } = req.body;
 
     const seller = await Seller.findByPk(req.seller.id);
     if (!seller) {
@@ -256,22 +257,6 @@ export const updateSellerProfile = async (req, res) => {
 
     const hasPickupLocationsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupLocations');
     const normalizedPickupLocations = normalizePickupLocations(pickupLocations);
-    const hasPickupMapsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupMaps');
-    let normalizedPickupMaps = [];
-    if (hasPickupMapsField) {
-      try {
-        if (typeof pickupMaps === 'string') {
-          normalizedPickupMaps = JSON.parse(pickupMaps);
-        } else if (Array.isArray(pickupMaps)) {
-          normalizedPickupMaps = pickupMaps;
-        } else if (pickupMaps) {
-          normalizedPickupMaps = [pickupMaps];
-        }
-        normalizedPickupMaps = normalizedPickupMaps.map(m => String(m || '').trim()).filter(Boolean);
-      } catch (e) {
-        normalizedPickupMaps = [];
-      }
-    }
 
     await seller.update({
       name: name || seller.name,
@@ -284,8 +269,32 @@ export const updateSellerProfile = async (req, res) => {
       bio: bio || seller.bio,
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
       pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
-      pickupMaps: hasPickupMapsField ? normalizedPickupMaps : (Array.isArray(seller.pickupMaps) ? seller.pickupMaps : []),
     });
+
+    // Handle uploaded images (append to portfolioImages)
+    if (req.files && req.files.length) {
+      const uploaded = [];
+      for (const file of req.files) {
+        const r = await uploadImage(file, 'artistry/seller-pickup');
+        if (r && r.url) uploaded.push(r.url);
+      }
+      const current = Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [];
+      const merged = [...current, ...uploaded];
+      await seller.update({ portfolioImages: merged });
+    }
+    // Allow replacing portfolioImages via JSON body
+    if (req.body && req.body.portfolioImages) {
+      try {
+        const parsed = typeof req.body.portfolioImages === 'string'
+          ? JSON.parse(req.body.portfolioImages)
+          : req.body.portfolioImages;
+        if (Array.isArray(parsed)) {
+          await seller.update({ portfolioImages: parsed });
+        }
+      } catch (err) {
+        // ignore parse errors
+      }
+    }
 
     // Also update shippingSettings and returnPolicy if provided
     const { shippingSettings, returnPolicy } = req.body;
@@ -339,35 +348,35 @@ export const updateSellerAvatar = async (req, res) => {
   }
 };
 
-// Upload pickup map images for seller
-export const uploadPickupMaps = async (req, res) => {
+// Upload multiple seller images (e.g., portfolio or pickup photos)
+export const uploadSellerImages = async (req, res) => {
   try {
-    const seller = await Seller.findByPk(req.seller.id);
-    if (!seller) return res.status(404).json({ message: 'Seller not found' });
-
-    const files = req.files || [];
-    if (!files.length) return res.status(400).json({ message: 'No files uploaded' });
-
-    const uploadedUrls = [];
-    for (const file of files) {
-      try {
-        const uploaded = await uploadImage(file, 'artistry/seller-pickup-maps');
-        if (uploaded?.url) uploadedUrls.push(uploaded.url);
-      } catch (e) {
-        console.error('uploadPickupMaps file upload failed:', e);
-      }
+    if (!req.files || !req.files.length) {
+      return res.status(400).json({ message: 'No image files uploaded' });
     }
 
-    const existing = Array.isArray(seller.pickupMaps) ? seller.pickupMaps : [];
-    const next = [...existing, ...uploadedUrls];
-    await seller.update({ pickupMaps: next });
+    const seller = await Seller.findByPk(req.seller.id);
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found' });
+    }
 
-    res.json({ message: 'Pickup map images uploaded', pickupMaps: next });
+    const uploaded = [];
+    for (const file of req.files) {
+      const r = await uploadImage(file, 'artistry/seller-pickup');
+      if (r && r.url) uploaded.push(r.url);
+    }
+
+    const current = Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [];
+    const merged = [...current, ...uploaded];
+    await seller.update({ portfolioImages: merged });
+
+    return res.status(200).json({ message: 'Images uploaded', images: merged });
   } catch (error) {
-    console.error('uploadPickupMaps error:', error);
-    res.status(500).json({ message: 'Failed to upload pickup maps', error: error.message });
+    console.error('Error uploading seller images:', error);
+    return res.status(500).json({ message: 'Error uploading images', error: error.message });
   }
 };
+
 
 // Get orders that include this seller's products
 export const getSellerOrders = async (req, res) => {

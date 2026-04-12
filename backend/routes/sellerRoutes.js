@@ -24,7 +24,7 @@ import {
   uploadPaymentQr,
   getReturnPolicy,
   updateReturnPolicy,
-  uploadPickupMaps,
+  uploadSellerImages,
 } from '../controllers/sellerController.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
 import { verifyAdmin } from '../middleware/auth.js';
@@ -34,7 +34,7 @@ import { upload } from '../middleware/upload.js';
 const router = express.Router();
 
 // Public routes
-router.post('/register', upload.single('proofOfArtisan'), registerSeller);
+router.post('/register', upload.fields([{ name: 'proofOfArtisan', maxCount: 1 }, { name: 'images', maxCount: 10 }]), registerSeller);
 router.post('/login', loginSeller);
 router.post('/forgot-password', forgotSellerPassword);
 router.post('/reset-password', resetSellerPassword);
@@ -47,9 +47,11 @@ router.get('/by-name/:name', findSellerByName);
 
 // Protected routes
 router.get('/profile', verifySeller, getSellerProfile);
-router.put('/profile', verifySeller, updateSellerProfile);
+router.put('/profile', verifySeller, upload.array('images', 10), updateSellerProfile);
 router.put('/profile/avatar', verifySeller, upload.single('image'), updateSellerAvatar);
-router.put('/profile/pickup-maps', verifySeller, upload.array('maps', 10), uploadPickupMaps);
+router.put('/profile/images', verifySeller, upload.array('images', 10), uploadSellerImages);
+router.put('/profile/portfolio', verifySeller, updateSellerProfile);
+// pickup maps route removed
 // Seller's orders (orders that include their products)
 router.get('/orders', verifySeller, getSellerOrders);
 
