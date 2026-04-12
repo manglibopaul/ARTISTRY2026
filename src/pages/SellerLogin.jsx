@@ -47,15 +47,10 @@ const SellerLogin = () => {
     }
   }
 
-  const handlePickupLocationPick = (loc) => {
-    if (loc && typeof loc === 'object' && 'address' in loc && 'lat' in loc && 'lon' in loc) {
-      setPickupInput({ address: formatAddressFromParts(loc.address), lat: loc.lat, lon: loc.lon });
-    } else if (loc && typeof loc === 'object' && 'address' in loc) {
-      setPickupInput(formatAddressFromParts(loc.address));
-    } else if (typeof loc === 'string') {
-      setPickupInput(loc);
-    } else {
-      setPickupInput('');
+  const handlePickupLocationPick = ({ address }) => {
+    const formatted = formatAddressFromParts(address)
+    if (formatted) {
+      setPickupInput(formatted.replace(/\n/g, ', '))
     }
   }
 
@@ -70,18 +65,9 @@ const SellerLogin = () => {
   }
 
   const handleAddPickup = () => {
-    let loc = pickupInput;
-    if (typeof loc === 'object' && loc.address && typeof loc.lat === 'number' && typeof loc.lon === 'number') {
-      if (!formData.pickupLocations.some(l => typeof l === 'object' && l.address === loc.address)) {
-        setFormData(prev => ({ ...prev, pickupLocations: [...prev.pickupLocations, loc] }))
-        setPickupInput('')
-      }
-    } else {
-      loc = String(loc).trim();
-      if (loc && !formData.pickupLocations.includes(loc)) {
-        setFormData(prev => ({ ...prev, pickupLocations: [...prev.pickupLocations, loc] }))
-        setPickupInput('')
-      }
+    if (pickupInput.trim()) {
+      setFormData(prev => ({ ...prev, pickupLocations: [...prev.pickupLocations, pickupInput.trim()] }))
+      setPickupInput('')
     }
   }
   const handleRemovePickup = (idx) => {
@@ -233,7 +219,7 @@ const SellerLogin = () => {
                 <ul className='list-disc pl-5'>
                   {formData.pickupLocations.map((loc, idx) => (
                     <li key={idx} className='flex items-center gap-2'>
-                      <span>{typeof loc === 'object' && loc.address ? loc.address : String(loc)}</span>
+                      <span>{loc}</span>
                       <button type='button' onClick={() => handleRemovePickup(idx)} className='text-red-500 text-xs'>Remove</button>
                     </li>
                   ))}
