@@ -459,7 +459,7 @@ const SellerProfile = () => {
                   return (
                   <div key={idx} className='flex items-center gap-2'>
                     <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>
-                      {typeof loc === 'object' && loc.address ? loc.address : JSON.stringify(loc)}
+                      {typeof loc === 'object' && loc.address ? loc.address : typeof loc === 'string' ? loc : ''}
                     </span>
                     <button
                       type='button'
