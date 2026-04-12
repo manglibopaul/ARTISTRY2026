@@ -74,11 +74,6 @@ const Seller = sequelize.define('Seller', {
     defaultValue: [],
     comment: 'Array of pickup location strings set by the seller',
   },
-  pickupLocationPhotos: {
-    type: DataTypes.JSON,
-    defaultValue: {},
-    comment: 'Mapping of pickup location string -> array of image URLs uploaded by seller',
-  },
   proofOfArtisan: {
     type: DataTypes.STRING,
     allowNull: true,

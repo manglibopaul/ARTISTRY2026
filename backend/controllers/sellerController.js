@@ -112,7 +112,6 @@ export const registerSeller = async (req, res) => {
           phone,
           address,
           pickupLocations,
-          pickupLocationPhotos: req.body.pickupLocationPhotos || existingSeller.pickupLocationPhotos || {},
           proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
           portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
           isVerified: false,
@@ -132,7 +131,6 @@ export const registerSeller = async (req, res) => {
         phone,
         address,
         pickupLocations,
-        pickupLocationPhotos: req.body.pickupLocationPhotos || {},
         proofOfArtisan,
         portfolioImages,
       });
@@ -153,7 +151,6 @@ export const registerSeller = async (req, res) => {
         pickupLocations: normalizePickupLocations(seller.pickupLocations),
         proofOfArtisan: seller.proofOfArtisan,
         portfolioImages: Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [],
-        pickupLocationPhotos: seller.pickupLocationPhotos || {},
       },
     });
   } catch (error) {
@@ -272,7 +269,6 @@ export const updateSellerProfile = async (req, res) => {
       bio: bio || seller.bio,
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
       pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
-      pickupLocationPhotos: req.body.pickupLocationPhotos !== undefined ? (typeof req.body.pickupLocationPhotos === 'string' ? (function(){ try { return JSON.parse(req.body.pickupLocationPhotos) } catch { return {} } })() : req.body.pickupLocationPhotos) : seller.pickupLocationPhotos,
     });
 
     // Handle uploaded images (append to portfolioImages)
