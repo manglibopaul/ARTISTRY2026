@@ -428,67 +428,6 @@ const SellerProfile = () => {
         {/* Profile Content */}
         <div className='bg-white rounded-lg shadow-md p-4 sm:p-6 space-y-5 sm:space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                      {/* Pickup Locations Upload */}
-                      <div>
-                        <label className='text-sm font-medium text-gray-600'>Pickup Locations (addresses)</label>
-                        {isEditing ? (
-                          <>
-                            <div className='flex gap-2 mt-2'>
-                              <input
-                                type='text'
-                                placeholder='Add a pickup address...'
-                                value={newPickupLocation}
-                                onChange={(e) => setNewPickupLocation(e.target.value)}
-                                className='flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white'
-                              />
-                              <button
-                                type='button'
-                                onClick={() => {
-                                  const v = String(newPickupLocation || '').trim();
-                                  if (!v) return;
-                                  setFormData(prev => ({ ...prev, pickupLocations: [...(Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []), v] }));
-                                  setNewPickupLocation('');
-                                }}
-                                className='px-3 py-2 bg-black text-white rounded text-sm'
-                              >Add</button>
-                            </div>
-                            {pickupFileError && <p className='text-xs text-red-600 mt-1'>{pickupFileError}</p>}
-                            <ul className='list-disc pl-5 mt-2'>
-                              {(Array.isArray(formData.pickupLocations) ? formData.pickupLocations : []).map((loc, idx) => (
-                                <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
-                                  <div className='flex-1'>
-                                    <span>{loc}</span>
-                                    {pickupLocationPhotos[loc] && (
-                                      <div className='mt-1'>
-                                        <img src={pickupLocationPhotos[loc]} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border mt-2' />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className='flex flex-col items-end gap-1'>
-                                    <label className='text-xs text-gray-600 cursor-pointer'>
-                                      <input type='file' accept='image/*' onChange={(e) => handleAttachPickupPhoto(e, loc)} className='hidden' />
-                                      <span className='px-2 py-1 bg-gray-100 rounded text-xs'>Attach Photo</span>
-                                    </label>
-                                    <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          </>
-                        ) : (
-                          <ul className='list-disc pl-5 mt-2'>
-                            {seller?.pickupLocations?.length > 0 ? (
-                              seller.pickupLocations.map((loc, idx) => (
-                                <li key={idx} className='text-sm text-gray-700'>{loc}</li>
-                              ))
-                            ) : (
-                              <li className='text-sm text-gray-500'>No pickup locations uploaded yet.</li>
-                            )}
-                          </ul>
-                        )}
-                      </div>
-
-                      
                       
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
@@ -533,6 +472,66 @@ const SellerProfile = () => {
                 <p className='text-lg text-gray-900 mt-1'>{seller?.phone || 'Not provided'}</p>
               )}
             </div>
+          </div>
+
+          {/* Pickup Locations (addresses) - moved below Address field */}
+          <div>
+            <label className='text-sm font-medium text-gray-600'>Pickup Locations (addresses)</label>
+            {isEditing ? (
+              <>
+                <div className='flex gap-2 mt-2'>
+                  <input
+                    type='text'
+                    placeholder='Add a pickup address...'
+                    value={newPickupLocation}
+                    onChange={(e) => setNewPickupLocation(e.target.value)}
+                    className='flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white'
+                  />
+                  <button
+                    type='button'
+                    onClick={() => {
+                      const v = String(newPickupLocation || '').trim();
+                      if (!v) return;
+                      setFormData(prev => ({ ...prev, pickupLocations: [...(Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []), v] }));
+                      setNewPickupLocation('');
+                    }}
+                    className='px-3 py-2 bg-black text-white rounded text-sm'
+                  >Add</button>
+                </div>
+                {pickupFileError && <p className='text-xs text-red-600 mt-1'>{pickupFileError}</p>}
+                <ul className='list-disc pl-5 mt-2'>
+                  {(Array.isArray(formData.pickupLocations) ? formData.pickupLocations : []).map((loc, idx) => (
+                    <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
+                      <div className='flex-1'>
+                        <span>{loc}</span>
+                        {pickupLocationPhotos[loc] && (
+                          <div className='mt-1'>
+                            <img src={pickupLocationPhotos[loc]} alt={`pickup-${idx}`} className='w-24 h-24 object-cover rounded-md border mt-2' />
+                          </div>
+                        )}
+                      </div>
+                      <div className='flex flex-col items-end gap-1'>
+                        <label className='text-xs text-gray-600 cursor-pointer'>
+                          <input type='file' accept='image/*' onChange={(e) => handleAttachPickupPhoto(e, loc)} className='hidden' />
+                          <span className='px-2 py-1 bg-gray-100 rounded text-xs'>Attach Photo</span>
+                        </label>
+                        <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: (Array.isArray(prev.pickupLocations) ? prev.pickupLocations : []).filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <ul className='list-disc pl-5 mt-2'>
+                {seller?.pickupLocations?.length > 0 ? (
+                  seller.pickupLocations.map((loc, idx) => (
+                    <li key={idx} className='text-sm text-gray-700'>{loc}</li>
+                  ))
+                ) : (
+                  <li className='text-sm text-gray-500'>No pickup locations uploaded yet.</li>
+                )}
+              </ul>
+            )}
           </div>
 
           <div>
