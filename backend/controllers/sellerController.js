@@ -57,6 +57,13 @@ const toStoreSlug = (value) => {
 const normalizeSellerPayload = (seller) => {
   const plain = typeof seller?.toJSON === 'function' ? seller.toJSON() : { ...seller };
   plain.pickupLocations = normalizePickupLocations(plain.pickupLocations);
+  // Expose pickupLocationPhotos stored under shippingSettings to frontend without DB schema changes
+  try {
+    const s = plain.shippingSettings || {};
+    plain.pickupLocationPhotos = s.pickupLocationPhotos && typeof s.pickupLocationPhotos === 'object' ? s.pickupLocationPhotos : {};
+  } catch (err) {
+    plain.pickupLocationPhotos = {};
+  }
   return plain;
 };
 
@@ -151,6 +158,7 @@ export const registerSeller = async (req, res) => {
         pickupLocations: normalizePickupLocations(seller.pickupLocations),
         proofOfArtisan: seller.proofOfArtisan,
         portfolioImages: Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [],
+        pickupLocationPhotos: (seller.shippingSettings && seller.shippingSettings.pickupLocationPhotos) ? seller.shippingSettings.pickupLocationPhotos : {},
       },
     });
   } catch (error) {
@@ -270,6 +278,29 @@ export const updateSellerProfile = async (req, res) => {
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
       pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
     });
+
+    // If client sent pickupLocationPhotos, merge them into shippingSettings.pickupLocationPhotos
+    if (req.body && req.body.pickupLocationPhotos) {
+      try {
+        const provided = typeof req.body.pickupLocationPhotos === 'string'
+          ? JSON.parse(req.body.pickupLocationPhotos)
+          : req.body.pickupLocationPhotos;
+        if (provided && typeof provided === 'object') {
+          const currentSettings = seller.shippingSettings && typeof seller.shippingSettings === 'object' ? seller.shippingSettings : {};
+          const currentPhotos = currentSettings.pickupLocationPhotos && typeof currentSettings.pickupLocationPhotos === 'object' ? currentSettings.pickupLocationPhotos : {};
+          const merged = { ...currentPhotos };
+          for (const k of Object.keys(provided)) {
+            const arr = Array.isArray(provided[k]) ? provided[k] : [String(provided[k] || '').trim()].filter(Boolean);
+            merged[k] = Array.isArray(merged[k]) ? [...merged[k], ...arr] : arr;
+          }
+          const nextSettings = { ...currentSettings, pickupLocationPhotos: merged };
+          await seller.update({ shippingSettings: nextSettings });
+        }
+      } catch (err) {
+        // ignore parse errors
+        console.warn('Failed to parse pickupLocationPhotos in updateSellerProfile', err && err.message ? err.message : err);
+      }
+    }
 
     // Handle uploaded images (append to portfolioImages)
     if (req.files && req.files.length) {
