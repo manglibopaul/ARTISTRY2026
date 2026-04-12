@@ -578,7 +578,19 @@ export const getAllOrders = async (req, res) => {
 export const getSellerOrders = async (req, res) => {
   try {
     const sellerId = req.seller.id;
-    const orders = await Order.findAll({ order: [['createdAt', 'DESC']] });
+    let orders;
+    try {
+      orders = await Order.findAll({ order: [['createdAt', 'DESC']] });
+    } catch (err) {
+      // Defensive fallback: if the DB schema in production is missing the `gcashReceipt`
+      // column, retry the query excluding that attribute to avoid a hard 500.
+      if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
+        console.warn('getSellerOrders: retrying without gcashReceipt attribute due to DB schema mismatch');
+        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] }, order: [['createdAt', 'DESC']] });
+      } else {
+        throw err;
+      }
+    }
 
     // Filter orders where any item belongs to this seller
     const sellerOrders = orders
