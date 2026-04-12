@@ -446,9 +446,9 @@ const SellerProfile = () => {
                 <AddressPickerMap
                   onLocationPick={loc => {
                     if (loc && typeof loc === 'object' && 'address' in loc) {
-                      setNewPickupLocation(String(loc.address));
+                      setNewPickupLocation(loc.address || '');
                     } else if (typeof loc === 'string') {
-                      setNewPickupLocation(typeof loc === 'object' && loc.address ? loc.address : String(loc));
+                      setNewPickupLocation(loc);
                     } else {
                       setNewPickupLocation('');
                     }
