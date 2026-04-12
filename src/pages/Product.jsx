@@ -698,22 +698,7 @@ const Product = () => {
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
                   {/* iOS AR Quick Look Button */}
-                  {isIOS && resolvedIosModelUrl && (
-                    <div className="mt-4 flex justify-center">
-                      <a
-                        rel="ar"
-                        href={resolvedIosModelUrl}
-                        style={{ display: 'inline-block' }}
-                      >
-                        {/* You can use an official Apple badge or a simple button */}
-                        <img
-                          src="https://developer.apple.com/arkit/gallery/images/quicklook-badge.png"
-                          alt="View in AR"
-                          style={{ height: 40 }}
-                        />
-                      </a>
-                    </div>
-                  )}
+                  {/* iOS AR Quick Look button removed as requested */}
                   {arError && (
                     <div className="absolute inset-0 flex items-center justify-center bg-red-50 bg-opacity-90">
                       <div className="text-red-700 text-center text-sm px-4">

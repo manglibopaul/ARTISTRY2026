@@ -456,7 +456,9 @@ const SellerProfile = () => {
                 />
                 {formData.pickupLocations.map((loc, idx) => (
                   <div key={idx} className='flex items-center gap-2'>
-                    <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>{loc}</span>
+                    <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>
+                      {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
+                    </span>
                     <button
                       type='button'
                       onClick={() => setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))}
