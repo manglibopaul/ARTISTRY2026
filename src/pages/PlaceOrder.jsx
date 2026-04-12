@@ -27,8 +27,8 @@ import Title from '../components/Title'
 import CartTotal from '../components/CartTotal'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
-import MapPin from '../components/MapPin'
-import { geocodeAddress, geocodeQuery } from '../utils/geocoding'
+// import MapPin from '../components/MapPin'
+// import { geocodeAddress, geocodeQuery } from '../utils/geocoding'
 
 const parseCartKey = (key) => {
   if (typeof key !== 'string') return { id: key, color: null, size: null };
@@ -173,6 +173,7 @@ const PlaceOrder = () => {
   const [placing, setPlacing] = useState(false);
   const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
   const [sellerPickupLocations, setSellerPickupLocations] = useState([])
+  const [sellerPickupMaps, setSellerPickupMaps] = useState({})
   const [reservationDateTime] = useState('')
   const [reservationNote] = useState('')
   const [appliedDiscount] = useState(0)
@@ -188,9 +189,9 @@ const PlaceOrder = () => {
     title: '',
     message: '',
   })
-  const [deliveryMapLat, setDeliveryMapLat] = useState(null)
-  const [deliveryMapLon, setDeliveryMapLon] = useState(null)
-  const [pickupMapLocations, setPickupMapLocations] = useState({})
+  // const [deliveryMapLat, setDeliveryMapLat] = useState(null)
+  // const [deliveryMapLon, setDeliveryMapLon] = useState(null)
+  // const [pickupMapLocations, setPickupMapLocations] = useState({})
 
   const openModal = (title, message) => {
     setModalState({ open: true, title, message })
@@ -290,8 +291,11 @@ const PlaceOrder = () => {
       for (const sid of sellerIds) {
         try {
           const res = await fetch(`${apiUrl}/api/sellers/${sid}`)
-          if (res.ok) {
+            if (res.ok) {
             const seller = await res.json()
+            // store seller pickup map images
+            const maps = Array.isArray(seller.pickupMaps) ? seller.pickupMaps : []
+            setSellerPickupMaps((prev) => ({ ...prev, [sid]: maps }))
             // Pickup locations
             const locs = normalizePickupLocations(seller)
             locs.forEach(loc => {
@@ -398,83 +402,7 @@ const PlaceOrder = () => {
   }, [cartsItems])
 
   // Geocode delivery address to get map coordinates
-  React.useEffect(() => {
-    const geocodeDeliveryAddress = async () => {
-      // Only geocode if we have all required fields and are in delivery mode
-      if (method === 'pickup') {
-        setDeliveryMapLat(null)
-        setDeliveryMapLon(null)
-        return
-      }
 
-      if (!street || !regionProvinceCityBarangay) {
-        setDeliveryMapLat(null)
-        setDeliveryMapLon(null)
-        return
-      }
-
-      try {
-        // Use the full area field so both formats work:
-        // - "Region/Province/City/Barangay"
-        // - "City, Province" (saved profile format)
-        const area = regionProvinceCityBarangay.trim()
-        const coords = await geocodeAddress(street, area, country || 'Philippines')
-        if (coords) {
-          setDeliveryMapLat(coords.lat)
-          setDeliveryMapLon(coords.lon)
-        } else {
-          setDeliveryMapLat(null)
-          setDeliveryMapLon(null)
-        }
-      } catch (error) {
-        console.error('Geocoding error:', error)
-        setDeliveryMapLat(null)
-        setDeliveryMapLon(null)
-      }
-    }
-
-    geocodeDeliveryAddress()
-  }, [street, regionProvinceCityBarangay, country, method])
-
-  React.useEffect(() => {
-    const geocodePickupLocations = async () => {
-      if (method !== 'pickup') {
-        setPickupMapLocations({})
-        return
-      }
-
-      const nextLocations = {}
-      for (const seller of pickupLocationsGrouped) {
-        const selectedLocation = pickupLocationsBySeller[String(seller.sellerId)]
-        if (!selectedLocation) continue
-
-        try {
-          const queryCandidates = buildPickupGeocodeQueries(selectedLocation)
-          let coords = null
-          for (const query of queryCandidates) {
-            coords = await geocodeQuery(query)
-            if (coords) break
-          }
-          if (coords) {
-            nextLocations[String(seller.sellerId)] = {
-              lat: coords.lat,
-              lon: coords.lon,
-              label: seller.storeName || 'Pickup Location',
-              address: selectedLocation,
-            }
-          } else {
-            console.warn('Could not geocode pickup location:', selectedLocation)
-          }
-        } catch (error) {
-          console.error('Geocoding pickup location failed:', error)
-        }
-      }
-
-      setPickupMapLocations(nextLocations)
-    }
-
-    geocodePickupLocations()
-  }, [method, pickupLocationsBySeller, pickupLocationsGrouped])
 
   const subtotal = getCartAmount ? getCartAmount() : 0
 
@@ -810,15 +738,11 @@ const PlaceOrder = () => {
                             <option key={idx} value={loc}>{loc}</option>
                           ))}
                         </select>
-                        {pickupMapLocations[String(seller.sellerId)] && (
-                          <div className='mt-3'>
-                            <MapPin
-                              lat={pickupMapLocations[String(seller.sellerId)].lat}
-                              lon={pickupMapLocations[String(seller.sellerId)].lon}
-                              label={`${seller.storeName} Pickup Location`}
-                              address={pickupMapLocations[String(seller.sellerId)].address}
-                              isPickup={true}
-                            />
+                        {(sellerPickupMaps[String(seller.sellerId)] || []).length > 0 && (
+                          <div className='mt-3 flex gap-2 flex-wrap'>
+                            {(sellerPickupMaps[String(seller.sellerId)] || []).map((url, i) => (
+                              <img key={i} src={(url || '').startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${i}`} className='w-28 h-20 object-cover rounded border' />
+                            ))}
                           </div>
                         )}
                       </div>

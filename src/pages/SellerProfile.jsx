@@ -1,5 +1,4 @@
 import React, { useCallback, useState, useEffect } from 'react'
-import AddressPickerMap from '../components/AddressPickerMap'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
@@ -26,6 +25,9 @@ const SellerProfile = () => {
     pickupLocations: [],
   })
   const [newPickupLocation, setNewPickupLocation] = useState('')
+  const [pickupFileError, setPickupFileError] = useState('')
+  const [pickupMapsUploading, setPickupMapsUploading] = useState(false)
+  const [pickupMapError, setPickupMapError] = useState('')
   const [saveError, setSaveError] = useState('')
 
   // Defensive: always ensure formData and artisanTypes are defined
@@ -169,6 +171,55 @@ const SellerProfile = () => {
     }
   }
 
+  const handleMapFilesUpload = async (e) => {
+    setPickupMapError('')
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setPickupMapsUploading(true)
+    try {
+      const data = new FormData()
+      for (const f of files) data.append('maps', f)
+      const res = await axios.put(`${apiUrl}/api/sellers/profile/pickup-maps`, data, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      })
+      if (res.data && Array.isArray(res.data.pickupMaps)) {
+        setSeller(prev => ({ ...(prev || {}), pickupMaps: res.data.pickupMaps }))
+      }
+    } catch (err) {
+      console.error('Map upload failed', err)
+      setPickupMapError(err.response?.data?.message || 'Failed to upload map images')
+    } finally {
+      setPickupMapsUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  // Handle pickup locations file upload
+  const handlePickupFileUpload = async (e) => {
+    setPickupFileError('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ['text/csv', 'application/json', 'text/plain'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.json') && !file.name.endsWith('.txt')) {
+      setPickupFileError('Invalid file type. Please upload a CSV, TXT, or JSON file.');
+      return;
+    }
+    try {
+      const text = await file.text();
+      let locations = [];
+      if (file.name.endsWith('.json')) {
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) locations = parsed;
+        else if (typeof parsed === 'string') locations = [parsed];
+      } else {
+        locations = text.split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean);
+      }
+      setFormData(prev => ({ ...prev, pickupLocations: locations }));
+    } catch (err) {
+      setPickupFileError('Failed to parse file. Please check the format.');
+    }
+  };
+
   const handleSave = async () => {
     try {
       setIsSaving(true)
@@ -224,21 +275,22 @@ const SellerProfile = () => {
     }
   }
 
+  // Auto-dismiss non-blocking toast for profile updates
+  useEffect(() => {
+    if (!showSaveModal) return
+    const t = setTimeout(() => setShowSaveModal(false), 3000)
+    return () => clearTimeout(t)
+  }, [showSaveModal])
+
   return (
     <div className='min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4'>
       {/* Save Confirmation Modal */}
       {showSaveModal && (
-        <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
-          <div className='bg-white rounded-xl shadow-xl w-full max-w-sm p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>Profile Updated</h3>
-            <p className='text-sm text-gray-700 mb-5'>Your profile has been successfully updated.</p>
-            <div className='flex justify-end'>
-              <button
-                onClick={() => setShowSaveModal(false)}
-                className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
-              >
-                OK
-              </button>
+        <div className='fixed top-4 right-4 z-50'>
+          <div className='bg-black text-white px-4 py-2 rounded shadow-lg'>
+            <div className='flex items-center gap-3'>
+              <div className='text-sm'>Profile updated</div>
+              <button onClick={() => setShowSaveModal(false)} className='text-xs text-gray-200 hover:text-white ml-2'>Dismiss</button>
             </div>
           </div>
         </div>
@@ -322,6 +374,82 @@ const SellerProfile = () => {
         {/* Profile Content */}
         <div className='bg-white rounded-lg shadow-md p-4 sm:p-6 space-y-5 sm:space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                      {/* Pickup Locations Upload */}
+                      <div>
+                        <label className='text-sm font-medium text-gray-600'>Pickup Locations (Upload CSV, TXT, or JSON)</label>
+                        {isEditing ? (
+                          <>
+                            <input
+                              type='file'
+                              accept='.csv,.txt,.json,text/csv,text/plain,application/json'
+                              onChange={handlePickupFileUpload}
+                              className='mt-2 mb-2 block w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white'
+                            />
+                            {pickupFileError && <p className='text-xs text-red-600 mt-1'>{pickupFileError}</p>}
+                            <ul className='list-disc pl-5 mt-2'>
+                              {formData.pickupLocations.map((loc, idx) => (
+                                <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
+                                  <span>{loc}</span>
+                                  <button type='button' onClick={() => setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))} className='text-red-500 text-xs'>Remove</button>
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : (
+                          <ul className='list-disc pl-5 mt-2'>
+                            {seller?.pickupLocations?.length > 0 ? (
+                              seller.pickupLocations.map((loc, idx) => (
+                                <li key={idx} className='text-sm text-gray-700'>{loc}</li>
+                              ))
+                            ) : (
+                              <li className='text-sm text-gray-500'>No pickup locations uploaded yet.</li>
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                      {/* Pickup Maps Upload */}
+                      <div>
+                        <label className='text-sm font-medium text-gray-600'>Pickup Map Images</label>
+                        {isEditing ? (
+                          <>
+                            <input
+                              type='file'
+                              accept='image/*'
+                              multiple
+                              onChange={handleMapFilesUpload}
+                              className='mt-2 mb-2 block w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white'
+                            />
+                            {pickupMapError && <p className='text-xs text-red-600 mt-1'>{pickupMapError}</p>}
+                            {pickupMapsUploading && <p className='text-xs text-gray-500 mt-1'>Uploading images...</p>}
+                            <div className='mt-2 flex flex-wrap gap-2'>
+                              {(seller?.pickupMaps || []).map((url, idx) => (
+                                <div key={idx} className='w-24 h-20 border rounded overflow-hidden relative'>
+                                  <img src={url.startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${idx}`} className='w-full h-full object-cover' />
+                                  <button type='button' onClick={async () => {
+                                    const next = (seller.pickupMaps || []).filter((_, i) => i !== idx)
+                                    try {
+                                      await axios.put(`${apiUrl}/api/sellers/profile`, { pickupMaps: next }, { headers: { Authorization: `Bearer ${token}` } })
+                                      setSeller(prev => ({ ...(prev || {}), pickupMaps: next }))
+                                    } catch (err) {
+                                      console.error('Failed to remove map', err)
+                                    }
+                                  }} className='absolute top-1 right-1 bg-black/60 text-white text-xs px-1 rounded'>x</button>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className='mt-2 flex flex-wrap gap-2'>
+                            {(seller?.pickupMaps || []).length > 0 ? (
+                              (seller.pickupMaps || []).map((url, idx) => (
+                                <img key={idx} src={url.startsWith('http') ? url : `${apiUrl}${url}`} alt={`map-${idx}`} className='w-24 h-20 object-cover rounded border' />
+                              ))
+                            ) : (
+                              <p className='text-sm text-gray-500'>No pickup map images uploaded.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
               {isEditing ? (
@@ -437,75 +565,7 @@ const SellerProfile = () => {
             )}
           </div>
 
-          {/* Pickup Locations */}
-          <div>
-            <label className='text-sm font-medium text-gray-600'>Pickup Locations</label>
-            {isEditing ? (
-              <div className='mt-2 space-y-2'>
-                {/* Map picker for pickup location */}
-                <AddressPickerMap
-                  onLocationPick={loc => {
-                    if (loc && typeof loc === 'object' && 'address' in loc) {
-                      setNewPickupLocation(String(loc.address));
-                    } else if (typeof loc === 'string') {
-                      setNewPickupLocation(typeof loc === 'object' && loc.address ? loc.address : String(loc));
-                    } else {
-                      setNewPickupLocation('');
-                    }
-                  }}
-                />
-                {formData.pickupLocations.map((loc, idx) => (
-                  <div key={idx} className='flex items-center gap-2'>
-                    <span className='flex-1 px-3 py-2 border rounded-lg bg-gray-50 text-sm'>
-                      {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
-                    </span>
-                    <button
-                      type='button'
-                      onClick={() => setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))}
-                      className='text-red-500 hover:text-red-700 text-sm font-medium px-2'
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                <div className='flex gap-2'>
-                  <input
-                    value={typeof newPickupLocation === 'string' ? newPickupLocation : (newPickupLocation?.address || '')}
-                    onChange={e => setNewPickupLocation(e.target.value)}
-                    placeholder='Add pickup location... (or pin on map)'
-                    className='flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm'
-                  />
-                  <button
-                    type='button'
-                    onClick={() => {
-                      const loc = newPickupLocation.trim()
-                      if (loc && !formData.pickupLocations.includes(loc)) {
-                        setFormData(prev => ({ ...prev, pickupLocations: [...prev.pickupLocations, loc] }))
-                        setNewPickupLocation('')
-                      }
-                    }}
-                    className='bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800'
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className='mt-2'>
-                {seller?.pickupLocations?.length > 0 ? (
-                  <ul className='space-y-1'>
-                    {seller.pickupLocations.map((loc, idx) => (
-                      <li key={idx} className='text-sm text-gray-700 flex items-center gap-2'>
-                        <span className='text-gray-400'>📍</span> {typeof loc === 'object' && loc.address ? loc.address : String(loc)}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className='text-gray-500 text-sm'>No pickup locations set</p>
-                )}
-              </div>
-            )}
-          </div>
+
         </div>
       </div>
     </div>

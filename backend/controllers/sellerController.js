@@ -57,6 +57,17 @@ const toStoreSlug = (value) => {
 const normalizeSellerPayload = (seller) => {
   const plain = typeof seller?.toJSON === 'function' ? seller.toJSON() : { ...seller };
   plain.pickupLocations = normalizePickupLocations(plain.pickupLocations);
+  // Ensure pickupMaps is always an array of strings
+  try {
+    let maps = plain.pickupMaps || [];
+    if (typeof maps === 'string') {
+      maps = JSON.parse(maps);
+    }
+    if (!Array.isArray(maps)) maps = maps ? [maps] : [];
+    plain.pickupMaps = maps.map(m => String(m || '').trim()).filter(Boolean);
+  } catch (e) {
+    plain.pickupMaps = [];
+  }
   return plain;
 };
 
@@ -236,7 +247,7 @@ export const findSellerByName = async (req, res) => {
 // Update seller profile
 export const updateSellerProfile = async (req, res) => {
   try {
-    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations } = req.body;
+    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations, pickupMaps } = req.body;
 
     const seller = await Seller.findByPk(req.seller.id);
     if (!seller) {
@@ -245,6 +256,22 @@ export const updateSellerProfile = async (req, res) => {
 
     const hasPickupLocationsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupLocations');
     const normalizedPickupLocations = normalizePickupLocations(pickupLocations);
+    const hasPickupMapsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupMaps');
+    let normalizedPickupMaps = [];
+    if (hasPickupMapsField) {
+      try {
+        if (typeof pickupMaps === 'string') {
+          normalizedPickupMaps = JSON.parse(pickupMaps);
+        } else if (Array.isArray(pickupMaps)) {
+          normalizedPickupMaps = pickupMaps;
+        } else if (pickupMaps) {
+          normalizedPickupMaps = [pickupMaps];
+        }
+        normalizedPickupMaps = normalizedPickupMaps.map(m => String(m || '').trim()).filter(Boolean);
+      } catch (e) {
+        normalizedPickupMaps = [];
+      }
+    }
 
     await seller.update({
       name: name || seller.name,
@@ -257,6 +284,7 @@ export const updateSellerProfile = async (req, res) => {
       bio: bio || seller.bio,
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
       pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
+      pickupMaps: hasPickupMapsField ? normalizedPickupMaps : (Array.isArray(seller.pickupMaps) ? seller.pickupMaps : []),
     });
 
     // Also update shippingSettings and returnPolicy if provided
@@ -308,6 +336,36 @@ export const updateSellerAvatar = async (req, res) => {
   } catch (error) {
     console.error('Error updating avatar:', error);
     return res.status(500).json({ message: 'Error updating avatar', error: error.message });
+  }
+};
+
+// Upload pickup map images for seller
+export const uploadPickupMaps = async (req, res) => {
+  try {
+    const seller = await Seller.findByPk(req.seller.id);
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
+
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ message: 'No files uploaded' });
+
+    const uploadedUrls = [];
+    for (const file of files) {
+      try {
+        const uploaded = await uploadImage(file, 'artistry/seller-pickup-maps');
+        if (uploaded?.url) uploadedUrls.push(uploaded.url);
+      } catch (e) {
+        console.error('uploadPickupMaps file upload failed:', e);
+      }
+    }
+
+    const existing = Array.isArray(seller.pickupMaps) ? seller.pickupMaps : [];
+    const next = [...existing, ...uploadedUrls];
+    await seller.update({ pickupMaps: next });
+
+    res.json({ message: 'Pickup map images uploaded', pickupMaps: next });
+  } catch (error) {
+    console.error('uploadPickupMaps error:', error);
+    res.status(500).json({ message: 'Failed to upload pickup maps', error: error.message });
   }
 };
 

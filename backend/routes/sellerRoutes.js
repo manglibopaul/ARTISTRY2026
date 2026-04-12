@@ -24,6 +24,7 @@ import {
   uploadPaymentQr,
   getReturnPolicy,
   updateReturnPolicy,
+  uploadPickupMaps,
 } from '../controllers/sellerController.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
 import { verifyAdmin } from '../middleware/auth.js';
@@ -48,6 +49,7 @@ router.get('/by-name/:name', findSellerByName);
 router.get('/profile', verifySeller, getSellerProfile);
 router.put('/profile', verifySeller, updateSellerProfile);
 router.put('/profile/avatar', verifySeller, upload.single('image'), updateSellerAvatar);
+router.put('/profile/pickup-maps', verifySeller, upload.array('maps', 10), uploadPickupMaps);
 // Seller's orders (orders that include their products)
 router.get('/orders', verifySeller, getSellerOrders);
 

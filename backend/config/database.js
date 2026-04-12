@@ -134,6 +134,18 @@ const ensureSellersPaymentSettingsColumn = async () => {
   }
 };
 
+const ensureSellersPickupMapsColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Sellers');
+  if (!table.pickupMaps) {
+    await qi.addColumn('Sellers', 'pickupMaps', {
+      type: Sequelize.JSON,
+      allowNull: false,
+      defaultValue: [],
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -146,6 +158,7 @@ const connectDB = async () => {
     await ensureProductsSizesColumn();
     await ensureOrdersCompletedAtColumn();
     await ensureSellersPaymentSettingsColumn();
+    await ensureSellersPickupMapsColumn();
     console.log('✅ Database synchronized successfully');
 
     dbConnected = true;

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import AddressPickerMap from '../components/AddressPickerMap'
 
 const formatAddressFromParts = (address) => {
   if (!address) return ''
@@ -184,28 +183,8 @@ const SellerLogin = () => {
                 className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
                 rows='3'
               />
-              <button
-                type='button'
-                onClick={() => setShowSellerAddressPicker(v => !v)}
-                className='w-full px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50'
-              >
-                {showSellerAddressPicker ? 'Hide seller address map' : 'Pin seller address on map'}
-              </button>
-              {showSellerAddressPicker && (
-                <AddressPickerMap onLocationPick={handleSellerAddressPick} />
-              )}
               <div>
                 <label className='block text-sm mb-1'>Pickup Locations</label>
-                <button
-                  type='button'
-                  onClick={() => setShowPickupPicker(v => !v)}
-                  className='w-full mb-2 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50'
-                >
-                  {showPickupPicker ? 'Hide pickup location map' : 'Pin pickup location on map'}
-                </button>
-                {showPickupPicker && (
-                  <AddressPickerMap onLocationPick={handlePickupLocationPick} />
-                )}
                 <div className='flex gap-2 mb-2'>
                   <input
                     type='text'
