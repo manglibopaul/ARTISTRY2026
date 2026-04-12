@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'image' || file.fieldname === 'proofOfArtisan') {
+  if (file.fieldname === 'image' || file.fieldname === 'images' || file.fieldname === 'proofOfArtisan') {
     // Accept image files for both 'image' and 'proofOfArtisan' fields
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
     if (allowedMimes.includes(file.mimetype)) {
