@@ -49,21 +49,12 @@ const AddressPickerMap = ({ onLocationPick }) => {
     const handleReverseGeocode = async (lat, lon, marker) => {
       setLoadingAddress(true)
       try {
-        const addrObj = await reverseGeocode(lat, lon)
-        let addrStr = '';
-        if (addrObj) {
-          // Try to use display_name if present, else join fields
-          if (addrObj.display_name) {
-            addrStr = addrObj.display_name;
-          } else {
-            addrStr = Object.values(addrObj).filter(Boolean).join(', ');
-          }
-        }
+        const addr = await reverseGeocode(lat, lon)
         if (onLocationPick) {
-          onLocationPick({ lat, lon, address: addrStr })
+          onLocationPick({ lat, lon, address: addr })
         }
         if (marker) {
-          marker.bindPopup(addrStr).openPopup()
+          marker.bindPopup(addr).openPopup()
         }
       } finally {
         setLoadingAddress(false)
