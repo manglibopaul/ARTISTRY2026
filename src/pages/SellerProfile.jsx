@@ -327,30 +327,18 @@ const SellerProfile = () => {
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
               {isEditing ? (
-                (() => {
-                  try {
-                    // Debug log
-                    window.__sellerProfileDebug = {
-                      formData: safeFormData,
-                      artisanTypes: safeArtisanTypes,
-                      seller,
-                    };
-                    return <>
-                      <div style={{background: '#cce5ff', color: '#004085', padding: '6px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center'}}>EDIT MODE ACTIVE (DEBUG)</div>
-                      <div style={{background: '#e2e3e5', color: '#383d41', padding: '4px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center', fontSize: '12px'}}>
-                        formData.name: {String(safeFormData.name)} | artisanTypes: {JSON.stringify(safeArtisanTypes)}
-                      </div>
-                      <input
-                        name='name'
-                        value={safeFormData.name}
-                        onChange={handleInputChange}
-                        className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      />
-                    </>;
-                  } catch (err) {
-                    return <div style={{color: 'red'}}>Edit form error: {String(err)}</div>;
-                  }
-                })()
+                <>
+                  <div style={{background: '#cce5ff', color: '#004085', padding: '6px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center'}}>EDIT MODE ACTIVE (DEBUG)</div>
+                  <div style={{background: '#e2e3e5', color: '#383d41', padding: '4px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center', fontSize: '12px'}}>
+                    formData.name: {String(safeFormData.name)} | artisanTypes: {JSON.stringify(safeArtisanTypes)}
+                  </div>
+                  <input
+                    name='name'
+                    value={safeFormData.name}
+                    onChange={handleInputChange}
+                    className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
+                  />
+                </>
               ) : (
                 <p className='text-lg text-gray-900 mt-1'>{seller?.name}</p>
               )}
