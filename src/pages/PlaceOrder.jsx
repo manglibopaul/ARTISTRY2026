@@ -174,6 +174,7 @@ const PlaceOrder = () => {
   const [placing, setPlacing] = useState(false);
   const [pickupLocationsBySeller, setPickupLocationsBySeller] = useState({})
   const [sellerPickupLocations, setSellerPickupLocations] = useState([])
+  const [pickupPhotosBySeller, setPickupPhotosBySeller] = useState({})
   const [reservationDateTime] = useState('')
   const [reservationNote] = useState('')
   const [appliedDiscount] = useState(0)
@@ -314,6 +315,26 @@ const PlaceOrder = () => {
               rates,
               freeShippingMinimum: Number(settings.freeShippingMinimum) || 0,
               storeName: seller.storeName || 'Seller',
+            }
+
+            // Pickup-location photos (if seller provided pickupLocationPhotos mapping)
+            try {
+              const rawPhotos = seller.pickupLocationPhotos || seller.pickupLocationPhotos || null
+              let normalizedPhotos = {}
+              if (rawPhotos) {
+                if (typeof rawPhotos === 'string') {
+                  try { normalizedPhotos = JSON.parse(rawPhotos) } catch { normalizedPhotos = {} }
+                } else if (typeof rawPhotos === 'object') {
+                  normalizedPhotos = rawPhotos
+                }
+                // Ensure arrays
+                for (const k of Object.keys(normalizedPhotos)) {
+                  if (!Array.isArray(normalizedPhotos[k])) normalizedPhotos[k] = [String(normalizedPhotos[k] || '').trim()].filter(Boolean)
+                }
+              }
+              setPickupPhotosBySeller(prev => ({ ...(prev || {}), [sid]: normalizedPhotos }))
+            } catch (e) {
+              console.error('Failed to parse pickupLocationPhotos for seller', sid, e)
             }
 
             const paymentSettings = seller.paymentSettings || {}
@@ -735,7 +756,20 @@ const PlaceOrder = () => {
                             <option key={idx} value={loc}>{loc}</option>
                           ))}
                         </select>
-                        {/* Map thumbnails removed per request */}
+                        {/* Show photos for the selected pickup location, if any */}
+                        {pickupPhotosBySeller[String(seller.sellerId)] && (function(){
+                          const selected = pickupLocationsBySeller[seller.sellerId]
+                          const photosForSeller = pickupPhotosBySeller[String(seller.sellerId)] || {}
+                          const photos = selected ? (Array.isArray(photosForSeller[selected]) ? photosForSeller[selected] : (photosForSeller[selected] ? [photosForSeller[selected]] : [])) : []
+                          if (!photos || photos.length === 0) return null
+                          return (
+                            <div className='mt-2 flex flex-wrap gap-2'>
+                              {photos.map((u, i) => (
+                                <img key={i} src={u.startsWith('http') ? u : `${apiUrl}${u}`} alt={`pickup-${seller.sellerId}-${i}`} className='w-20 h-20 object-cover rounded border' />
+                              ))}
+                            </div>
+                          )
+                        })()}
                       </div>
                     ))}
                   </div>
