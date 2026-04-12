@@ -22,6 +22,8 @@ const OrderDetails = () => {
   const [deliveryMapLon, setDeliveryMapLon] = useState(null);
   const [pickupMapLat, setPickupMapLat] = useState(null);
   const [pickupMapLon, setPickupMapLon] = useState(null);
+  const [pickupPhotos, setPickupPhotos] = useState([]);
+  const [photoModal, setPhotoModal] = useState({ open: false, photoUrl: '', title: '' });
   // Edit review state (merged from duplicate)
   const [editingReview, setEditingReview] = useState(null); // {productId, reviewId, fields}
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -428,6 +430,9 @@ const OrderDetails = () => {
     return `${apiUrl}${url}`;
   }
 
+  const openPhotoModal = (url, title) => setPhotoModal({ open: true, photoUrl: url, title: title || 'Photo preview' });
+  const closePhotoModal = () => setPhotoModal({ open: false, photoUrl: '', title: '' });
+
   const renderStars = (rating = 0) => {
     const safe = Math.max(1, Math.min(5, Number(rating) || 0));
     return (
@@ -438,6 +443,49 @@ const OrderDetails = () => {
   }
 
   const isPickupOrder = order?.paymentMethod === 'pickup' || order?.method === 'pickup'
+
+  // Fetch pickup-location photos from sellers referenced in this order
+  useEffect(() => {
+    const fetchPickupPhotos = async () => {
+      if (!order || !(order.paymentMethod === 'pickup' || order.method === 'pickup')) {
+        setPickupPhotos([]);
+        return;
+      }
+
+      try {
+        const sellerIds = Array.from(new Set((Array.isArray(order.items) ? order.items : []).map(it => Number(it.sellerId)).filter(Boolean)));
+        const photos = [];
+        await Promise.all(sellerIds.map(async (sid) => {
+          try {
+            const res = await fetch(`${apiUrl}/api/sellers/${sid}`);
+            if (!res.ok) return;
+            const seller = await res.json();
+            let raw = seller?.pickupLocationPhotos || seller?.pickupLocationPhotos || null;
+            let mapping = null;
+            if (!raw) return;
+            if (typeof raw === 'string') {
+              try { mapping = JSON.parse(raw); } catch { mapping = null; }
+            } else if (typeof raw === 'object') {
+              mapping = raw;
+            }
+            if (!mapping) return;
+            const key = order.pickupLocation;
+            const arr = Array.isArray(mapping[key]) ? mapping[key] : (Array.isArray(mapping[String(key)]) ? mapping[String(key)] : []);
+            if (arr && arr.length) {
+              arr.forEach(u => photos.push(resolveUploadImage(u)));
+            }
+          } catch (err) {
+            // ignore per-seller errors
+          }
+        }));
+        setPickupPhotos(photos);
+      } catch (err) {
+        setPickupPhotos([]);
+      }
+    };
+
+    fetchPickupPhotos();
+  }, [order, apiUrl]);
   const statusLabel = order?.orderStatus === 'ready_for_pickup' ? 'ready for pickup' : (order?.orderStatus || 'pending')
 
   if (loading) return <div className='pt-16'><p className='text-sm text-gray-500'>Loading order…</p></div>
@@ -467,6 +515,19 @@ const OrderDetails = () => {
             <div>
               <p className='font-medium text-green-700'>📦 Pickup Order</p>
               <p className='text-sm mt-2'>Pickup Location: {order.pickupLocation || 'N/A'}</p>
+              {pickupPhotos && pickupPhotos.length > 0 && (
+                <div className='mt-3 flex gap-2 flex-wrap'>
+                  {pickupPhotos.map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`Pickup photo ${i+1}`}
+                      className='w-24 h-24 object-cover rounded border cursor-pointer'
+                      onClick={() => openPhotoModal(url, `Pickup photo ${i+1}`)}
+                    />
+                  ))}
+                </div>
+              )}
               {order.reservationDateTime && (
                 <p className='text-sm'>Reservation: {new Date(order.reservationDateTime).toLocaleString()}</p>
               )}
@@ -777,6 +838,19 @@ const OrderDetails = () => {
               >
                 OK
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {photoModal.open && (
+        <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
+          <div className='bg-white rounded-xl shadow-xl w-full max-w-4xl p-4'>
+            <div className='flex justify-between items-start'>
+              <h3 className='text-lg font-semibold text-gray-900'>{photoModal.title}</h3>
+              <button onClick={closePhotoModal} className='text-gray-500 ml-3'>Close</button>
+            </div>
+            <div className='mt-3 flex justify-center'>
+              <img src={photoModal.photoUrl} alt={photoModal.title} className='max-w-full max-h-[80vh] object-contain' />
             </div>
           </div>
         </div>
