@@ -50,6 +50,8 @@ router.get('/profile', verifySeller, getSellerProfile);
 router.put('/profile', verifySeller, upload.array('images', 10), updateSellerProfile);
 router.put('/profile/avatar', verifySeller, upload.single('image'), updateSellerAvatar);
 router.put('/profile/images', verifySeller, upload.array('images', 10), uploadSellerImages);
+// Also accept POST for multipart upload (some clients/platforms use POST)
+router.post('/profile/images', verifySeller, upload.array('images', 10), uploadSellerImages);
 router.put('/profile/portfolio', verifySeller, updateSellerProfile);
 // pickup maps route removed
 // Seller's orders (orders that include their products)
