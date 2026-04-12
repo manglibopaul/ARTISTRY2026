@@ -961,6 +961,12 @@ const PlaceOrder = () => {
 
               try {
                 setPlacing(true);
+                console.log('ORDER DEBUG', {
+                  cartsItems,
+                  productsCount: Array.isArray(products) ? products.length : 0,
+                  items,
+                  pickupLocationsBySeller,
+                })
                 let orderPayload = {
                   items: itemsWithPickup,
                   address,
