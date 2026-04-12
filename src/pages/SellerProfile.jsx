@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
@@ -299,6 +300,7 @@ const SellerProfile = () => {
   }, [showSaveModal])
 
   return (
+    <ErrorBoundary>
     <div className='min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4'>
       {/* Save Confirmation Modal */}
       {showSaveModal && (
@@ -578,6 +580,7 @@ const SellerProfile = () => {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
 
