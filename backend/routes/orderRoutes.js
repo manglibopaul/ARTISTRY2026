@@ -13,11 +13,13 @@ import {
 } from '../controllers/orderController.js';
 import { verifyUser, verifyAdmin } from '../middleware/auth.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
 // Protected routes
-router.post('/', verifyUser, createOrder);
+// Accept optional GCash receipt as multipart file field `gcashReceipt`.
+router.post('/', verifyUser, upload.single('gcashReceipt'), createOrder);
 router.get('/my-orders', verifyUser, getUserOrders);
 
 // Seller routes (place before '/:id' to avoid route shadowing)

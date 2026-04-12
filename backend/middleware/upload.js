@@ -39,6 +39,14 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Only image files are allowed for images and proof of artisan'), false);
     }
+  } else if (file.fieldname === 'gcashReceipt') {
+    // Accept images and PDF for GCash receipt uploads
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg', 'application/pdf'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image or PDF files are allowed for GCash receipts'), false);
+    }
   } else if (file.fieldname === 'model' || file.fieldname === 'iosModel') {
     // Accept 3D model files
     const allowedMimes = ['model/gltf+json', 'model/gltf-binary', 'application/octet-stream', 'application/json'];
