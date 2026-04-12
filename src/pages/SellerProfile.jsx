@@ -226,7 +226,6 @@ const SellerProfile = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4'>
-      <div style={{background: '#d1ecf1', color: '#0c5460', padding: '8px', borderRadius: '4px', marginBottom: '16px', textAlign: 'center'}}>SELLER PROFILE MAIN RENDER (DEBUG)</div>
       {/* Save Confirmation Modal */}
       {showSaveModal && (
         <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
@@ -327,18 +326,12 @@ const SellerProfile = () => {
             <div>
               <label className='text-sm font-medium text-gray-600'>Owner Name</label>
               {isEditing ? (
-                <>
-                  <div style={{background: '#cce5ff', color: '#004085', padding: '6px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center'}}>EDIT MODE ACTIVE (DEBUG)</div>
-                  <div style={{background: '#e2e3e5', color: '#383d41', padding: '4px', borderRadius: '4px', marginBottom: '8px', textAlign: 'center', fontSize: '12px'}}>
-                    formData.name: {String(safeFormData.name)} | artisanTypes: {JSON.stringify(safeArtisanTypes)}
-                  </div>
-                  <input
-                    name='name'
-                    value={safeFormData.name}
-                    onChange={handleInputChange}
-                    className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
-                  />
-                </>
+                <input
+                  name='name'
+                  value={safeFormData.name}
+                  onChange={handleInputChange}
+                  className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
+                />
               ) : (
                 <p className='text-lg text-gray-900 mt-1'>{seller?.name}</p>
               )}

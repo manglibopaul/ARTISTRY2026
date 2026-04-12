@@ -287,18 +287,24 @@ const SellerDashboard = () => {
     }
   }
 
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
   const savePaymentSettings = async () => {
+    setShowPaymentConfirm(true);
+  };
+
+  const doSavePaymentSettings = async () => {
     try {
-      setLoading(true)
-      await axios.put(`${apiUrl}/api/sellers/payment-settings`, paymentSettings, { headers: { Authorization: `Bearer ${token}` } })
-      toast.success('Payment settings saved')
+      setLoading(true);
+      await axios.put(`${apiUrl}/api/sellers/payment-settings`, paymentSettings, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Payment settings saved');
     } catch (err) {
-      console.error('savePaymentSettings', err)
-      toast.error('Failed to save payment settings')
+      console.error('savePaymentSettings', err);
+      toast.error('Failed to save payment settings');
     } finally {
-      setLoading(false)
+      setLoading(false);
+      setShowPaymentConfirm(false);
     }
-  }
+  };
 
   const uploadGcashQr = async (file) => {
     if (!file) return
@@ -1585,6 +1591,24 @@ const SellerDashboard = () => {
                     <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
                       Save Payment Settings
                     </button>
+                    {showPaymentConfirm && (
+                      <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
+                        <div className='bg-white rounded-lg shadow-lg p-6 max-w-sm w-full'>
+                          <h3 className='text-lg font-semibold mb-2'>Confirm Save</h3>
+                          <p className='mb-4 text-sm'>Are you sure you want to save your payment settings?</p>
+                          <div className='flex justify-end gap-2'>
+                            <button
+                              className='px-4 py-2 rounded bg-gray-100 text-gray-700 text-sm hover:bg-gray-200'
+                              onClick={() => setShowPaymentConfirm(false)}
+                            >Cancel</button>
+                            <button
+                              className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+                              onClick={doSavePaymentSettings}
+                            >Confirm</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
