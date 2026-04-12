@@ -544,6 +544,9 @@ const Product = () => {
                 />
                 <button 
                   onClick={() => {
+                    if (productData.stock <= 0) {
+                      return;
+                    }
                     const availableColors = getAvailableColors(productData);
                     const availableSizes = getAvailableSizes(productData);
                     addToCart(
@@ -553,8 +556,10 @@ const Product = () => {
                       availableSizes.length ? selectedSize : null,
                     );
                   }} 
-                  className='bg-black text-white px-6 py-3 text-sm active:bg-pink-700 flex-1 sm:flex-none'>
-                  ADD TO CART
+                  className={`bg-black text-white px-6 py-3 text-sm active:bg-pink-700 flex-1 sm:flex-none ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={productData.stock <= 0}
+                >
+                  {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
                 </button>
               </div>
             </div>

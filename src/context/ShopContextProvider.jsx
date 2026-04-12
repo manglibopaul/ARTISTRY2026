@@ -81,13 +81,24 @@ const ShopContextProvider = (props) => {
 
   // Add item to cart with optional quantity (default 1), color, and size
   const addToCart = async (itemId, qty = 1, color = null, size = null) => {
-
     let cartData = structuredClone(cartsItems);
-    
     // Create a unique key combining itemId, color, and size
     const cartKey = (color || size)
       ? `${itemId}::${color || ''}||${size || ''}`
       : itemId;
+
+    // Stock check
+    const product = findProductByCartKey(cartKey);
+    if (!product || product.stock <= 0) {
+      toast.error('This product is out of stock!');
+      return;
+    }
+    // Check if adding would exceed stock
+    const currentQty = cartData[cartKey] || 0;
+    if (currentQty + Number(qty || 0) > product.stock) {
+      toast.error(`Only ${product.stock} in stock.`);
+      return;
+    }
 
     if (cartData[cartKey]) {
       cartData[cartKey] += Number(qty || 0);
@@ -98,7 +109,6 @@ const ShopContextProvider = (props) => {
     syncCartToServer(cartData);
     const optionText = [color, size].filter(Boolean).join(', ');
     toast.success(`Item added to cart${optionText ? ` (${optionText})` : ''}!`);
-
   }
 
   const getCartCount = () => {

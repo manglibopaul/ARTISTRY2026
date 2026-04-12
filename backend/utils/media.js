@@ -1,5 +1,6 @@
 import cloudinary from 'cloudinary';
 import fs from 'fs';
+import { put } from '@vercel/blob';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -33,25 +34,22 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
     return null;
   }
   try {
-    // Save the file to /uploads/models/ with a unique name
-    const uploadsDir = './uploads/models';
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    const destPath = `${uploadsDir}/${Date.now()}-${file.originalname}`;
-    fs.copyFileSync(file.path, destPath);
+    // Read the file buffer
+    const fileBuffer = fs.readFileSync(file.path);
+    // Generate a unique filename
+    const uniqueName = `${folder}/${Date.now()}-${file.originalname}`;
+    // Upload to Vercel Blob
+    const { url } = await put(uniqueName, fileBuffer, { access: 'public' });
     // Optionally remove the temp file
     if (file.path && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
     }
-    // Return the public URL (assuming /uploads is served statically)
-    const publicUrl = `/uploads/models/${destPath.split('/').pop()}`;
     return {
-      url: publicUrl,
+      url,
       filename: file.originalname,
     };
   } catch (err) {
-    console.error('Local model upload error:', err);
+    console.error('Vercel Blob upload error:', err);
     return null;
   }
 };
