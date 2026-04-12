@@ -226,6 +226,7 @@ const SellerProfile = () => {
 
   return (
     <div className='min-h-screen bg-gray-50 py-6 sm:py-12 px-3 sm:px-4'>
+      <div style={{background: '#ffeeba', color: '#856404', padding: '8px', borderRadius: '4px', marginBottom: '16px', textAlign: 'center'}}>SellerProfile Rendered (PRODUCTION TEST)</div>
       {/* Save Confirmation Modal */}
       {showSaveModal && (
         <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
