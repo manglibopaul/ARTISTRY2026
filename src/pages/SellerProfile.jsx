@@ -244,7 +244,6 @@ const SellerProfile = () => {
         </div>
       )}
       <div className='max-w-2xl mx-auto'>
-        {/* Header */}
         <div className='bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6'>
           <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4'>
             <div className='flex items-start gap-4'>
