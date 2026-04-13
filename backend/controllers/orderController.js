@@ -404,7 +404,24 @@ export const createOrder = async (req, res) => {
         orderData.gcashReceipt = gcashReceiptPath;
       }
 
-      const created = await Order.create(orderData);
+      let created;
+      try {
+        created = await Order.create(orderData);
+      } catch (err) {
+        // If DB complains about missing gcashReceipt column, retry without it
+        const msg = String(err.message || '').toLowerCase();
+        if (msg.includes('gcashreceipt') || msg.includes('does not exist')) {
+          try {
+            const fallbackData = { ...orderData };
+            delete fallbackData.gcashReceipt;
+            created = await Order.create(fallbackData);
+          } catch (err2) {
+            throw err2;
+          }
+        } else {
+          throw err;
+        }
+      }
 
       createdOrders.push(created);
 
