@@ -711,7 +711,7 @@ const PlaceOrder = () => {
                                   src={qrUrl}
                                   alt={`${info.storeName} GCash QR`}
                                   className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer'
-                                  onClick={() => setModalState({ open: true, title: info.storeName, message: qrUrl })}
+                                  onClick={() => openPhotoModal(qrUrl, info.storeName)}
                                 />
                                 <QRModal
                                   open={modalState.open && modalState.message === qrUrl}
