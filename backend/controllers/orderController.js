@@ -461,6 +461,17 @@ export const createOrder = async (req, res) => {
           delete orderData.gcashReceipt;
         }
 
+        // Debug: log what we will attempt to insert in production to help diagnose schema mismatches
+        try {
+          console.warn('ORDER DEBUG pre-create', {
+            paymentMethod: String(paymentMethod || ''),
+            hasGcashColumn,
+            gcashReceiptPath,
+            orderDataKeys: Object.keys(orderData),
+            fieldsToInsert,
+          });
+        } catch (e) { /* ignore logging errors */ }
+
         // Use only model-supported fields when creating to avoid missing-column DB errors
         created = await Order.create(orderData, { fields: fieldsToInsert.length ? fieldsToInsert : Object.keys(orderData) });
       } catch (err) {
