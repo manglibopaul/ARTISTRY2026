@@ -135,6 +135,17 @@ const SellerDashboard = () => {
     return ''
   }
 
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return ''
+    const n = Number(value)
+    if (Number.isNaN(n)) return String(value)
+    try {
+      return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(n)
+    } catch (e) {
+      return `₱${n}`
+    }
+  }
+
   /* eslint-disable react-hooks/exhaustive-deps */
   // Intentional mount auth/bootstrap flow; keeping stable startup behavior over broad callback refactor.
   useEffect(() => {
@@ -1076,7 +1087,7 @@ const SellerDashboard = () => {
                           )}
                           <div className='flex-1 min-w-0'>
                             <p className='font-medium text-gray-900 text-sm truncate'>{product.name}</p>
-                            <p className='text-sm text-gray-700 mt-0.5'>Γé▒{product.price}</p>
+                            <p className='text-sm text-gray-700 mt-0.5'>{formatCurrency(product.price)}</p>
                             <div className='flex items-center gap-2 mt-1'>
                               <span className='text-xs text-gray-500'>Stock: {product.stock}</span>
                               {product.hidden ? (
@@ -1128,7 +1139,7 @@ const SellerDashboard = () => {
                             })()}
                           </td>
                           <td className='px-6 py-4 text-sm font-medium text-gray-900'>{product.name}</td>
-                          <td className='px-6 py-4 text-sm text-gray-700'>Γé▒{product.price}</td>
+                          <td className='px-6 py-4 text-sm text-gray-700'>{formatCurrency(product.price)}</td>
                           <td className='px-6 py-4 text-sm text-gray-700'>{product.stock}</td>
                           <td className='px-6 py-4 text-sm'>
                             {(() => {
@@ -1184,7 +1195,7 @@ const SellerDashboard = () => {
                           <p className='font-medium text-sm text-gray-900'>{order.firstName} {order.lastName}</p>
                           <p className='text-xs text-gray-500'>{order.email}</p>
                         </div>
-                        <p className='font-bold text-sm'>Γé▒{order.total}</p>
+                        <p className='font-bold text-sm'>{formatCurrency(order.total)}</p>
                       </div>
                       <div className='space-y-2 mb-3'>
                         {order.sellerItems.map((it, idx) => {
