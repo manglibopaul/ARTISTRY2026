@@ -3,6 +3,7 @@ import Product from '../models/Product.js';
 import Seller from '../models/Seller.js';
 import Notification from '../models/Notification.js';
 import { useCoupon } from './couponController.js';
+import fs from 'fs';
 const normalizePickupLocations = (seller) => {
   const raw = seller?.pickupLocations
   let locations = []
@@ -321,6 +322,30 @@ export const createOrder = async (req, res) => {
       }
     } catch (e) {
       gcashReceiptPath = null;
+    }
+
+    // Defensive: if a file was uploaded but the payment method is NOT GCash,
+    // remove the uploaded file and clear any gcashReceipt path to avoid
+    // accidental DB writes or schema-dependent errors on older deployments.
+    try {
+      if (req.file && String(paymentMethod || '').toLowerCase() !== 'gcash') {
+        try {
+          if (req.file.path) {
+            fs.unlink(req.file.path, (err) => {
+              if (err) console.warn('Failed to delete unexpected uploaded file:', req.file.path, err.message);
+            });
+          }
+        } catch (e) {
+          console.warn('Error while attempting to remove uploaded file for non-GCash payment:', e.message);
+        }
+        req.file = null;
+        gcashReceiptPath = null;
+      }
+    } catch (e) {
+      // swallow errors here; continue without file
+      console.warn('Defensive gcashReceipt cleanup failed:', e.message);
+      req.file = req.file || null;
+      gcashReceiptPath = gcashReceiptPath || null;
     }
 
     // If pickup and no name/email provided, use user profile
