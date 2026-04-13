@@ -215,17 +215,7 @@ const SellerLogin = () => {
                   required
                 />
               </div>
-              <div>
-                <label className='block text-sm mb-1'>Additional Images (pickup photos, portfolio)</label>
-                <input
-                  type='file'
-                  name='images'
-                  accept='image/*'
-                  multiple
-                  onChange={handleChange}
-                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
-                />
-              </div>
+              
             </>
           )}
 
