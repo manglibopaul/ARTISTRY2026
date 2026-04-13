@@ -373,7 +373,7 @@ export const createOrder = async (req, res) => {
         : discount;
 
 
-      const created = await Order.create({
+      const orderData = {
         userId: req.user.id,
         items: itemsForOrder,
         firstName,
@@ -397,8 +397,14 @@ export const createOrder = async (req, res) => {
         total: Math.max(0, sellerSpecificSubtotal + sellerSpecificShipping + commission - sellerSpecificDiscount),
         paymentStatus: 'pending',
         orderStatus: initialStatus,
-        gcashReceipt: gcashReceiptPath,
-      });
+      };
+
+      // Only attach gcashReceipt when payment method is GCash and a file was uploaded
+      if (String(paymentMethod || '').toLowerCase() === 'gcash' && gcashReceiptPath) {
+        orderData.gcashReceipt = gcashReceiptPath;
+      }
+
+      const created = await Order.create(orderData);
 
       createdOrders.push(created);
 
