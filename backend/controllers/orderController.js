@@ -26,6 +26,7 @@ const normalizePickupLocations = (seller) => {
 
 import { sendEmail } from '../utils/email.js';
 import safeFindOrderByPk from '../utils/orderUtils.js';
+import { setReceiptForOrder, getReceiptForOrder } from '../utils/receiptStore.js';
 
 const PLACEHOLDER_PATTERN = /\b(test|asdf|qwe|zxc|n\/?a|na|none|unknown|sample|dummy|fake|12345|1111)\b/i;
 
@@ -509,6 +510,16 @@ export const createOrder = async (req, res) => {
 
       createdOrders.push(created);
 
+      // Persist receipt mapping for this created order when a file was uploaded
+      try {
+        if (gcashReceiptPath && String(paymentMethod || '').toLowerCase() === 'gcash') {
+          // map the receipt path to the created order id (supports multi-seller splits)
+          setReceiptForOrder(created.id, gcashReceiptPath);
+        }
+      } catch (e) {
+        console.warn('Failed to save receipt mapping for order', created?.id, e.message || e);
+      }
+
       await createNotificationSafe({
         userId: req.user.id,
         orderId: created.id,
@@ -612,6 +623,14 @@ export const getUserOrders = async (req, res) => {
         orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] }, where: { userId: req.user.id }, order: [['createdAt', 'DESC']] });
       } else throw err;
     }
+    // Attach receipt paths from the temporary receipt store when present
+    try {
+      for (const o of orders) {
+        const r = getReceiptForOrder(o.id);
+        if (r) o.gcashReceipt = r;
+      }
+    } catch (e) { /* ignore */ }
+
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -636,6 +655,12 @@ export const getOrder = async (req, res) => {
     if (order.userId !== req.user.id && !req.user.isAdmin) {
       return res.status(403).json({ message: 'Not authorized' });
     }
+
+    // Attach receipt path from temp store if available
+    try {
+      const r = getReceiptForOrder(order.id);
+      if (r) order.gcashReceipt = r;
+    } catch (e) { /* ignore */ }
 
     res.json(order);
   } catch (error) {
@@ -734,6 +759,14 @@ export const getSellerOrders = async (req, res) => {
         return null;
       })
       .filter(Boolean);
+
+    // Attach temporary receipt mappings
+    try {
+      for (const so of sellerOrders) {
+        const r = getReceiptForOrder(so.id);
+        if (r) so.gcashReceipt = r;
+      }
+    } catch (e) { /* ignore */ }
 
     res.json(sellerOrders);
   } catch (error) {
