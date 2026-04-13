@@ -21,7 +21,7 @@ const ArtisanProfile = () => {
       setError('')
       const ref = String(sellerRef || '').trim()
       if (!ref) {
-        setError('Artisan not found')
+        setError('Artist not found')
         return
       }
 
@@ -34,14 +34,14 @@ const ArtisanProfile = () => {
       const res = await axios.get(`${apiUrl}/api/sellers/${resolvedId}`)
       
       if (!res.data) {
-        setError('Artisan not found')
+        setError('Artist not found')
         return
       }
       
       setSeller(res.data)
     } catch (err) {
       console.error('Error fetching seller profile:', err)
-      setError('Failed to load artisan profile')
+      setError('Failed to load artist profile')
     } finally {
       setLoading(false)
     }
@@ -95,7 +95,7 @@ const ArtisanProfile = () => {
   if (loading) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
-        <p className='text-gray-500'>Loading artisan profile...</p>
+        <p className='text-gray-500'>Loading artist profile...</p>
       </div>
     )
   }
@@ -104,12 +104,12 @@ const ArtisanProfile = () => {
     return (
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
-          <p className='text-red-600 mb-4'>{error || 'Artisan not found'}</p>
+          <p className='text-red-600 mb-4'>{error || 'Artist not found'}</p>
           <button
             onClick={() => navigate('/artisans')}
             className='text-black hover:underline font-medium'
           >
-            Back to Artisan Directory
+            Back to Artist Directory
           </button>
         </div>
       </div>
@@ -137,7 +137,7 @@ const ArtisanProfile = () => {
                   </div>
                 )}
               </div>
-              <button
+                <button
                 onClick={() => {
                   const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
                   if (sellerSlug) {
@@ -148,7 +148,7 @@ const ArtisanProfile = () => {
                 }}
                 className='w-full bg-black text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition text-sm mt-4'
               >
-                Chat with Artisan
+                Chat with Artist
               </button>
             </div>
 
@@ -327,7 +327,7 @@ const ArtisanProfile = () => {
       <div className='bg-gray-50 border-t border-gray-200 py-8'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4'>
           <div>
-            <h3 className='text-lg font-bold text-gray-900'>Support Local Artisans</h3>
+            <h3 className='text-lg font-bold text-gray-900'>Support Local Artists</h3>
             <p className='text-gray-600 text-sm'>Every purchase supports handmade craftsmanship</p>
           </div>
           <button

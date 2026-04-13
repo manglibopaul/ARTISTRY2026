@@ -85,14 +85,14 @@ const ArtisanDirectory = () => {
       <div className='bg-gradient-to-r from-gray-900 to-black py-12 sm:py-16'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='text-center text-white mb-8'>
-            <h1 className='text-4xl sm:text-5xl font-bold mb-3'>Discover Artisans</h1>
+            <h1 className='text-4xl sm:text-5xl font-bold mb-3'>Discover Artists</h1>
             <p className='text-gray-300 text-lg'>Connect with passionate craftspeople creating handmade treasures</p>
           </div>
 
           <div className='mx-auto mb-8 max-w-3xl rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md p-4 sm:p-5 text-white shadow-lg'>
             <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
               <div>
-                <p className='text-sm font-semibold uppercase tracking-wider text-gray-300'>Are you an artisan?</p>
+                <p className='text-sm font-semibold uppercase tracking-wider text-gray-300'>Are you an artist?</p>
                 <p className='text-sm sm:text-base text-gray-200'>List your store, share pickup locations, and reach customers directly.</p>
               </div>
               <div className='flex flex-col sm:flex-row gap-2'>
@@ -124,7 +124,7 @@ const ArtisanDirectory = () => {
                     : 'bg-gray-700 text-white hover:bg-gray-600'
                 }`}
               >
-                All Artisans ({sellers.length})
+                All Artists ({sellers.length})
               </button>
               {artisanTypes.map(type => (
                 <button
@@ -149,16 +149,16 @@ const ArtisanDirectory = () => {
         {/* Loading State */}
         {loading ? (
           <div className='text-center py-20'>
-            <p className='text-gray-500 text-lg'>Loading artisans...</p>
+            <p className='text-gray-500 text-lg'>Loading artists...</p>
           </div>
         ) : filteredSellers.length === 0 ? (
           <div className='text-center py-20'>
-            <p className='text-gray-500 text-lg'>No artisans found in this category</p>
+            <p className='text-gray-500 text-lg'>No artists found in this category</p>
             <button
               onClick={() => setSelectedType(null)}
               className='mt-4 text-black hover:underline font-medium'
             >
-              View all artisans
+              View all artists
             </button>
           </div>
         ) : (
@@ -166,11 +166,11 @@ const ArtisanDirectory = () => {
             {/* Results Summary */}
             <div className='mb-8'>
               <p className='text-gray-600 text-sm'>
-                Showing <span className='font-bold text-gray-900'>{filteredSellers.length}</span> {selectedType ? `${selectedType} artisans` : 'artisans'}
+                Showing <span className='font-bold text-gray-900'>{filteredSellers.length}</span> {selectedType ? `${selectedType} artists` : 'artists'}
               </p>
             </div>
 
-            {/* Artisans Grid */}
+            {/* Artists Grid */}
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {filteredSellers.map(seller => (
                 <div
@@ -209,7 +209,7 @@ const ArtisanDirectory = () => {
 
                     {/* Bio */}
                     <p className='text-sm text-gray-700 mb-4 line-clamp-2 leading-relaxed'>
-                      {seller.bio || seller.description || 'Talented artisan creating beautiful handmade items'}
+                      {seller.bio || seller.description || 'Talented artist creating beautiful handmade items'}
                     </p>
 
                     {/* Expertise Tags */}

@@ -77,7 +77,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     }
     // Only auto-select a seller if explicitly passed via props (e.g. from product/artisan page)
     if (defaultSellerId) {
-      setSelectedSeller({ sellerId: defaultSellerId, sellerName: defaultSellerName || 'Artisan', lastAt: Date.now() })
+      setSelectedSeller({ sellerId: defaultSellerId, sellerName: defaultSellerName || 'Artist', lastAt: Date.now() })
       fetchMessages(defaultSellerId)
     }
     fetchConversations()
@@ -332,7 +332,7 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
                 </svg>
               </div>
               <h3 className='text-xl font-semibold text-gray-800 mb-2'>Welcome to Artistry Chat</h3>
-              <p className='text-sm text-gray-400'>Start chatting with our artisans now!</p>
+              <p className='text-sm text-gray-400'>Start chatting with our artists now!</p>
             </div>
           ) : (
             /* Active conversation */

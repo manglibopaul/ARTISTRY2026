@@ -49,7 +49,7 @@ const Hero = () => {
 
             <h1 className='prata-regular text-3xl sm:text-4xl lg:text-5xl leading-tight'>New Products</h1>
 
-            <p className='text-sm sm:text-base text-gray-600'>Preview handmade pieces in AR, browse unique artisan creations, and chat with makers directly.</p>
+            <p className='text-sm sm:text-base text-gray-600'>Preview handmade pieces in AR, browse unique artist creations, and chat with makers directly.</p>
 
             <div className='flex items-center gap-4'>
               <Link

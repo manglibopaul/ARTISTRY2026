@@ -205,7 +205,7 @@ const SellerLogin = () => {
                 </ul>
               </div>
               <div>
-                <label className='block text-sm mb-1'>Proof of Artisan (photo of shop, etc.)</label>
+                <label className='block text-sm mb-1'>Proof of Artist (photo of shop, etc.)</label>
                 <input
                   type='file'
                   name='proofOfArtisan'

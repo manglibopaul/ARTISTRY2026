@@ -38,9 +38,9 @@ function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }
         <div className="mb-2"><span className="font-semibold">Phone Number:</span> {seller.phone || '-'}</div>
         <div className="mb-2"><span className="font-semibold">Address:</span> {seller.address || '-'}</div>
         <div className="mb-2"><span className="font-semibold">Pickup Locations:</span> {Array.isArray(seller.pickupLocations) ? seller.pickupLocations.join(', ') : '-'}</div>
-        <div className="mb-2"><span className="font-semibold">Proof of Artisan (photo of shop, etc.):</span></div>
+        <div className="mb-2"><span className="font-semibold">Proof of Artist (photo of shop, etc.):</span></div>
         {proofUrl ? (
-          <img src={proofUrl} alt="Proof of Artisan" className="mb-4 max-h-48 rounded border" style={{ background: '#eee', objectFit: 'contain' }} />
+          <img src={proofUrl} alt="Proof of Artist" className="mb-4 max-h-48 rounded border" style={{ background: '#eee', objectFit: 'contain' }} />
         ) : (
           <div className="mb-4 text-gray-500">No proof image provided.</div>
         )}
@@ -564,7 +564,7 @@ const AdminDashboard = () => {
                     <th className="text-left p-3 font-semibold">Order ID</th>
                     <th className="text-left p-3 font-semibold">Customer</th>
                     <th className="text-left p-3 font-semibold">Items</th>
-                    <th className="text-left p-3 font-semibold">Artisan</th>
+                    <th className="text-left p-3 font-semibold">Artist</th>
                     <th className="text-left p-3 font-semibold">Mode of Delivery</th>
                     <th className="text-left p-3 font-semibold">Status</th>
                     <th className="text-left p-3 font-semibold">Created</th>
