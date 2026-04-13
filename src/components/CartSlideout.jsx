@@ -79,8 +79,8 @@ const CartSlideout = ({ isOpen, onClose }) => {
             <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
             </svg>
-          </button>
-        </div>
+                        <button
+                          onClick={() => { onClose(); navigate('/collection'); }}
 
         {/* Cart Items */}
         <div className='flex-1 overflow-y-auto p-6'>
@@ -111,8 +111,8 @@ const CartSlideout = ({ isOpen, onClose }) => {
                   return (
                     <div className='text-center text-gray-500 mt-20'>
                       <p>Your cart is empty</p>
-                      <button
-                        onClick={() => { onClose(); navigate('/products'); }}
+                        <button
+                        onClick={() => { onClose(); navigate('/collection'); }}
                         className='mt-4 text-sm text-black underline hover:text-gray-700'
                       >
                         Browse products
