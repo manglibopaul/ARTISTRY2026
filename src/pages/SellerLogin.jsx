@@ -36,7 +36,6 @@ const SellerLogin = () => {
     address: '',
     pickupLocations: [],
     proofOfArtisan: null,
-    images: [],
   })
   const [pickupInput, setPickupInput] = useState('')
 
@@ -58,8 +57,6 @@ const SellerLogin = () => {
     const { name, value, files } = e.target
     if (name === 'proofOfArtisan') {
       setFormData(prev => ({ ...prev, proofOfArtisan: files[0] }))
-    } else if (name === 'images') {
-      setFormData(prev => ({ ...prev, images: Array.from(files || []) }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
@@ -104,8 +101,6 @@ const SellerLogin = () => {
             dataToSend.append('pickupLocations', JSON.stringify(filteredPickupLocations))
           } else if (key === 'proofOfArtisan' && value) {
             dataToSend.append('proofOfArtisan', value)
-          } else if (key === 'images' && Array.isArray(value) && value.length) {
-            for (const f of value) dataToSend.append('images', f)
           } else {
             dataToSend.append(key, value)
           }
