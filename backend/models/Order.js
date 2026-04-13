@@ -69,10 +69,10 @@ const Order = sequelize.define('Order', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  gcashReceipt: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+  // NOTE: `gcashReceipt` intentionally omitted from model as an emergency
+  // runtime fix to avoid production DB schema mismatch errors. The field
+  // is only required when paymentMethod === 'gcash'. A proper migration
+  // and schema normalization should be applied later.
   workingDays: {
     type: DataTypes.INTEGER,
     allowNull: true,
