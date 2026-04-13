@@ -40,6 +40,8 @@ const SellerOrders = () => {
                 <div>
                   <div className='font-semibold'>Order</div>
                   <div className='text-sm text-gray-600'>Buyer: {o.firstName} {o.lastName} ({o.email})</div>
+                  <div className='text-sm text-gray-600'>Payment: {(o.paymentMethod || '-').toString().charAt(0).toUpperCase() + (o.paymentMethod || '-').toString().slice(1)}</div>
+                  <div className='text-sm text-gray-600'>Mode: {Array.isArray(o.items) && o.items.length > 0 && o.items[0].deliveryMode ? (o.items[0].deliveryMode.charAt(0).toUpperCase() + o.items[0].deliveryMode.slice(1)) : (o.paymentMethod === 'pickup' ? 'Pick Up' : 'Delivery')}</div>
                 </div>
                 <div className='text-right'>
                   <div>₱{o.total}</div>
