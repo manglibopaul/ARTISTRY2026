@@ -1945,6 +1945,9 @@ const SellerDashboard = () => {
                   <div className='text-sm'>{viewOrder.firstName} {viewOrder.lastName}</div>
                   <div className='text-xs text-gray-500'>{viewOrder.email}</div>
                   {viewOrder.phone && <div className='text-sm mt-1'>Phone: {viewOrder.phone}</div>}
+                  {/* Show Payment Method and Delivery Mode */}
+                  <div className='text-sm mt-2'>Payment: {(viewOrder.paymentMethod || '-').toString().charAt(0).toUpperCase() + (viewOrder.paymentMethod || '-').toString().slice(1)}</div>
+                  <div className='text-sm'>Mode: {Array.isArray(viewOrder.items) && viewOrder.items.length > 0 && viewOrder.items.some(it => it.deliveryMode) ? [...new Set(viewOrder.items.map(it => it.deliveryMode).filter(Boolean))].map(m => m.charAt(0).toUpperCase()+m.slice(1)).join(', ') : (viewOrder.paymentMethod === 'pickup' ? 'Pick Up' : 'Delivery')}</div>
 
                   <h4 className='font-medium mt-4'>
                     {viewOrder.paymentMethod === 'pickup' ? 'Pickup Details' : 'Shipping Details'}

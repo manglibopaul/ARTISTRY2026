@@ -566,7 +566,6 @@ const AdminDashboard = () => {
                     <th className="text-left p-3 font-semibold">Items</th>
                     <th className="text-left p-3 font-semibold">Artist</th>
                     <th className="text-left p-3 font-semibold">Mode of Delivery</th>
-                    <th className="text-left p-3 font-semibold">Payment Method</th>
                     <th className="text-left p-3 font-semibold">Status</th>
                     <th className="text-left p-3 font-semibold">Created</th>
                     <th className="text-left p-3 font-semibold">Completed</th>
@@ -597,7 +596,6 @@ const AdminDashboard = () => {
                         <td className="p-3">{Array.isArray(o.items) ? o.items.length : 0}</td>
                         <td className="p-3">{artisans.join(', ')}</td>
                         <td className="p-3">{deliveryModes.map(mode => mode.charAt(0).toUpperCase() + mode.slice(1)).join(', ')}</td>
-                        <td className="p-3">{(o.paymentMethod || '-').toString().charAt(0).toUpperCase() + (o.paymentMethod || '-').toString().slice(1)}</td>
                         <td className="p-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${o.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : o.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
                             {o.orderStatus}
