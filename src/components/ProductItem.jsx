@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { getArtisanPath } from '../utils/artisanUrl';
 import { getProductPath } from '../utils/productUrl';
@@ -71,7 +71,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
 
   return (
     <div className='text-gray cursor-pointer block h-full group'>
-      <a href={productHref} className='block w-full text-left'>
+      <Link to={productHref} className='block w-full text-left'>
         <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
           <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center'>
             <img
@@ -91,7 +91,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
             <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
           </div>
         </div>
-      </a>
+      </Link>
 
       {/* Seller Info */}
       {sellerData && (

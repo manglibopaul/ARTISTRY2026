@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react' 
 import {assets} from '../assets/assets'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import CartSlideout from './CartSlideout';
 
@@ -166,7 +166,7 @@ const Navbar = () => {
     <>
     <div className='flex items-center justify-between py-4 sm:py-5 px-2 sm:px-0 font-medium'>
 
-        <Link to='/' className='text-2xl sm:text-3xl font-bold text-gray-900'>ARTISTRY</Link>
+        <button onClick={() => navigate('/')} className='text-2xl sm:text-3xl font-bold text-gray-900 bg-transparent border-0 p-0'>ARTISTRY</button>
       
       <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
 
@@ -199,14 +199,14 @@ const Navbar = () => {
                 <p className='absolute right-[-2px] bottom-[-2px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px]'>{getCartCount()}</p>
             </button>
 
-            <Link to='/chat' className='relative p-1' aria-label='Chat'>
+            <button onClick={() => navigate('/chat')} className='relative p-1' aria-label='Chat'>
                 <svg className='w-6 sm:w-5 h-6 sm:h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' d='M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z' />
                 </svg>
-            </Link>
+            </button>
 
             {userObj && (
-              <Link to='/notifications' className='relative p-1' aria-label='Notifications'>
+              <button onClick={() => navigate('/notifications')} className='relative p-1' aria-label='Notifications'>
                 <svg className='w-6 sm:w-5 h-6 sm:h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' d='M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0' />
                 </svg>
@@ -215,7 +215,7 @@ const Navbar = () => {
                     {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </p>
                 )}
-              </Link>
+              </button>
             )}
 
             {customerSessionReady && customerSessionValid ? (
@@ -229,19 +229,19 @@ const Navbar = () => {
               </>
             ) : isSellerRoute && sellerSessionReady && sellerSessionValid ? (
               <>
-                <Link to='/seller/profile' className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Seller Profile'>
+                <button onClick={() => navigate('/seller/profile')} className='flex items-center gap-2 text-sm text-gray-700 hover:text-black p-1' aria-label='Seller Profile'>
                   <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
                   </svg>
-                </Link>
+                </button>
               </>
             ) : (
-              <Link to='/login' className='flex items-center text-sm text-gray-700 hover:text-black p-1' aria-label='Login'>
+              <button onClick={() => navigate('/login')} className='flex items-center text-sm text-gray-700 hover:text-black p-1' aria-label='Login'>
                 <svg className='w-7 sm:w-6 h-7 sm:h-6 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
                 </svg>
                 <span className='hidden sm:inline ml-1'>Login</span>
-              </Link>
+              </button>
             )}
 
             <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-6 cursor-pointer sm:hidden p-1' alt="" loading="lazy" />
