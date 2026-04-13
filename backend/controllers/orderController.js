@@ -474,7 +474,22 @@ export const createOrder = async (req, res) => {
             const fieldsToInsert = Object.keys(fallbackData).filter(k => modelFields.includes(k));
             created = await Order.create(fallbackData, { fields: fieldsToInsert.length ? fieldsToInsert : Object.keys(fallbackData) });
           } catch (err2) {
-            throw err2;
+            // Emergency fallback: try creating a minimal safe payload (drop optional/problematic fields)
+            try {
+              const safeKeys = ['userId','items','firstName','lastName','email','phone','subtotal','shippingFee','commission','discount','couponCode','paymentMethod','total','paymentStatus','orderStatus','pickupLocation','reservationDateTime','reservationNote'];
+              const safePayload = {};
+              for (const k of safeKeys) {
+                if (Object.prototype.hasOwnProperty.call(orderData, k)) safePayload[k] = orderData[k];
+              }
+              // intersect with model fields
+              const modelFields2 = Order && Order.rawAttributes ? Object.keys(Order.rawAttributes) : [];
+              const safeFieldsToInsert = Object.keys(safePayload).filter(k => modelFields2.includes(k));
+              created = await Order.create(safePayload, { fields: safeFieldsToInsert.length ? safeFieldsToInsert : Object.keys(safePayload) });
+            } catch (err3) {
+              // If everything fails, rethrow original error to be handled by outer catch
+              console.error('Order create emergency fallback failed:', err3.message || err3);
+              throw err3;
+            }
           }
         } else {
           throw err;
