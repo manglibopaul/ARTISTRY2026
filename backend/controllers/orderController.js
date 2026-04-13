@@ -424,8 +424,31 @@ export const createOrder = async (req, res) => {
         orderStatus: initialStatus,
       };
 
+      // Runtime safety: check whether the Orders table actually has gcashReceipt column
+      let hasGcashColumn = false;
+      try {
+        const sequelize = Order.sequelize;
+        const dialect = sequelize.getDialect && sequelize.getDialect();
+        if (dialect === 'sqlite') {
+          const [[...]] = await sequelize.query(`PRAGMA table_info('Orders');`);
+          // sqlite returns array of rows; check `name` field
+          const rows = Array.isArray([[...]]?.[0]) ? [[...]]?.[0] : [[...]];
+          hasGcashColumn = Array.isArray(rows) ? rows.some(r => String(r.name) === 'gcashReceipt') : false;
+        } else {
+          const table = 'Orders';
+          const column = 'gcashReceipt';
+          const res = await sequelize.query(
+            `SELECT column_name FROM information_schema.columns WHERE table_name='${table}' AND column_name='${column}';`
+          );
+          hasGcashColumn = Array.isArray(res) && res[0] && res[0].length > 0;
+        }
+      } catch (e) {
+        // If detection fails, default to false to be safe
+        hasGcashColumn = false;
+      }
+
       // Only attach gcashReceipt when payment method is GCash and a file was uploaded
-      if (String(paymentMethod || '').toLowerCase() === 'gcash' && gcashReceiptPath) {
+      if (String(paymentMethod || '').toLowerCase() === 'gcash' && gcashReceiptPath && hasGcashColumn) {
         orderData.gcashReceipt = gcashReceiptPath;
       }
 
