@@ -12,7 +12,7 @@ export const toProductSlug = (value) => {
 export const getProductPath = (product) => {
   const slug = toProductSlug(product?.name || product?.id || '');
   const productId = product?._id || product?.id || '';
-  if (!slug) return '/collection';
+  if (!slug) return '/products';
   if (!productId) return `/product/${encodeURIComponent(slug)}`;
   return `/product/${encodeURIComponent(`${slug}-p${productId}`)}`;
 };

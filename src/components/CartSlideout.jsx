@@ -112,7 +112,7 @@ const CartSlideout = ({ isOpen, onClose }) => {
                     <div className='text-center text-gray-500 mt-20'>
                       <p>Your cart is empty</p>
                       <button
-                        onClick={() => { onClose(); navigate('/collection'); }}
+                        onClick={() => { onClose(); navigate('/products'); }}
                         className='mt-4 text-sm text-black underline hover:text-gray-700'
                       >
                         Browse products

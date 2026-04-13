@@ -174,7 +174,7 @@ const Navbar = () => {
             <p>HOME</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='flex flex-col items-center gap-1'>
+        <button type='button' onClick={() => navigateWithHardFallback('/products')} className='flex flex-col items-center gap-1'>
           <p>PRODUCTS</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
         </button>
@@ -262,7 +262,7 @@ const Navbar = () => {
                      <p className='font-medium'>Back</p>
                 </div>
                 <button type='button' onClick={() => navigateWithHardFallback('/')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>HOME</button>
-                <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>PRODUCTS</button>
+                  <button type='button' onClick={() => navigateWithHardFallback('/products')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>PRODUCTS</button>
                 <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ARTISTS</button>
                 <button type='button' onClick={() => navigateWithHardFallback('/about')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ABOUT US</button>
                 <button onClick={() => { setVisible(false); handleSupportClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SUPPORT</button>

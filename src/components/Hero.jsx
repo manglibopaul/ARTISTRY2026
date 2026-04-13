@@ -53,7 +53,7 @@ const Hero = () => {
 
             <div className='flex items-center gap-4'>
               <Link
-                to='/collection'
+                to='/products'
                 aria-label="Go to products collection"
                 className='inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-sm font-semibold hover:bg-pink-700 transition-colors'
               >
