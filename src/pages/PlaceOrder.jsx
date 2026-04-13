@@ -226,6 +226,18 @@ const PlaceOrder = () => {
     setPhotoModal({ open: false, photoUrl: '', title: '' })
   }
 
+  // Use this to change delivery method and clear GCash receipt state for pickup
+  const handleSetMethod = (m) => {
+    setMethod(m)
+    if (m === 'pickup') {
+      // clear any GCash receipt since payment happens at pickup
+      setGcashReceipt(null)
+      setGcashReceiptError('')
+      // prefer COD as default option when switching to pickup
+      setPaymentOption('cod')
+    }
+  }
+
   React.useEffect(() => {
     const token = localStorage.getItem('token')
     setIsLoggedIn(!!token)
@@ -902,12 +914,12 @@ const PlaceOrder = () => {
           <div className='mt-6 sm:mt-8'>
             <h3 className='font-bold mb-3 sm:mb-4 text-base sm:text-lg'>Mode of Delivery</h3>
             <div className='space-y-2 sm:space-y-3'>
-              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('pickup')}>
-                <input type="radio" name="payment" checked={method === 'pickup'} onChange={() => setMethod('pickup')} className='w-4 h-4' />
+              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>handleSetMethod('pickup')}>
+                <input type="radio" name="payment" checked={method === 'pickup'} onChange={() => handleSetMethod('pickup')} className='w-4 h-4' />
                 <span className='font-medium text-sm sm:text-base'>Pick Up</span>
               </label>
-              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>setMethod('delivery')}>
-                <input type="radio" name="payment" checked={method === 'delivery'} onChange={() => setMethod('delivery')} className='w-4 h-4' />
+              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>handleSetMethod('delivery')}>
+                <input type="radio" name="payment" checked={method === 'delivery'} onChange={() => handleSetMethod('delivery')} className='w-4 h-4' />
                 <span className='font-medium text-sm sm:text-base'>Delivery</span>
               </label>
             </div>
@@ -1012,8 +1024,8 @@ const PlaceOrder = () => {
                   reservationNote: pickupInfo?.reservationNote || null,
                 };
 
-                // If GCash, send as multipart/form-data with receipt
-                if (paymentOption === 'gcash' && gcashReceipt) {
+                // If payment method is GCash, send as multipart/form-data with receipt
+                if (orderPayload.paymentMethod === 'gcash' && gcashReceipt) {
                   const formData = new FormData();
                   Object.entries(orderPayload).forEach(([key, value]) => {
                     if (typeof value === 'object' && value !== null) {
