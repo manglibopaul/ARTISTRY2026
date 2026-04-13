@@ -452,7 +452,7 @@ export const createOrder = async (req, res) => {
 
       let created;
       try {
-        created = await Order.create(orderData);
+        created = await Order.create(orderData, { fields: Object.keys(orderData) });
       } catch (err) {
         // If DB complains about missing gcashReceipt column, retry without it
         const msg = String(err.message || '').toLowerCase();
@@ -460,7 +460,7 @@ export const createOrder = async (req, res) => {
           try {
             const fallbackData = { ...orderData };
             delete fallbackData.gcashReceipt;
-            created = await Order.create(fallbackData);
+            created = await Order.create(fallbackData, { fields: Object.keys(fallbackData) });
           } catch (err2) {
             throw err2;
           }
