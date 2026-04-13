@@ -452,7 +452,17 @@ export const createOrder = async (req, res) => {
 
       let created;
       try {
-        created = await Order.create(orderData, { fields: Object.keys(orderData) });
+        // Determine which fields are actually defined on the Order model
+        const modelFields = Order && Order.rawAttributes ? Object.keys(Order.rawAttributes) : [];
+        const fieldsToInsert = Object.keys(orderData).filter(k => modelFields.includes(k));
+
+        // If payment is not GCash, ensure gcashReceipt is not present
+        if (String(paymentMethod || '').toLowerCase() !== 'gcash') {
+          delete orderData.gcashReceipt;
+        }
+
+        // Use only model-supported fields when creating to avoid missing-column DB errors
+        created = await Order.create(orderData, { fields: fieldsToInsert.length ? fieldsToInsert : Object.keys(orderData) });
       } catch (err) {
         // If DB complains about missing gcashReceipt column, retry without it
         const msg = String(err.message || '').toLowerCase();
@@ -460,7 +470,9 @@ export const createOrder = async (req, res) => {
           try {
             const fallbackData = { ...orderData };
             delete fallbackData.gcashReceipt;
-            created = await Order.create(fallbackData, { fields: Object.keys(fallbackData) });
+            const modelFields = Order && Order.rawAttributes ? Object.keys(Order.rawAttributes) : [];
+            const fieldsToInsert = Object.keys(fallbackData).filter(k => modelFields.includes(k));
+            created = await Order.create(fallbackData, { fields: fieldsToInsert.length ? fieldsToInsert : Object.keys(fallbackData) });
           } catch (err2) {
             throw err2;
           }
