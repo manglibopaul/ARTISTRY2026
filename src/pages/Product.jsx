@@ -36,6 +36,9 @@ const Product = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [detectedParts, setDetectedParts] = useState([]);
+  const [selectedParts, setSelectedParts] = useState([]);
+  const [showPartsList, setShowPartsList] = useState(false);
 
   const normalizeToHex = (color) => {
     if (!color || typeof window === 'undefined') return null;
@@ -54,6 +57,38 @@ const Product = () => {
     }
   };
 
+  const detectModelParts = (viewer) => {
+    try {
+      const names = new Set();
+      if (!viewer) return setDetectedParts([]);
+      const model = viewer.model || viewer.scene || null;
+      if (model && model.materials) {
+        model.materials.forEach((m) => {
+          const n = (m && (m.name || m._name)) || '';
+          if (n && String(n).trim()) names.add(String(n).trim());
+        });
+      }
+      if (model && model.scene && typeof model.scene.traverse === 'function') {
+        model.scene.traverse((node) => {
+          if (!node) return;
+          const n = node.name || (node.material && (node.material.name || node.material._name)) || '';
+          if (n && String(n).trim()) names.add(String(n).trim());
+        });
+      }
+      const arr = Array.from(names).filter(Boolean);
+      // default selection: if product defines colorableParts use that, otherwise select all except likely exclusions
+      const defaultSelected = Array.isArray(productData?.colorableParts) && productData.colorableParts.length > 0
+        ? productData.colorableParts
+        : arr.filter(n => !/eye|pupil|button|stitch|seam|tongue/i.test(n));
+      setDetectedParts(arr);
+      setSelectedParts(defaultSelected);
+    } catch (err) {
+      console.error('detectModelParts error', err);
+      setDetectedParts([]);
+      setSelectedParts([]);
+    }
+  };
+
   const applyColorToModel = (hexColor) => {
     if (!modelViewerElementRef.current) return;
     const viewer = modelViewerElementRef.current;
@@ -67,8 +102,11 @@ const Product = () => {
     
     try {
       if (viewer.model && viewer.model.materials) {
-        // Respect product metadata: `colorableParts` (whitelist) or `colorExclusions` (blacklist)
-        const whitelist = (productData && Array.isArray(productData.colorableParts)) ? productData.colorableParts.map(s => String(s).toLowerCase()) : [];
+        // Determine allowed parts: prefer explicit selectedParts set by the user in the modal
+        const userSelected = Array.isArray(selectedParts) && selectedParts.length > 0
+          ? selectedParts.map(s => String(s).toLowerCase())
+          : null;
+        const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts)) ? productData.colorableParts.map(s => String(s).toLowerCase()) : []);
         const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
 
         viewer.model.materials.forEach((material) => {
@@ -76,8 +114,8 @@ const Product = () => {
             const mName = (material.name || material._name || '').toString().toLowerCase();
             // Skip if explicitly excluded
             if (blacklist.length && blacklist.some(ex => mName.includes(ex))) return;
-            // If whitelist provided, only apply when material name matches one of the whitelist items
-            if (whitelist.length && !whitelist.some(w => mName.includes(w))) return;
+            // If whitelist provided (non-empty), only apply when material name matches one of the whitelist items
+            if (whitelist && whitelist.length && !whitelist.some(w => mName.includes(w))) return;
 
             if (material.pbrMetallicRoughness && typeof material.pbrMetallicRoughness.setBaseColorFactor === 'function') {
               material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
@@ -421,6 +459,12 @@ const Product = () => {
     const handleLoad = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
+      // detect model parts for debugging / selective recolor
+      try {
+        detectModelParts(viewer);
+      } catch (e) {
+        // ignore detection errors
+      }
     };
     const handleError = () => {
       setArLoading(false);
@@ -816,6 +860,33 @@ const Product = () => {
                           <>Note: some model parts (e.g., eyes) may not change.</>
                         )}
                       </div>
+                      <div className="ml-3">
+                        <button onClick={() => setShowPartsList(v => !v)} className="text-xs px-2 py-1 border rounded">List model parts</button>
+                      </div>
+                    </div>
+                  )}
+                  {showPartsList && (
+                    <div className="mt-3 bg-white border rounded p-3 max-h-48 overflow-auto text-left text-sm">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">Detected model parts</div>
+                        <div className="flex gap-2">
+                          <button onClick={() => setSelectedParts(detectedParts.slice())} className="px-2 py-1 text-xs border rounded">Select all</button>
+                          <button onClick={() => setSelectedParts([])} className="px-2 py-1 text-xs border rounded">Clear</button>
+                        </div>
+                      </div>
+                      {detectedParts.length === 0 ? (
+                        <div className="text-xs text-gray-500">No parts detected yet. Close and reopen the AR modal after the model loads.</div>
+                      ) : (
+                        detectedParts.map((p) => (
+                          <label key={p} className="flex items-center gap-2 mb-1">
+                            <input type="checkbox" checked={selectedParts.includes(p)} onChange={(e) => {
+                              if (e.target.checked) setSelectedParts(prev => Array.from(new Set([...prev, p])));
+                              else setSelectedParts(prev => prev.filter(x => x !== p));
+                            }} />
+                            <span>{p}</span>
+                          </label>
+                        ))
+                      )}
                     </div>
                   )}
                   {/* iOS AR Quick Look Button */}
