@@ -487,6 +487,13 @@ const Product = () => {
     }
   }, [selectedColor]);
 
+  // Reapply color when selected parts change or when viewer is (re)loaded
+  useEffect(() => {
+    if (modelViewerElementRef.current) {
+      applyColorToModel(selectedColor);
+    }
+  }, [selectedParts, modelViewerElementRef.current, showAR]);
+
   const handleNextImage = () => {
     if (productData.image && productData.image.length > 0) {
       const nextIndex = (currentImageIndex + 1) % productData.image.length;
