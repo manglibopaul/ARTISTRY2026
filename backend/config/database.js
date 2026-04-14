@@ -105,6 +105,32 @@ const ensureProductsSizesColumn = async () => {
   }
 };
 
+const ensureProductsColorColumns = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Products');
+  if (!table.colorableParts) {
+    await qi.addColumn('Products', 'colorableParts', {
+      type: Sequelize.JSON,
+      allowNull: true,
+      defaultValue: []
+    });
+  }
+  if (!table.colorExclusions) {
+    await qi.addColumn('Products', 'colorExclusions', {
+      type: Sequelize.JSON,
+      allowNull: true,
+      defaultValue: []
+    });
+  }
+  if (!table.colorChangeable) {
+    await qi.addColumn('Products', 'colorChangeable', {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    });
+  }
+};
+
 const ensureOrdersCompletedAtColumn = async () => {
   const qi = sequelize.getQueryInterface();
   const table = await qi.describeTable('Orders');
@@ -156,6 +182,7 @@ const connectDB = async () => {
     await ensureReviewsImageUrlColumn();
     await ensureReviewsOrderIdColumn();
     await ensureProductsSizesColumn();
+    await ensureProductsColorColumns();
     await ensureOrdersCompletedAtColumn();
     await ensureSellersPaymentSettingsColumn();
     // pickupMaps support removed; no runtime schema-ensure needed
