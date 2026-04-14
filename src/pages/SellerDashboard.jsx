@@ -999,25 +999,7 @@ const SellerDashboard = () => {
 
               {/* removed seller rename editor per request */}
 
-              <input
-                type='text'
-                name='colorableParts'
-                placeholder='Colorable parts (comma-separated) e.g. body,handle'
-                value={formData.colorableParts}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
-              />
-
-              <input
-                type='text'
-                name='colorExclusions'
-                placeholder='Color exclusions (comma-separated) e.g. eyes,buttons'
-                value={formData.colorExclusions}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
-              />
+              {/* colorableParts and colorExclusions inputs removed per request */}
 
               <label className='flex items-center gap-2'>
                 <input type='checkbox' name='colorChangeable' checked={!!formData.colorChangeable} onChange={handleChange} />
