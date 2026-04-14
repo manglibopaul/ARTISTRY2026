@@ -2,55 +2,6 @@ import React, { useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-                        <select
-                          value={order.orderStatus}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value
-                            // optimistic update
-                            const prevOrders = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-                            setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(order.id) ? ({ ...o, orderStatus: newStatus }) : o)) : prev))
-                            try {
-                              const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
-                                headers: { Authorization: `Bearer ${token}` },
-                              })
-                              if (res?.data?.id) {
-                                setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
-                              }
-                              toast.success('Order status updated')
-                              fetchSellerOrders()
-                            } catch (err) {
-                              console.error(err)
-                              // rollback optimistic update
-                              setSellerOrders(prevOrders)
-                              toast.error(err.response?.data?.message || 'Failed to update status')
-                            }
-                          }}
-                          className='w-full px-3 py-2 border rounded text-sm'>
-        let width = img.width
-        let height = img.height
-        const maxWidth = 1000
-        
-        if (width > maxWidth) {
-          height = (maxWidth / width) * height
-          width = maxWidth
-        }
-        
-        canvas.width = width
-        canvas.height = height
-        ctx.drawImage(img, 0, 0, width, height)
-        
-        canvas.toBlob(
-          (blob) => {
-            const compressedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() })
-            resolve(compressedFile)
-          },
-          'image/jpeg',
-          0.8 // 80% quality
-        )
-      }
-    }
-  })
-}
 
 const SellerDashboard = () => {
   const navigate = useNavigate()
