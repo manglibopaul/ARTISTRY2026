@@ -84,6 +84,10 @@ const Product = () => {
         : arr.filter(n => !/eye|pupil|button|stitch|seam|tongue/i.test(n));
       setDetectedParts(arr);
       setSelectedParts(defaultSelected);
+      // initialize friendly name mapping from product data if present
+      if (productData && productData.colorPartNames && typeof productData.colorPartNames === 'object') {
+        setPartNameMap(productData.colorPartNames);
+      }
     } catch (err) {
       console.error('detectModelParts error', err);
       setDetectedParts([]);

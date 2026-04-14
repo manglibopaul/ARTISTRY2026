@@ -129,6 +129,13 @@ const ensureProductsColorColumns = async () => {
       defaultValue: false,
     });
   }
+  if (!table.colorPartNames) {
+    await qi.addColumn('Products', 'colorPartNames', {
+      type: Sequelize.JSON,
+      allowNull: true,
+      defaultValue: {},
+    });
+  }
 };
 
 const ensureOrdersCompletedAtColumn = async () => {

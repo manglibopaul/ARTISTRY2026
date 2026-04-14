@@ -213,6 +213,15 @@ export const createProduct = async (req, res) => {
       productData.colorChangeable = (String(val) === 'true' || val === true)
     }
 
+    // Handle colorPartNames (JSON object mapping originalName->friendlyName)
+    if (req.body.colorPartNames) {
+      let map = req.body.colorPartNames
+      if (typeof map === 'string') {
+        try { map = JSON.parse(map) } catch { map = {} }
+      }
+      if (map && typeof map === 'object') productData.colorPartNames = map
+    }
+
     if (req.body.sizes) {
       let sizes = req.body.sizes;
       if (typeof sizes === 'string') {
@@ -325,6 +334,15 @@ export const updateProduct = async (req, res) => {
     if (typeof req.body.colorChangeable !== 'undefined') {
       const val = req.body.colorChangeable
       updateData.colorChangeable = (String(val) === 'true' || val === true)
+    }
+
+    // Update colorPartNames
+    if (req.body.colorPartNames) {
+      let map = req.body.colorPartNames
+      if (typeof map === 'string') {
+        try { map = JSON.parse(map) } catch { map = {} }
+      }
+      if (map && typeof map === 'object') updateData.colorPartNames = map
     }
 
     if (req.body.sizes) {

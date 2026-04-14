@@ -59,6 +59,7 @@ const SellerDashboard = () => {
     colorableParts: '',
     colorExclusions: '',
     colorChangeable: false,
+    colorPartNames: '',
     stock: '',
     image: [],
     model: null,
@@ -564,6 +565,12 @@ const SellerDashboard = () => {
 
       // Always send a value for colorChangeable (string 'true'/'false') so backend can update reliably
       uploadData.append('colorChangeable', formData.colorChangeable ? 'true' : 'false')
+      // Send friendly part name mapping (JSON string)
+      if (formData.colorPartNames) {
+        uploadData.append('colorPartNames', formData.colorPartNames)
+      } else if (editingProduct) {
+        uploadData.append('colorPartNames', JSON.stringify({}))
+      }
 
       if (formData.sizes) {
         uploadData.append('sizes', formData.sizes)
@@ -696,6 +703,7 @@ const SellerDashboard = () => {
       colorableParts: Array.isArray(product.colorableParts) ? product.colorableParts.join(', ') : (product.colorableParts || ''),
       colorExclusions: Array.isArray(product.colorExclusions) ? product.colorExclusions.join(', ') : (product.colorExclusions || ''),
       colorChangeable: !!product.colorChangeable,
+      colorPartNames: product.colorPartNames && typeof product.colorPartNames === 'object' ? JSON.stringify(product.colorPartNames) : (product.colorPartNames || ''),
       stock: product.stock,
       image: product.image || [],
       model: null,
@@ -921,6 +929,20 @@ const SellerDashboard = () => {
                 disabled={isSubmitting}
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
               />
+
+              <label className='col-span-1 md:col-span-2'>
+                <div className='text-sm font-medium mb-1'>Material friendly names (JSON)</div>
+                <textarea
+                  name='colorPartNames'
+                  placeholder='e.g. {"Material.001":"Body","Material.002":"Pad"}'
+                  value={formData.colorPartNames}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100 text-sm'
+                  rows={3}
+                />
+                <p className='text-xs text-gray-500 mt-1'>Optional: JSON mapping of original material names to friendly labels.</p>
+              </label>
 
               <input
                 type='text'
