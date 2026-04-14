@@ -544,9 +544,16 @@ const SellerDashboard = () => {
       uploadData.append('subCategory', formData.subCategory)
       if (formData.colors) {
         uploadData.append('colors', formData.colors)
+      } else if (editingProduct) {
+        // If editing and colors cleared, explicitly send empty array to clear on backend
+        uploadData.append('colors', JSON.stringify([]))
       }
+
       if (formData.sizes) {
         uploadData.append('sizes', formData.sizes)
+      } else if (editingProduct) {
+        // If editing and sizes cleared, explicitly send empty array so backend will set sizes = []
+        uploadData.append('sizes', JSON.stringify([]))
       }
       uploadData.append('stock', formData.stock)
 
