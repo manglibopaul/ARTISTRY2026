@@ -2,27 +2,30 @@ import React, { useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-
-import { ShopContext } from '../context/ShopContext'
-import SellerChat from '../components/SellerChat'
-import SellerAdminChat from '../components/SellerAdminChat'
-
-const MAX_GLTF_FILE_BYTES = 25 * 1024 * 1024
-const MAX_USDZ_FILE_BYTES = 10 * 1024 * 1024
-
-// Helper: Compress image before upload
-const compressImage = (file) => {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = (event) => {
-      const img = new Image()
-      img.src = event.target.result
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        
-        // Calculate new dimensions (max 1000px width)
+                        <select
+                          value={order.orderStatus}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value
+                            // optimistic update
+                            const prevOrders = Array.isArray(sellerOrders) ? [...sellerOrders] : []
+                            setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(order.id) ? ({ ...o, orderStatus: newStatus }) : o)) : prev))
+                            try {
+                              const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
+                                headers: { Authorization: `Bearer ${token}` },
+                              })
+                              if (res?.data?.id) {
+                                setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                              }
+                              toast.success('Order status updated')
+                              fetchSellerOrders()
+                            } catch (err) {
+                              console.error(err)
+                              // rollback optimistic update
+                              setSellerOrders(prevOrders)
+                              toast.error(err.response?.data?.message || 'Failed to update status')
+                            }
+                          }}
+                          className='w-full px-3 py-2 border rounded text-sm'>
         let width = img.width
         let height = img.height
         const maxWidth = 1000
@@ -1331,7 +1334,10 @@ const SellerDashboard = () => {
                                             <button
                                               className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
                                               onClick={async () => {
-                                                try {
+                                                  // optimistic update for confirmation flow
+                                                  const prevOrders = Array.isArray(sellerOrders) ? [...sellerOrders] : []
+                                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(statusChangeConfirm.order.id) ? ({ ...o, orderStatus: statusChangeConfirm.newStatus }) : o)) : prev))
+                                                  try {
                                                     const res = await axios.put(`${apiUrl}/api/orders/${statusChangeConfirm.order.id}/status-seller`, { orderStatus: statusChangeConfirm.newStatus }, {
                                                       headers: { Authorization: `Bearer ${token}` },
                                                     });
@@ -1340,13 +1346,15 @@ const SellerDashboard = () => {
                                                     }
                                                     toast.success('Order status updated');
                                                     fetchSellerOrders();
-                                                } catch (err) {
-                                                  console.error(err);
-                                                  toast.error(err.response?.data?.message || 'Failed to update status');
-                                                } finally {
-                                                  setStatusChangeConfirm({ open: false, order: null, newStatus: '' });
-                                                }
-                                              }}
+                                                  } catch (err) {
+                                                    console.error(err);
+                                                    // rollback
+                                                    setSellerOrders(prevOrders)
+                                                    toast.error(err.response?.data?.message || 'Failed to update status');
+                                                  } finally {
+                                                    setStatusChangeConfirm({ open: false, order: null, newStatus: '' });
+                                                  }
+                                                }}
                                             >Confirm</button>
                                           </div>
                                         </div>
