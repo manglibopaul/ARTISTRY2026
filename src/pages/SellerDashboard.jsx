@@ -3,27 +3,28 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { ShopContext } from '../context/ShopContext'
-
-const SellerDashboard = () => {
-  const navigate = useNavigate()
-  const [seller, setSeller] = useState(null)
-  const [products, setProducts] = useState([])
-  const [sellerOrders, setSellerOrders] = useState([])
-  const [selectedTab, setSelectedTab] = useState('products')
-  const [sellerReviews, setSellerReviews] = useState([])
-  const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
-  const [replyDrafts, setReplyDrafts] = useState({})
-  const [lowStockThreshold, setLowStockThreshold] = useState(5)
-  const [loading, setLoading] = useState(false)
-  const [viewOrder, setViewOrder] = useState(null)
-  const [showForm, setShowForm] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadError, setUploadError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
-  const [orderDeleteConfirm, setOrderDeleteConfirm] = useState(null)
-  // Confirmation modal for status change
+                        <select
+                          value={order.orderStatus}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value
+                            try {
+                                const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                })
+                                // Update local state from response for immediate UI feedback
+                                if (res?.data?.id) {
+                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                                }
+                                toast.success('Order status updated')
+                                // Refresh from server as a fallback to ensure consistency
+                                fetchSellerOrders()
+                            } catch (err) {
+                              console.error(err)
+                              toast.error(err.response?.data?.message || 'Failed to update status')
+                            }
+                          }}
+                          disabled={order.orderStatus === 'completed' || order.orderStatus === 'cancelled'}
+                          className={`w-full px-3 py-2 border rounded text-sm ${order.orderStatus === 'completed' || order.orderStatus === 'cancelled' ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
   const [statusChangeConfirm, setStatusChangeConfirm] = useState({ open: false, order: null, newStatus: '' });
   // Shipping settings state
   const [shippingSettings, setShippingSettings] = useState({
@@ -1272,7 +1273,8 @@ const SellerDashboard = () => {
                                 const newStatus = e.target.value;
                                 setStatusChangeConfirm({ open: true, order, newStatus });
                               }}
-                              className='px-2 py-1 border rounded'>
+                              disabled={order.orderStatus === 'completed' || order.orderStatus === 'cancelled'}
+                              className={`px-2 py-1 border rounded ${order.orderStatus === 'completed' || order.orderStatus === 'cancelled' ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
                               <option value='pending'>pending</option>
                               <option value='processing'>processing</option>
                               {order.paymentMethod === 'pickup' && (
