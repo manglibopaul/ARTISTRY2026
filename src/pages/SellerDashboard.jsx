@@ -155,7 +155,8 @@ const SellerDashboard = () => {
         headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
         params: { _ts: Date.now() },
       })
-      setSellerOrders(response.data || [])
+        setSellerOrders(response.data || [])
+        toast.success('Orders fetched successfully')
     } catch (error) {
       console.error('Error fetching seller orders:', error)
       if (error.response?.status === 401) {
