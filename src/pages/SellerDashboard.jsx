@@ -1273,45 +1273,6 @@ const SellerDashboard = () => {
                                 setStatusChangeConfirm({ open: true, order, newStatus });
                               }}
                               className='px-2 py-1 border rounded'>
-                                    {/* Status Change Confirmation Modal */}
-                                    {statusChangeConfirm.open && (
-                                      <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
-                                        <div className='bg-white rounded-lg shadow-lg p-6 max-w-sm w-full'>
-                                          <h3 className='text-lg font-semibold mb-2'>Confirm Status Change</h3>
-                                          <p className='mb-4 text-sm'>Change order <span className='font-bold'>#{statusChangeConfirm.order?.id}</span> status to <span className='font-bold'>{statusChangeConfirm.newStatus}</span>?</p>
-                                          <div className='flex justify-end gap-2'>
-                                            <button
-                                              className='px-4 py-2 rounded bg-gray-100 text-gray-700 text-sm hover:bg-gray-200'
-                                              onClick={() => setStatusChangeConfirm({ open: false, order: null, newStatus: '' })}
-                                            >Cancel</button>
-                                            <button
-                                              className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
-                                              onClick={async () => {
-                                                  // optimistic update for confirmation flow
-                                                  const prevOrders = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-                                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(statusChangeConfirm.order.id) ? ({ ...o, orderStatus: statusChangeConfirm.newStatus }) : o)) : prev))
-                                                  try {
-                                                    const res = await axios.put(`${apiUrl}/api/orders/${statusChangeConfirm.order.id}/status-seller`, { orderStatus: statusChangeConfirm.newStatus }, {
-                                                      headers: { Authorization: `Bearer ${token}` },
-                                                    });
-                                                    if (res?.data?.id) {
-                                                      setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
-                                                    }
-                                                    toast.success('Order status updated');
-                                                  } catch (err) {
-                                                    console.error(err);
-                                                    // rollback
-                                                    setSellerOrders(prevOrders)
-                                                    toast.error(err.response?.data?.message || 'Failed to update status');
-                                                  } finally {
-                                                    setStatusChangeConfirm({ open: false, order: null, newStatus: '' });
-                                                  }
-                                                }}
-                                            >Confirm</button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
                               <option value='pending'>pending</option>
                               <option value='processing'>processing</option>
                               {order.paymentMethod === 'pickup' && (
@@ -2074,6 +2035,44 @@ const SellerDashboard = () => {
         )}
 
         {/* Order Delete Confirmation Modal */}
+        {/* Status Change Confirmation Modal (global) */}
+        {statusChangeConfirm.open && (
+          <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
+            <div className='bg-white rounded-lg shadow-lg p-6 max-w-sm w-full'>
+              <h3 className='text-lg font-semibold mb-2'>Confirm Status Change</h3>
+              <p className='mb-4 text-sm'>Change order <span className='font-bold'>#{statusChangeConfirm.order?.id}</span> status to <span className='font-bold'>{statusChangeConfirm.newStatus}</span>?</p>
+              <div className='flex justify-end gap-2'>
+                <button
+                  className='px-4 py-2 rounded bg-gray-100 text-gray-700 text-sm hover:bg-gray-200'
+                  onClick={() => setStatusChangeConfirm({ open: false, order: null, newStatus: '' })}
+                >Cancel</button>
+                <button
+                  className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
+                  onClick={async () => {
+                    const prevOrders = Array.isArray(sellerOrders) ? [...sellerOrders] : []
+                    setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(statusChangeConfirm.order.id) ? ({ ...o, orderStatus: statusChangeConfirm.newStatus }) : o)) : prev))
+                    try {
+                      const res = await axios.put(`${apiUrl}/api/orders/${statusChangeConfirm.order.id}/status-seller`, { orderStatus: statusChangeConfirm.newStatus }, {
+                        headers: { Authorization: `Bearer ${token}` },
+                      })
+                      if (res?.data?.id) {
+                        setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                      }
+                      toast.success('Order status updated')
+                    } catch (err) {
+                      console.error(err)
+                      setSellerOrders(prevOrders)
+                      toast.error(err.response?.data?.message || 'Failed to update status')
+                    } finally {
+                      setStatusChangeConfirm({ open: false, order: null, newStatus: '' })
+                    }
+                  }}
+                >Confirm</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {orderDeleteConfirm && (
           <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
             <div className='bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4'>
