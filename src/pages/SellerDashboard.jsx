@@ -1187,8 +1187,6 @@ const SellerDashboard = () => {
                                   setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
                                 }
                                 toast.success('Order status updated')
-                                // Refresh from server as a fallback to ensure consistency
-                                fetchSellerOrders()
                             } catch (err) {
                               console.error(err)
                               toast.error(err.response?.data?.message || 'Failed to update status')
@@ -1299,7 +1297,6 @@ const SellerDashboard = () => {
                                                       setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
                                                     }
                                                     toast.success('Order status updated');
-                                                    fetchSellerOrders();
                                                   } catch (err) {
                                                     console.error(err);
                                                     // rollback
