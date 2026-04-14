@@ -275,6 +275,10 @@ const Navbar = () => {
                 <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ARTISTS</button>
                 <button type='button' onClick={() => navigateWithHardFallback('/about')} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ABOUT US</button>
                 <button onClick={() => { setVisible(false); handleSupportClick(); }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100 cursor-pointer hover:bg-gray-50'>SUPPORT</button>
+                <button type='button' onClick={() => { setVisible(false); navigateWithHardFallback('/profile') }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>PROFILE</button>
+                <button type='button' onClick={() => { setVisible(false); navigateWithHardFallback('/chat') }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>CHAT</button>
+                <button type='button' onClick={() => { setVisible(false); navigateWithHardFallback('/notifications') }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>NOTIFICATIONS</button>
+                <button type='button' onClick={() => { setVisible(false); navigateWithHardFallback('/orders') }} className='w-full text-left py-4 pl-6 border-b text-base active:bg-gray-100'>ORDERS</button>
             </div>
         </div>
 
