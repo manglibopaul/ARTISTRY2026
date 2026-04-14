@@ -1222,11 +1222,16 @@ const SellerDashboard = () => {
                           onChange={async (e) => {
                             const newStatus = e.target.value
                             try {
-                              await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
-                                headers: { Authorization: `Bearer ${token}` },
-                              })
-                              toast.success('Order status updated')
-                              fetchSellerOrders()
+                                const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                })
+                                // Update local state from response for immediate UI feedback
+                                if (res?.data?.id) {
+                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                                }
+                                toast.success('Order status updated')
+                                // Refresh from server as a fallback to ensure consistency
+                                fetchSellerOrders()
                             } catch (err) {
                               console.error(err)
                               toast.error(err.response?.data?.message || 'Failed to update status')
@@ -1327,11 +1332,14 @@ const SellerDashboard = () => {
                                               className='px-4 py-2 rounded bg-black text-white text-sm hover:bg-gray-800'
                                               onClick={async () => {
                                                 try {
-                                                  await axios.put(`${apiUrl}/api/orders/${statusChangeConfirm.order.id}/status-seller`, { orderStatus: statusChangeConfirm.newStatus }, {
-                                                    headers: { Authorization: `Bearer ${token}` },
-                                                  });
-                                                  toast.success('Order status updated');
-                                                  fetchSellerOrders();
+                                                    const res = await axios.put(`${apiUrl}/api/orders/${statusChangeConfirm.order.id}/status-seller`, { orderStatus: statusChangeConfirm.newStatus }, {
+                                                      headers: { Authorization: `Bearer ${token}` },
+                                                    });
+                                                    if (res?.data?.id) {
+                                                      setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                                                    }
+                                                    toast.success('Order status updated');
+                                                    fetchSellerOrders();
                                                 } catch (err) {
                                                   console.error(err);
                                                   toast.error(err.response?.data?.message || 'Failed to update status');

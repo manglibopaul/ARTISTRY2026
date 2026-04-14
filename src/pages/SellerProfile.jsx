@@ -608,21 +608,7 @@ const SellerProfile = () => {
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <div>
               <label className='text-sm font-medium text-gray-600'>Artisan Type</label>
-              {isEditing ? (
-                <select
-                  name='artisanType'
-                  value={safeFormData.artisanType}
-                  onChange={handleInputChange}
-                  className='mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black'
-                >
-                  <option value=''>Select a craft type...</option>
-                  {safeArtisanTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              ) : (
-                <p className='text-lg text-gray-900 mt-1'>{seller?.artisanType || 'Not specified'}</p>
-              )}
+              <p className='text-lg text-gray-900 mt-1'>{seller?.artisanType || 'Not specified'}</p>
             </div>
           </div>
 
