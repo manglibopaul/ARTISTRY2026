@@ -39,6 +39,8 @@ const Product = () => {
   const [detectedParts, setDetectedParts] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
   const [showPartsList, setShowPartsList] = useState(false);
+  const [partNameMap, setPartNameMap] = useState({});
+  const [editingPart, setEditingPart] = useState(null);
 
   const normalizeToHex = (color) => {
     if (!color || typeof window === 'undefined') return null;
@@ -900,7 +902,21 @@ const Product = () => {
                               if (e.target.checked) setSelectedParts(prev => Array.from(new Set([...prev, p])));
                               else setSelectedParts(prev => prev.filter(x => x !== p));
                             }} />
-                            <span>{p}</span>
+                            {editingPart === p ? (
+                              <input
+                                autoFocus
+                                className="px-2 py-1 border rounded text-sm"
+                                value={partNameMap[p] ?? p}
+                                onChange={(e) => setPartNameMap(prev => ({ ...prev, [p]: e.target.value }))}
+                                onBlur={() => setEditingPart(null)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') setEditingPart(null) }}
+                              />
+                            ) : (
+                              <>
+                                <span>{partNameMap[p] || p}</span>
+                                <button type="button" onClick={() => setEditingPart(p)} className="ml-2 text-xs px-2 py-0.5 border rounded">Rename</button>
+                              </>
+                            )}
                           </label>
                         ))
                       )}
