@@ -870,6 +870,16 @@ const Product = () => {
                       <div className="ml-3">
                         <button onClick={() => setShowPartsList(v => !v)} className="text-xs px-2 py-1 border rounded">List model parts</button>
                       </div>
+                      <div className="w-full text-left mt-3 text-xs text-gray-700">
+                        <div className="font-medium text-sm mb-1">How to change color</div>
+                        <ol className="list-decimal list-inside text-xs leading-5">
+                          <li>Open "View AR" and wait for the 3D model to load.</li>
+                          <li>Click "List model parts" to see detected materials/meshes.</li>
+                          <li>Select the parts you want recolored (uncheck eyes/buttons).</li>
+                          <li>Pick a color from the color input or click a swatch — the model updates immediately.</li>
+                          <li>If nothing changes, ensure "Allow color changes on 3D model" is enabled in the product settings (Seller Dashboard) and try different part names from the list.</li>
+                        </ol>
+                      </div>
                     </div>
                   )}
                   {showPartsList && (
