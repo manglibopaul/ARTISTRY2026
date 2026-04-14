@@ -827,7 +827,7 @@ const Product = () => {
                   </div>
                   {/* Color picker controls - only show when product supports color change */}
                   {(productData?.colorChangeable || availableColors.length > 0) && (
-                    <div className="mt-3 flex items-center justify-center gap-3">
+                    <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -883,7 +883,7 @@ const Product = () => {
                     </div>
                   )}
                   {showPartsList && (
-                    <div className="mt-3 bg-white border rounded p-3 max-h-48 overflow-auto text-left text-sm">
+                    <div className="mt-3 bg-white border rounded p-3 max-h-48 overflow-auto text-left text-sm w-full">
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-medium">Detected model parts</div>
                         <div className="flex gap-2">
