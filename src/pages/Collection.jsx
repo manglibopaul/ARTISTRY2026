@@ -52,19 +52,17 @@ const Collection = () => {
   const sortProduct = useCallback(() => {
     const fpCopy = filterProducts.slice()
 
-    switch (sortType) {
-      case 'price-asc':
-        setFilterProducts(fpCopy.sort((a, b) => a.price - b.price))
-        break
-
-      case 'price-desc':
-        setFilterProducts(fpCopy.sort((a, b) => b.price - a.price))
-        break
-
-      default:
-        applyFilter()
-        break
+    if (sortType === 'price-asc') {
+      setFilterProducts(fpCopy.sort((a, b) => a.price - b.price))
+      return
     }
+
+    if (sortType === 'price-desc') {
+      setFilterProducts(fpCopy.sort((a, b) => b.price - a.price))
+      return
+    }
+
+    // 'featured' or unknown sort: keep current filtered order (no-op)
   }, [filterProducts, sortType, applyFilter])
 
   useEffect(() => {

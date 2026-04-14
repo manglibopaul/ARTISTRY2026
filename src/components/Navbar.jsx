@@ -164,7 +164,7 @@ const Navbar = () => {
 
   return (
     <>
-    <div className='flex items-center justify-between py-4 sm:py-5 px-2 sm:px-0 font-medium'>
+    <div className='relative z-50 flex items-center justify-between py-4 sm:py-5 px-2 sm:px-0 font-medium'>
 
         <Link to='/' className='text-2xl sm:text-3xl font-bold text-gray-900'>ARTISTRY</Link>
       
