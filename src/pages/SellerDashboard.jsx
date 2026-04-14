@@ -59,8 +59,6 @@ const SellerDashboard = () => {
     subCategory: '',
     colors: '',
     sizes: '',
-    colorableParts: '',
-    colorExclusions: '',
     colorChangeable: false,
     colorPartNames: '',
     stock: '',
@@ -618,17 +616,7 @@ const SellerDashboard = () => {
         uploadData.append('colors', JSON.stringify([]))
       }
 
-      if (formData.colorableParts) {
-        uploadData.append('colorableParts', formData.colorableParts)
-      } else if (editingProduct) {
-        uploadData.append('colorableParts', JSON.stringify([]))
-      }
-
-      if (formData.colorExclusions) {
-        uploadData.append('colorExclusions', formData.colorExclusions)
-      } else if (editingProduct) {
-        uploadData.append('colorExclusions', JSON.stringify([]))
-      }
+      // colorableParts/colorExclusions removed from seller form; backend may still accept them via API if needed
 
       // Always send a value for colorChangeable (string 'true'/'false') so backend can update reliably
       uploadData.append('colorChangeable', formData.colorChangeable ? 'true' : 'false')
@@ -767,8 +755,6 @@ const SellerDashboard = () => {
       subCategory: product.subCategory || '',
       colors: Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || ''),
         sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || product.size || ''),
-      colorableParts: Array.isArray(product.colorableParts) ? product.colorableParts.join(', ') : (product.colorableParts || ''),
-      colorExclusions: Array.isArray(product.colorExclusions) ? product.colorExclusions.join(', ') : (product.colorExclusions || ''),
       colorChangeable: !!product.colorChangeable,
       colorPartNames: product.colorPartNames && typeof product.colorPartNames === 'object' ? JSON.stringify(product.colorPartNames) : (product.colorPartNames || ''),
       stock: product.stock,
@@ -812,8 +798,6 @@ const SellerDashboard = () => {
       subCategory: '',
       colors: '',
         sizes: '',
-      colorableParts: '',
-      colorExclusions: '',
       colorChangeable: false,
       stock: '',
       image: [],
