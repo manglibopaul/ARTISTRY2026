@@ -841,22 +841,7 @@ const Product = () => {
                           className="text-xs px-2 py-1 border rounded"
                         >Reset</button>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {availableColors.slice(0, 8).map((c) => (
-                          (() => {
-                            const hexC = normalizeToHex(c) || c;
-                            return (
-                              <button
-                                key={c}
-                                onClick={() => setSelectedColor(hexC)}
-                                title={`Choose ${c}`}
-                                style={{ background: c }}
-                                className={`w-8 h-8 rounded border ${selectedColor === hexC ? 'ring-2 ring-offset-1 ring-black' : ''}`}
-                              />
-                            )
-                          })()
-                        ))}
-                      </div>
+                      {/* swatches removed as they were redundant */}
                       <div className="text-sm text-gray-600">Change model color</div>
                       <div className="text-xs text-gray-500 ml-2">
                         {productData?.colorableParts && productData.colorableParts.length > 0 ? (
