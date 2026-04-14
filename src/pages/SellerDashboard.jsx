@@ -72,7 +72,6 @@ const SellerDashboard = () => {
   const imageInputRef = useRef(null)
   const hiddenViewerRef = useRef(null)
   const [detectedPartsSeller, setDetectedPartsSeller] = useState([])
-  const [partNameMapSeller, setPartNameMapSeller] = useState({})
   const [showPartsEditorSeller, setShowPartsEditorSeller] = useState(false)
 
   const token = localStorage.getItem('sellerToken')
@@ -995,83 +994,7 @@ const SellerDashboard = () => {
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
               />
 
-              <label className='col-span-1 md:col-span-2'>
-                <div className='text-sm font-medium mb-1'>Material friendly names (JSON)</div>
-                <textarea
-                  name='colorPartNames'
-                  placeholder='e.g. {"Material.001":"Body","Material.002":"Pad"}'
-                  value={formData.colorPartNames}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100 text-sm'
-                  rows={3}
-                />
-                <p className='text-xs text-gray-500 mt-1'>Optional: JSON mapping of original material names to friendly labels.</p>
-              </label>
-              {/* Parts editor for sellers - user-friendly mapping UI */}
-              <div className='col-span-1 md:col-span-2'>
-                <div className='flex items-center gap-3 mt-2'>
-                  <button type='button' onClick={async () => {
-                    // detect parts from current product model if present
-                    const modelPath = (editingProduct && (editingProduct.modelUrl || editingProduct.model)) || ''
-                    const resolved = modelPath && String(modelPath).startsWith('http') ? modelPath : (modelPath ? `${apiUrl}${modelPath}` : '')
-                    if (!resolved) {
-                      toast.info('No model URL available for detection')
-                      return
-                    }
-                    setShowPartsEditorSeller(true)
-                    try {
-                      const parts = await detectPartsFromModelUrl(resolved)
-                      setDetectedPartsSeller(parts)
-                      // prefill map with existing values if available or sensible defaults
-                      let existing = {}
-                      try { existing = formData.colorPartNames ? JSON.parse(formData.colorPartNames) : {} } catch { existing = {} }
-                      const map = {}
-                      parts.forEach((p) => { map[p] = existing[p] || guessFriendlyName(p) })
-                      setPartNameMapSeller(map)
-                    } catch (err) {
-                      console.error('detect parts failed', err)
-                      toast.error('Failed to detect model parts')
-                    }
-                  }} className='px-3 py-2 border rounded text-sm'>Auto-detect model parts</button>
-                  <button type='button' onClick={() => setShowPartsEditorSeller(s => !s)} className='px-3 py-2 border rounded text-sm'>Toggle parts editor</button>
-                  <div className='text-xs text-gray-500'>Use this to map Material.X names to friendly labels for customers.</div>
-                </div>
-
-                {showPartsEditorSeller && (
-                  <div className='mt-3 bg-white border rounded p-3'>
-                    <div className='flex items-center justify-between mb-2'>
-                      <div className='font-medium'>Detected parts</div>
-                      <div className='flex gap-2'>
-                        <button type='button' onClick={() => {
-                          // apply mapping to formData
-                          try {
-                            setFormData(prev => ({ ...prev, colorPartNames: JSON.stringify(partNameMapSeller || {}) }))
-                            toast.success('Mapping applied to form')
-                          } catch { toast.error('Failed to apply mapping') }
-                        }} className='px-2 py-1 text-xs border rounded'>Apply mapping</button>
-                        <button type='button' onClick={() => {
-                          setPartNameMapSeller(prev => {
-                            const cleared = {}
-                            Object.keys(prev).forEach(k => cleared[k] = '')
-                            return cleared
-                          })
-                        }} className='px-2 py-1 text-xs border rounded'>Clear names</button>
-                      </div>
-                    </div>
-                    {detectedPartsSeller.length === 0 ? (
-                      <div className='text-xs text-gray-500'>No parts detected. Click "Auto-detect model parts" first.</div>
-                    ) : (
-                      detectedPartsSeller.map((p) => (
-                        <div key={p} className='flex items-center gap-2 mb-2'>
-                          <div className='w-48 text-xs truncate'>{p}</div>
-                          <input className='px-2 py-1 border rounded text-sm flex-1' value={partNameMapSeller[p] ?? ''} onChange={(e) => setPartNameMapSeller(prev => ({ ...prev, [p]: e.target.value }))} />
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* removed seller rename editor per request */}
 
               <input
                 type='text'
