@@ -70,6 +70,10 @@ const SellerDashboard = () => {
   const [newImages, setNewImages] = useState([])
   const [isImageDropActive, setIsImageDropActive] = useState(false)
   const imageInputRef = useRef(null)
+  const hiddenViewerRef = useRef(null)
+  const [detectedPartsSeller, setDetectedPartsSeller] = useState([])
+  const [partNameMapSeller, setPartNameMapSeller] = useState({})
+  const [showPartsEditorSeller, setShowPartsEditorSeller] = useState(false)
 
   const token = localStorage.getItem('sellerToken')
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
@@ -517,6 +521,67 @@ const SellerDashboard = () => {
     setFormData(prev => ({ ...prev, [fieldName]: file }))
   }
 
+  // Detect parts in a GLB/USDZ by creating a hidden model-viewer element and inspecting loaded model
+  const detectPartsFromModelUrl = (url) => {
+    return new Promise((resolve, reject) => {
+      if (!url || typeof document === 'undefined') return reject(new Error('No url'))
+      try {
+        const viewer = document.createElement('model-viewer')
+        viewer.setAttribute('src', url)
+        viewer.setAttribute('camera-controls', '')
+        viewer.style.position = 'fixed'
+        viewer.style.left = '-9999px'
+        viewer.style.width = '1px'
+        viewer.style.height = '1px'
+        document.body.appendChild(viewer)
+        const onLoad = () => {
+          try {
+            const model = viewer.model || viewer.scene || null
+            const names = new Set()
+            if (model && model.materials) {
+              model.materials.forEach(m => {
+                const n = (m && (m.name || m._name)) || ''
+                if (n) names.add(String(n))
+              })
+            }
+            if (model && model.scene && typeof model.scene.traverse === 'function') {
+              model.scene.traverse((node) => {
+                if (!node) return
+                const n = node.name || (node.material && (node.material.name || node.material._name)) || ''
+                if (n) names.add(String(n))
+              })
+            }
+            viewer.removeEventListener('load', onLoad)
+            try { document.body.removeChild(viewer) } catch(_) {}
+            resolve(Array.from(names))
+          } catch (err) {
+            viewer.removeEventListener('load', onLoad)
+            try { document.body.removeChild(viewer) } catch(_) {}
+            reject(err)
+          }
+        }
+        viewer.addEventListener('load', onLoad)
+        viewer.addEventListener('error', (e) => {
+          try { viewer.removeEventListener('load', onLoad) } catch(_) {}
+          try { document.body.removeChild(viewer) } catch(_) {}
+          reject(new Error('Model load error'))
+        })
+      } catch (e) {
+        reject(e)
+      }
+    })
+  }
+
+  const guessFriendlyName = (original) => {
+    if (!original) return ''
+    const low = original.toLowerCase()
+    if (low.includes('pad') || low.includes('paw')) return 'Pad'
+    if (low.includes('eye') || low.includes('pupil')) return 'Eye'
+    if (low.includes('leaf') || low.includes('stem')) return 'Leaf'
+    if (low.includes('body') || low.includes('main')) return 'Body'
+    return original.replace(/[_\.]/g, ' ')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -943,6 +1008,70 @@ const SellerDashboard = () => {
                 />
                 <p className='text-xs text-gray-500 mt-1'>Optional: JSON mapping of original material names to friendly labels.</p>
               </label>
+              {/* Parts editor for sellers - user-friendly mapping UI */}
+              <div className='col-span-1 md:col-span-2'>
+                <div className='flex items-center gap-3 mt-2'>
+                  <button type='button' onClick={async () => {
+                    // detect parts from current product model if present
+                    const modelPath = (editingProduct && (editingProduct.modelUrl || editingProduct.model)) || ''
+                    const resolved = modelPath && String(modelPath).startsWith('http') ? modelPath : (modelPath ? `${apiUrl}${modelPath}` : '')
+                    if (!resolved) {
+                      toast.info('No model URL available for detection')
+                      return
+                    }
+                    setShowPartsEditorSeller(true)
+                    try {
+                      const parts = await detectPartsFromModelUrl(resolved)
+                      setDetectedPartsSeller(parts)
+                      // prefill map with existing values if available or sensible defaults
+                      let existing = {}
+                      try { existing = formData.colorPartNames ? JSON.parse(formData.colorPartNames) : {} } catch { existing = {} }
+                      const map = {}
+                      parts.forEach((p) => { map[p] = existing[p] || guessFriendlyName(p) })
+                      setPartNameMapSeller(map)
+                    } catch (err) {
+                      console.error('detect parts failed', err)
+                      toast.error('Failed to detect model parts')
+                    }
+                  }} className='px-3 py-2 border rounded text-sm'>Auto-detect model parts</button>
+                  <button type='button' onClick={() => setShowPartsEditorSeller(s => !s)} className='px-3 py-2 border rounded text-sm'>Toggle parts editor</button>
+                  <div className='text-xs text-gray-500'>Use this to map Material.X names to friendly labels for customers.</div>
+                </div>
+
+                {showPartsEditorSeller && (
+                  <div className='mt-3 bg-white border rounded p-3'>
+                    <div className='flex items-center justify-between mb-2'>
+                      <div className='font-medium'>Detected parts</div>
+                      <div className='flex gap-2'>
+                        <button type='button' onClick={() => {
+                          // apply mapping to formData
+                          try {
+                            setFormData(prev => ({ ...prev, colorPartNames: JSON.stringify(partNameMapSeller || {}) }))
+                            toast.success('Mapping applied to form')
+                          } catch { toast.error('Failed to apply mapping') }
+                        }} className='px-2 py-1 text-xs border rounded'>Apply mapping</button>
+                        <button type='button' onClick={() => {
+                          setPartNameMapSeller(prev => {
+                            const cleared = {}
+                            Object.keys(prev).forEach(k => cleared[k] = '')
+                            return cleared
+                          })
+                        }} className='px-2 py-1 text-xs border rounded'>Clear names</button>
+                      </div>
+                    </div>
+                    {detectedPartsSeller.length === 0 ? (
+                      <div className='text-xs text-gray-500'>No parts detected. Click "Auto-detect model parts" first.</div>
+                    ) : (
+                      detectedPartsSeller.map((p) => (
+                        <div key={p} className='flex items-center gap-2 mb-2'>
+                          <div className='w-48 text-xs truncate'>{p}</div>
+                          <input className='px-2 py-1 border rounded text-sm flex-1' value={partNameMapSeller[p] ?? ''} onChange={(e) => setPartNameMapSeller(prev => ({ ...prev, [p]: e.target.value }))} />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
 
               <input
                 type='text'
