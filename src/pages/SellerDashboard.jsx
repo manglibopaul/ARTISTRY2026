@@ -4,6 +4,9 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { ShopContext } from '../context/ShopContext'
 
+// Lazy-load seller chat to avoid loading in non-seller views and fix missing reference
+const SellerChat = React.lazy(() => import('../components/SellerChat'))
+
 const SellerDashboard = () => {
   const navigate = useNavigate()
   const [seller, setSeller] = useState(null)
