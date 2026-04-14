@@ -249,12 +249,7 @@ const Navbar = () => {
         <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-6 cursor-pointer sm:hidden p-1' alt="" loading="lazy" />
       </div>
 
-      {/* Floating More button to open RightSidebar on mobile */}
-      <button type='button' onClick={() => setRightSidebarOpen(true)} aria-label='More' className='fixed right-4 bottom-6 sm:hidden bg-white p-3 rounded-full shadow-lg border border-gray-200' style={{zIndex: 99999, pointerEvents: 'auto'}}>
-        <svg className='w-5 h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' d='M12 6h.01M12 12h.01M12 18h.01' />
-        </svg>
-      </button>
+      {/* Floating More button moved to a top-level portal in App.jsx to avoid stacking-context issues */}
 
         {/* sidebar menu for a much smaller devices */}
 
