@@ -150,8 +150,10 @@ const SellerDashboard = () => {
   const fetchSellerOrders = async () => {
     try {
       setLoading(true)
+      // Add cache-busting param to avoid stale 304 responses from cached GETs
       const response = await axios.get(`${apiUrl}/api/orders/seller/my-orders`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
+        params: { _ts: Date.now() },
       })
       setSellerOrders(response.data || [])
     } catch (error) {
