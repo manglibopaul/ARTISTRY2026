@@ -31,6 +31,7 @@ const Product = () => {
   const [arLoading, setArLoading] = useState(true);
   const [, setIsMobileDevice] = useState(false);
   const [arError, setArError] = useState('');
+  const [arInSession, setArInSession] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
@@ -470,14 +471,31 @@ const Product = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
+    // When entering AR/VR (WebXR) disable camera controls to prevent pinch-zoom in real world
+    const handleEnterXR = () => {
+      try {
+        viewer.removeAttribute('camera-controls');
+        setArInSession(true);
+      } catch (e) {}
+    };
+    const handleExitXR = () => {
+      try {
+        viewer.setAttribute('camera-controls', '');
+        setArInSession(false);
+      } catch (e) {}
+    };
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
+    viewer.addEventListener('enter-vr', handleEnterXR);
+    viewer.addEventListener('exit-vr', handleExitXR);
 
     modelViewerRef.current.appendChild(viewer);
     
     return () => {
-      viewer.removeEventListener('load', handleLoad);
-      viewer.removeEventListener('error', handleError);
+      try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
+      try { viewer.removeEventListener('error', handleError); } catch (e) {}
+      try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
+      try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
