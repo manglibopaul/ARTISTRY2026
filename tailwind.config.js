@@ -9,6 +9,14 @@ export default {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
       },
+      colors: {
+        primary: 'var(--color-primary)',
+        secondary: 'var(--color-secondary)',
+        accent: 'var(--color-accent)',
+        muted: 'var(--color-muted)',
+        surface: 'var(--color-surface)',
+        text: 'var(--color-text)'
+      },
     },
   },
   plugins: [],

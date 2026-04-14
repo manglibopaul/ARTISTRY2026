@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --color-primary: #c8102e; /* brand red */
+    --color-secondary: #ff69b4; /* pink */
+    --color-accent: #f59e0b; /* amber */
+    --color-muted: #6b7280; /* gray-500 */
+    --color-surface: #f8fafc; /* gray-50 */
+    --color-text: #111827; /* gray-900 */
+}
+
 a.active hr{
     display: block;
     background: rgb(231, 113, 209);
