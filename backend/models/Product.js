@@ -37,6 +37,18 @@ const Product = sequelize.define('Product', {
     type: DataTypes.JSON,
     defaultValue: [],
   },
+  colorableParts: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
+  colorExclusions: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
+  colorChangeable: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   sizes: {
     type: DataTypes.JSON,
     defaultValue: [],

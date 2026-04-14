@@ -177,6 +177,42 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    // Handle colorableParts (comma-separated string or JSON array)
+    if (req.body.colorableParts) {
+      let parts = req.body.colorableParts
+      if (typeof parts === 'string') {
+        try {
+          parts = JSON.parse(parts)
+        } catch {
+          parts = parts.split(',').map(p => p.trim()).filter(Boolean)
+        }
+      }
+      if (Array.isArray(parts)) {
+        productData.colorableParts = parts.filter(Boolean)
+      }
+    }
+
+    // Handle colorExclusions (comma-separated string or JSON array)
+    if (req.body.colorExclusions) {
+      let ex = req.body.colorExclusions
+      if (typeof ex === 'string') {
+        try {
+          ex = JSON.parse(ex)
+        } catch {
+          ex = ex.split(',').map(p => p.trim()).filter(Boolean)
+        }
+      }
+      if (Array.isArray(ex)) {
+        productData.colorExclusions = ex.filter(Boolean)
+      }
+    }
+
+    // colorChangeable boolean
+    if (typeof req.body.colorChangeable !== 'undefined') {
+      const val = req.body.colorChangeable
+      productData.colorChangeable = (String(val) === 'true' || val === true)
+    }
+
     if (req.body.sizes) {
       let sizes = req.body.sizes;
       if (typeof sizes === 'string') {
@@ -265,6 +301,30 @@ export const updateProduct = async (req, res) => {
       if (Array.isArray(colors)) {
         updateData.colors = colors.filter(Boolean);
       }
+    }
+
+    // Update colorableParts
+    if (req.body.colorableParts) {
+      let parts = req.body.colorableParts
+      if (typeof parts === 'string') {
+        try { parts = JSON.parse(parts) } catch { parts = parts.split(',').map(p => p.trim()).filter(Boolean) }
+      }
+      if (Array.isArray(parts)) updateData.colorableParts = parts.filter(Boolean)
+    }
+
+    // Update colorExclusions
+    if (req.body.colorExclusions) {
+      let ex = req.body.colorExclusions
+      if (typeof ex === 'string') {
+        try { ex = JSON.parse(ex) } catch { ex = ex.split(',').map(p => p.trim()).filter(Boolean) }
+      }
+      if (Array.isArray(ex)) updateData.colorExclusions = ex.filter(Boolean)
+    }
+
+    // Update colorChangeable
+    if (typeof req.body.colorChangeable !== 'undefined') {
+      const val = req.body.colorChangeable
+      updateData.colorChangeable = (String(val) === 'true' || val === true)
     }
 
     if (req.body.sizes) {

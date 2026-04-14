@@ -56,6 +56,9 @@ const SellerDashboard = () => {
     subCategory: '',
     colors: '',
     sizes: '',
+    colorableParts: '',
+    colorExclusions: '',
+    colorChangeable: false,
     stock: '',
     image: [],
     model: null,
@@ -402,8 +405,9 @@ const SellerDashboard = () => {
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = e.target
+    const next = type === 'checkbox' ? checked : value
+    setFormData(prev => ({ ...prev, [name]: next }))
   }
 
   // Compress an image file using canvas; returns a Promise<File>
@@ -546,6 +550,21 @@ const SellerDashboard = () => {
         uploadData.append('colors', JSON.stringify([]))
       }
 
+      if (formData.colorableParts) {
+        uploadData.append('colorableParts', formData.colorableParts)
+      } else if (editingProduct) {
+        uploadData.append('colorableParts', JSON.stringify([]))
+      }
+
+      if (formData.colorExclusions) {
+        uploadData.append('colorExclusions', formData.colorExclusions)
+      } else if (editingProduct) {
+        uploadData.append('colorExclusions', JSON.stringify([]))
+      }
+
+      // Always send a value for colorChangeable (string 'true'/'false') so backend can update reliably
+      uploadData.append('colorChangeable', formData.colorChangeable ? 'true' : 'false')
+
       if (formData.sizes) {
         uploadData.append('sizes', formData.sizes)
       } else if (editingProduct) {
@@ -674,6 +693,9 @@ const SellerDashboard = () => {
       subCategory: product.subCategory || '',
       colors: Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || ''),
         sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || product.size || ''),
+      colorableParts: Array.isArray(product.colorableParts) ? product.colorableParts.join(', ') : (product.colorableParts || ''),
+      colorExclusions: Array.isArray(product.colorExclusions) ? product.colorExclusions.join(', ') : (product.colorExclusions || ''),
+      colorChangeable: !!product.colorChangeable,
       stock: product.stock,
       image: product.image || [],
       model: null,
@@ -715,6 +737,9 @@ const SellerDashboard = () => {
       subCategory: '',
       colors: '',
         sizes: '',
+      colorableParts: '',
+      colorExclusions: '',
+      colorChangeable: false,
       stock: '',
       image: [],
       model: null,
@@ -896,6 +921,31 @@ const SellerDashboard = () => {
                 disabled={isSubmitting}
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
               />
+
+              <input
+                type='text'
+                name='colorableParts'
+                placeholder='Colorable parts (comma-separated) e.g. body,handle'
+                value={formData.colorableParts}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+              />
+
+              <input
+                type='text'
+                name='colorExclusions'
+                placeholder='Color exclusions (comma-separated) e.g. eyes,buttons'
+                value={formData.colorExclusions}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+              />
+
+              <label className='flex items-center gap-2'>
+                <input type='checkbox' name='colorChangeable' checked={!!formData.colorChangeable} onChange={handleChange} />
+                <span className='text-sm'>Allow color changes on 3D model</span>
+              </label>
 
               <input
                 type='number'

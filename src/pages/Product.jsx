@@ -31,31 +31,64 @@ const Product = () => {
   const [arLoading, setArLoading] = useState(true);
   const [, setIsMobileDevice] = useState(false);
   const [arError, setArError] = useState('');
-  const [selectedColor] = useState('#FF69B4');
+  const [selectedColor, setSelectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  const normalizeToHex = (color) => {
+    if (!color || typeof window === 'undefined') return null;
+    try {
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.fillStyle = color;
+      const computed = ctx.fillStyle;
+      if (!computed) return null;
+      if (computed.startsWith('#')) return computed;
+      const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (!m) return null;
+      const toHex = (n) => (Number(n).toString(16).padStart(2, '0'));
+      return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const applyColorToModel = (hexColor) => {
     if (!modelViewerElementRef.current) return;
     const viewer = modelViewerElementRef.current;
     
-    const hex = hexColor.replace('#', '');
+    const hexVal = normalizeToHex(hexColor);
+    if (!hexVal) return;
+    const hex = hexVal.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16) / 255;
     const g = parseInt(hex.substring(2, 4), 16) / 255;
     const b = parseInt(hex.substring(4, 6), 16) / 255;
     
     try {
       if (viewer.model && viewer.model.materials) {
+        // Respect product metadata: `colorableParts` (whitelist) or `colorExclusions` (blacklist)
+        const whitelist = (productData && Array.isArray(productData.colorableParts)) ? productData.colorableParts.map(s => String(s).toLowerCase()) : [];
+        const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
+
         viewer.model.materials.forEach((material) => {
-          if (material.pbrMetallicRoughness) {
-            material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+          try {
+            const mName = (material.name || material._name || '').toString().toLowerCase();
+            // Skip if explicitly excluded
+            if (blacklist.length && blacklist.some(ex => mName.includes(ex))) return;
+            // If whitelist provided, only apply when material name matches one of the whitelist items
+            if (whitelist.length && !whitelist.some(w => mName.includes(w))) return;
+
+            if (material.pbrMetallicRoughness && typeof material.pbrMetallicRoughness.setBaseColorFactor === 'function') {
+              material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+            }
+          } catch (inner) {
+            // ignore individual material failures
           }
         });
       }
-    } catch {
-      console.log('Color change may not be supported for this model');
+    } catch (e) {
+      console.log('Color change may not be supported for this model', e);
     }
   };
 
@@ -305,6 +338,8 @@ const Product = () => {
   const resolvedIosModelUrl = productData?.iosModel
     ? (productData.iosModel.startsWith('http') ? productData.iosModel : `${apiUrl}${productData.iosModel}`)
     : '';
+
+  const availableColors = getAvailableColors(productData);
 
   // Set model-viewer src when AR modal opens
   useEffect(() => {
@@ -697,6 +732,50 @@ const Product = () => {
                 <div className="relative overflow-hidden">
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
+                  {/* Color picker controls - only show when product supports color change */}
+                  {(productData?.colorChangeable || availableColors.length > 0) && (
+                    <div className="mt-3 flex items-center justify-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={selectedColor}
+                          onChange={(e) => setSelectedColor(e.target.value)}
+                          className="w-10 h-10 p-0 border rounded"
+                          aria-label="Pick model color"
+                        />
+                        <button
+                          onClick={() => setSelectedColor('#ffffff')}
+                          className="text-xs px-2 py-1 border rounded"
+                        >Reset</button>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {availableColors.slice(0, 8).map((c) => (
+                          (() => {
+                            const hexC = normalizeToHex(c) || c;
+                            return (
+                              <button
+                                key={c}
+                                onClick={() => setSelectedColor(hexC)}
+                                title={`Choose ${c}`}
+                                style={{ background: c }}
+                                className={`w-8 h-8 rounded border ${selectedColor === hexC ? 'ring-2 ring-offset-1 ring-black' : ''}`}
+                              />
+                            )
+                          })()
+                        ))}
+                      </div>
+                      <div className="text-sm text-gray-600">Change model color</div>
+                      <div className="text-xs text-gray-500 ml-2">
+                        {productData?.colorableParts && productData.colorableParts.length > 0 ? (
+                          <>Affects: {productData.colorableParts.join(', ')}</>
+                        ) : productData?.colorExclusions && productData.colorExclusions.length > 0 ? (
+                          <>All except: {productData.colorExclusions.join(', ')}</>
+                        ) : (
+                          <>Note: some model parts (e.g., eyes) may not change.</>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {/* iOS AR Quick Look Button */}
                   {/* iOS AR Quick Look button removed as requested */}
                   {arError && (
