@@ -12,6 +12,7 @@ const ShopContextProvider = (props) => {
   const [showSearch,setShowSearch] = useState (false);
   const [cartsItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   // Remove useNavigate from top level to avoid hook error
   // Use inside functions only if needed
   // Use localhost fallback only in development; production must use configured API URL.
@@ -199,7 +200,9 @@ const ShopContextProvider = (props) => {
     cartsItems,addToCart,clearCart,
     getCartCount,updateQuantity,getCartAmount,
     navigate,
-    parseCartKey
+    parseCartKey,
+    rightSidebarOpen,
+    setRightSidebarOpen
   };
 
   return (
