@@ -848,9 +848,7 @@ const Product = () => {
                           <>Affects: {productData.colorableParts.join(', ')}</>
                         ) : productData?.colorExclusions && productData.colorExclusions.length > 0 ? (
                           <>All except: {productData.colorExclusions.join(', ')}</>
-                        ) : (
-                          <>Note: some model parts (e.g., eyes) may not change.</>
-                        )}
+                        ) : null}
                       </div>
                       <div className="ml-3">
                         <button onClick={() => setShowPartsList(v => !v)} className="text-xs px-2 py-1 border rounded">List model parts</button>
