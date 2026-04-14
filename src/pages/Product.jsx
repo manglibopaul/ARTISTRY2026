@@ -861,13 +861,7 @@ const Product = () => {
                       </div>
                       {/* swatches removed as they were redundant */}
                       <div className="text-sm text-gray-600">Change model color</div>
-                      <div className="text-xs text-gray-500 ml-2">
-                        {productData?.colorableParts && productData.colorableParts.length > 0 ? (
-                          <>Affects: {productData.colorableParts.join(', ')}</>
-                        ) : productData?.colorExclusions && productData.colorExclusions.length > 0 ? (
-                          <>All except: {productData.colorExclusions.join(', ')}</>
-                        ) : null}
-                      </div>
+                      {/* removed 'Affects' / exclusions display per request */}
                       <div className="ml-3">
                         <button onClick={() => setShowPartsList(v => !v)} className="text-xs px-2 py-1 border rounded">List model parts</button>
                       </div>
