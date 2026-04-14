@@ -3,28 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { ShopContext } from '../context/ShopContext'
-                        <select
-                          value={order.orderStatus}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value
-                            try {
-                                const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
-                                  headers: { Authorization: `Bearer ${token}` },
-                                })
-                                // Update local state from response for immediate UI feedback
-                                if (res?.data?.id) {
-                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
-                                }
-                                toast.success('Order status updated')
-                                // Refresh from server as a fallback to ensure consistency
-                                fetchSellerOrders()
-                            } catch (err) {
-                              console.error(err)
-                              toast.error(err.response?.data?.message || 'Failed to update status')
-                            }
-                          }}
-                          disabled={order.orderStatus === 'completed' || order.orderStatus === 'cancelled'}
-                          className={`w-full px-3 py-2 border rounded text-sm ${order.orderStatus === 'completed' || order.orderStatus === 'cancelled' ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
   const [statusChangeConfirm, setStatusChangeConfirm] = useState({ open: false, order: null, newStatus: '' });
   // Shipping settings state
   const [shippingSettings, setShippingSettings] = useState({
