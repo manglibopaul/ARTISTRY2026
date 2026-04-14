@@ -888,8 +888,9 @@ const Product = () => {
                           <li>Select the parts you want recolored (uncheck eyes/buttons).</li>
                         </ol>
                       </div>
-                    </div>
-                  {/* iOS AR Quick Look Button */}
+                      </div>
+                    )}
+                    {/* iOS AR Quick Look Button */}
                   {/* iOS AR Quick Look button removed as requested */}
                   {arError && (
                     <div className="absolute inset-0 flex items-center justify-center bg-red-50 bg-opacity-90">
