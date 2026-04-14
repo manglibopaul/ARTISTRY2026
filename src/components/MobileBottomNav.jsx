@@ -26,8 +26,9 @@ const MobileBottomNav = () => {
   }, [])
 
   return (
-    <nav className='fixed inset-x-0 bottom-0 z-90 md:hidden'>
+    <nav className='fixed inset-x-0 bottom-0 md:hidden' style={{zIndex: 9999}}>
       <div className='w-full bg-orange-600 border-t border-orange-700 shadow-2xl' style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+        <div className='w-full text-center text-white font-bold py-1'>BOTTOM NAV (debug)</div>
         <div className='max-w-[900px] mx-auto flex justify-between items-center h-18 px-4' style={{height: '68px'}}>
           <Link to='/' aria-label='Home' className='flex flex-col items-center text-white text-xs'>
             <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M3 9l9-6 9 6v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v4a2 2 0 01-2 2H3a2 2 0 01-2-2V9z' /></svg>
