@@ -88,7 +88,49 @@ const Product = () => {
         });
       }
     } catch (e) {
-      console.log('Color change may not be supported for this model', e);
+      // Primary API failed — log and continue to fallback strategies
+      console.log('Primary material API failed:', e);
+    }
+
+    // Fallback strategy: traverse underlying scene/meshes and try common material APIs
+    try {
+      const sceneRoot = (viewer.model && (viewer.model.scene || viewer.model)) || null;
+      if (sceneRoot && typeof sceneRoot.traverse === 'function') {
+        sceneRoot.traverse((node) => {
+          try {
+            if (!node || !node.material) return;
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            mats.forEach((mat) => {
+              if (!mat) return;
+              try {
+                if (mat.pbrMetallicRoughness && typeof mat.pbrMetallicRoughness.setBaseColorFactor === 'function') {
+                  mat.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
+                } else if (Array.isArray(mat.baseColorFactor)) {
+                  mat.baseColorFactor = [r, g, b, 1.0];
+                } else if (mat.setBaseColorFactor && typeof mat.setBaseColorFactor === 'function') {
+                  mat.setBaseColorFactor([r, g, b, 1.0]);
+                } else if (mat.color && typeof mat.color.set === 'function') {
+                  mat.color.set(hexVal);
+                } else if (mat.uniforms && mat.uniforms.baseColor && mat.uniforms.baseColor.value) {
+                  const u = mat.uniforms.baseColor;
+                  if (u.value && typeof u.value.set === 'function') {
+                    u.value.set(hexVal);
+                  } else if (Array.isArray(u.value)) {
+                    u.value = [r, g, b, 1.0];
+                  }
+                }
+              } catch (innerMatErr) {
+                // ignore material update failure
+              }
+              try { mat.needsUpdate = true; } catch (_) {}
+            });
+          } catch (nodeErr) {
+            // ignore node traversal errors
+          }
+        });
+      }
+    } catch (e2) {
+      console.log('Fallback material traversal failed:', e2);
     }
   };
 
