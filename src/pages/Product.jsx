@@ -875,9 +875,8 @@ const Product = () => {
                         <ol className="list-decimal list-inside text-xs leading-5">
                           <li>Open "View AR" and wait for the 3D model to load.</li>
                           <li>Click "List model parts" to see detected materials/meshes.</li>
-                          <li>Select the parts you want recolored (uncheck eyes/buttons).</li>
                           <li>Pick a color from the color input or click a swatch — the model updates immediately.</li>
-                          <li>If nothing changes, ensure "Allow color changes on 3D model" is enabled in the product settings (Seller Dashboard) and try different part names from the list.</li>
+                          <li>Select the parts you want recolored (uncheck eyes/buttons).</li>
                         </ol>
                       </div>
                     </div>
