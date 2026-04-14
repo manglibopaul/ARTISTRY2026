@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { ShopContext } from '../context/ShopContext'
 
 const SellerDashboard = () => {
   const navigate = useNavigate()
