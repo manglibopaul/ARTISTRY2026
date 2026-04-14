@@ -406,6 +406,45 @@ const SellerDashboard = () => {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  // Compress an image file using canvas; returns a Promise<File>
+  const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      if (!file) return reject(new Error('No file'))
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.onload = () => {
+        const img = new Image()
+        img.onload = () => {
+          try {
+            let { width, height } = img
+            if (width > maxWidth) {
+              height = Math.round((maxWidth / width) * height)
+              width = maxWidth
+            }
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0, width, height)
+            canvas.toBlob((blob) => {
+              if (!blob) return reject(new Error('Canvas is empty'))
+              // Preserve original filename but ensure jpeg extension
+              const ext = '.jpg'
+              const baseName = (file.name || 'image').replace(/\.[^/.]+$/, '')
+              const compressedFile = new File([blob], `${baseName}${ext}`, { type: 'image/jpeg', lastModified: Date.now() })
+              resolve(compressedFile)
+            }, 'image/jpeg', quality)
+          } catch (err) {
+            reject(err)
+          }
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = reader.result
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleImageFiles = async (files, inputElement = null) => {
     const imageFiles = Array.from(files || [])
     console.log('Files selected:', imageFiles.length, imageFiles)
