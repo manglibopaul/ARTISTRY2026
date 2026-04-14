@@ -57,13 +57,13 @@ const SearchBar = () => {
     return showSearch ? (
         <div className='border-t border-b bg-gray-50'>
             <div className='max-w-2xl mx-auto px-4 py-4'>
-                <div className='flex items-center gap-2'>
-                    <div className='flex-1 flex items-center border border-gray-300 rounded-full px-4 py-3 bg-white hover:border-gray-400 transition'>
+                <div className='flex items-center gap-2 min-w-0'>
+                    <div className='flex-1 flex items-center min-w-0 border border-gray-300 rounded-full px-4 py-3 bg-white hover:border-gray-400 transition'>
                         <img className='w-5 h-5 text-gray-400' src={assets.search_icon} alt="search" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className='flex-1 outline-none bg-transparent text-sm ml-3 placeholder-gray-400'
+                            className='flex-1 min-w-0 outline-none bg-transparent text-sm ml-3 placeholder-gray-400'
                             type="text"
                             placeholder='Search products by name or description...'
                             autoFocus
