@@ -855,6 +855,30 @@ const Product = () => {
                       <div className="ml-3">
                         <button onClick={() => setShowPartsList(v => !v)} className="text-xs px-2 py-1 border rounded">List model parts</button>
                       </div>
+                      {showPartsList && (
+                        <div className="mt-3 bg-white border rounded p-3 max-h-48 overflow-auto text-left text-sm w-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium">Detected model parts</div>
+                            <div className="flex gap-2">
+                              <button onClick={() => setSelectedParts(detectedParts.slice())} className="px-2 py-1 text-xs border rounded">Select all</button>
+                              <button onClick={() => setSelectedParts([])} className="px-2 py-1 text-xs border rounded">Clear</button>
+                            </div>
+                          </div>
+                          {detectedParts.length === 0 ? (
+                            <div className="text-xs text-gray-500">No parts detected yet. Close and reopen the AR modal after the model loads.</div>
+                          ) : (
+                            detectedParts.map((p) => (
+                              <label key={p} className="flex items-center gap-2 mb-1">
+                                <input type="checkbox" checked={selectedParts.includes(p)} onChange={(e) => {
+                                  if (e.target.checked) setSelectedParts(prev => Array.from(new Set([...prev, p])));
+                                  else setSelectedParts(prev => prev.filter(x => x !== p));
+                                }} />
+                                <span>{p}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                      )}
                       <div className="w-full text-left mt-3 text-xs text-gray-700">
                         <div className="font-medium text-sm mb-1">How to change color</div>
                         <ol className="list-decimal list-inside text-xs leading-5">
@@ -865,31 +889,6 @@ const Product = () => {
                         </ol>
                       </div>
                     </div>
-                  )}
-                  {showPartsList && (
-                    <div className="mt-3 bg-white border rounded p-3 max-h-48 overflow-auto text-left text-sm w-full">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">Detected model parts</div>
-                        <div className="flex gap-2">
-                          <button onClick={() => setSelectedParts(detectedParts.slice())} className="px-2 py-1 text-xs border rounded">Select all</button>
-                          <button onClick={() => setSelectedParts([])} className="px-2 py-1 text-xs border rounded">Clear</button>
-                        </div>
-                      </div>
-                      {detectedParts.length === 0 ? (
-                        <div className="text-xs text-gray-500">No parts detected yet. Close and reopen the AR modal after the model loads.</div>
-                      ) : (
-                        detectedParts.map((p) => (
-                          <label key={p} className="flex items-center gap-2 mb-1">
-                            <input type="checkbox" checked={selectedParts.includes(p)} onChange={(e) => {
-                              if (e.target.checked) setSelectedParts(prev => Array.from(new Set([...prev, p])));
-                              else setSelectedParts(prev => prev.filter(x => x !== p));
-                            }} />
-                            <span>{p}</span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  )}
                   {/* iOS AR Quick Look Button */}
                   {/* iOS AR Quick Look button removed as requested */}
                   {arError && (
