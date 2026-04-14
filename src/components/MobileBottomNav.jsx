@@ -27,17 +27,17 @@ const MobileBottomNav = () => {
 
   return (
     <nav className='fixed inset-x-0 bottom-4 z-60 md:hidden flex justify-center pointer-events-auto'>
-      <div className='bg-white rounded-2xl px-6 py-3 shadow-lg border border-gray-100 flex items-center justify-between w-[92vw] max-w-[420px] mx-auto' style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
-        <Link to='/' className='flex items-center justify-center text-gray-700'>
-          <svg className='w-6 h-6 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='1.5' d='M3 9l9-6 9 6v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v4a2 2 0 01-2 2H3a2 2 0 01-2-2V9z' /></svg>
+      <div className='bg-gray-900 text-white rounded-2xl px-6 py-3 shadow-2xl border border-gray-800 flex items-center justify-between w-[92vw] max-w-[420px] mx-auto' style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+        <Link to='/' aria-label='Home' className='flex items-center justify-center text-white px-3'>
+          <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M3 9l9-6 9 6v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v4a2 2 0 01-2 2H3a2 2 0 01-2-2V9z' /></svg>
         </Link>
 
-        <Link to='/search' className='flex items-center justify-center text-gray-700'>
-          <img src={assets.search_icon} alt='Search' className='w-5 h-5' />
+        <Link to='/search' aria-label='Search' className='flex items-center justify-center text-white px-3'>
+          <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z' /></svg>
         </Link>
 
-        <Link to='/profile' className='flex items-center justify-center text-gray-700'>
-          <img src={assets.profile_icon} alt='Profile' className='w-6 h-6' />
+        <Link to='/profile' aria-label='Profile' className='flex items-center justify-center text-white px-3'>
+          <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM8 14s-1 0-1 1 1 3 5 3 5-2 5-3-1-1-1-1H8z' /></svg>
         </Link>
       </div>
       <div className='flex justify-center pointer-events-none'>
