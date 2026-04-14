@@ -875,7 +875,7 @@ const SellerDashboard = () => {
 
         {/* Tabs + Add Product Button */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6'>
-          <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative' style={{ maskImage: 'linear-gradient(90deg, black 85%, transparent)' }}>
+          <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative'>
             <button
               onClick={() => setSelectedTab('products')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'products' ? 'bg-black text-white' : 'bg-gray-200'}`}>
