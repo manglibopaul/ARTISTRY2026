@@ -26,22 +26,34 @@ const MobileBottomNav = () => {
   }, [])
 
   return (
-    <nav className='fixed inset-x-0 bottom-12 z-60 md:hidden flex justify-center pointer-events-auto'>
-      <div className='bg-gray-900 text-white rounded-2xl px-6 py-4 shadow-2xl border border-gray-800 flex items-center justify-between w-[94vw] max-w-[420px] mx-auto' style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
-        <Link to='/' aria-label='Home' className='flex items-center justify-center text-white px-3'>
-          <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M3 9l9-6 9 6v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v4a2 2 0 01-2 2H3a2 2 0 01-2-2V9z' /></svg>
-        </Link>
+    <nav className='fixed inset-x-0 bottom-0 z-70 md:hidden'>
+      <div className='w-full bg-white border-t border-gray-200 shadow-lg' style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+        <div className='max-w-[900px] mx-auto flex justify-between items-center h-16 px-4'>
+          <Link to='/' aria-label='Home' className='flex flex-col items-center text-gray-700 text-xs'>
+            <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M3 9l9-6 9 6v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v4a2 2 0 01-2 2H3a2 2 0 01-2-2V9z' /></svg>
+            <span>Home</span>
+          </Link>
 
-        <Link to='/search' aria-label='Search' className='flex items-center justify-center text-white px-3'>
-          <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z' /></svg>
-        </Link>
+          <Link to='/collection' aria-label='Categories' className='flex flex-col items-center text-gray-700 text-xs'>
+            <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 6h16M4 12h16M4 18h16' /></svg>
+            <span>Categories</span>
+          </Link>
 
-        <Link to='/profile' aria-label='Profile' className='flex items-center justify-center text-white px-3'>
-          <svg className='w-8 h-8' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM8 14s-1 0-1 1 1 3 5 3 5-2 5-3-1-1-1-1H8z' /></svg>
-        </Link>
-      </div>
-      <div className='flex justify-center pointer-events-none'>
-        <div className='mt-2 w-36 h-2 bg-black rounded-full' />
+          <Link to='/artisans' aria-label='Live' className='flex flex-col items-center text-gray-700 text-xs'>
+            <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4zM4 6h8v12H4z' /></svg>
+            <span>Live</span>
+          </Link>
+
+          <Link to='/notifications' aria-label='Notifications' className='flex flex-col items-center text-gray-700 text-xs'>
+            <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' /></svg>
+            <span>Alerts</span>
+          </Link>
+
+          <Link to='/profile' aria-label='Profile' className='flex flex-col items-center text-gray-700 text-xs'>
+            <svg className='w-6 h-6 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M16 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM8 14s-1 0-1 1 1 3 5 3 5-2 5-3-1-1-1-1H8z' /></svg>
+            <span>Me</span>
+          </Link>
+        </div>
       </div>
     </nav>
   )
