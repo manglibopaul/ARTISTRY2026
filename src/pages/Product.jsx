@@ -549,32 +549,45 @@ const Product = () => {
             opts.forEach(([val, text]) => {
               const o = document.createElement('option'); o.value = val; o.innerText = text; unitSelector.appendChild(o);
             });
-            unitSelector.value = 'm';
+            // default to centimeters for product dimensions
+            unitSelector.value = 'cm';
             unitSelector.style.position = 'absolute';
-            unitSelector.style.right = '12px';
-            unitSelector.style.top = '80px';
-            unitSelector.style.zIndex = '10000';
-            unitSelector.style.padding = '4px 6px';
-            unitSelector.style.borderRadius = '6px';
-            unitSelector.style.fontSize = '12px';
-            unitSelector.style.background = 'rgba(255,255,255,0.95)';
-            unitSelector.style.border = '1px solid rgba(0,0,0,0.1)';
+            unitSelector.style.right = '16px';
+            unitSelector.style.top = '16px';
+            unitSelector.style.zIndex = '10010';
+            unitSelector.style.padding = '6px 8px';
+            unitSelector.style.borderRadius = '8px';
+            unitSelector.style.fontSize = '13px';
+            unitSelector.style.background = 'rgba(255,255,255,0.98)';
+            unitSelector.style.border = '1px solid rgba(0,0,0,0.08)';
+            unitSelector.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)';
 
             unitSelector.addEventListener('change', (e) => {
               try { updateOverlayText(e.target.value); } catch (_) {}
             });
 
             if (modelViewerRef.current) {
-              // ensure the container is positioned so absolute overlay works
               try {
-                const parent = modelViewerRef.current;
-                if (!parent.style.position) parent.style.position = parent.style.position || 'relative';
-                parent.appendChild(overlay);
-                parent.appendChild(unitSelector);
+                // prefer attaching to the modal container (two levels up from the viewer container)
+                const viewerContainer = modelViewerRef.current;
+                const modalContainer = viewerContainer.parentElement && viewerContainer.parentElement.parentElement
+                  ? viewerContainer.parentElement.parentElement
+                  : viewerContainer.parentElement || viewerContainer;
+                if (modalContainer && modalContainer.style) modalContainer.style.position = modalContainer.style.position || 'relative';
+                // style overlay for readability (light background, dark text)
+                overlay.style.background = 'rgba(255,255,255,0.96)';
+                overlay.style.color = '#111';
+                overlay.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
+                overlay.style.border = '1px solid rgba(0,0,0,0.06)';
+                overlay.style.right = '16px';
+                overlay.style.top = '16px';
+
+                modalContainer.appendChild(overlay);
+                modalContainer.appendChild(unitSelector);
                 // keep references so we can remove them on cleanup
                 viewer._dimensionOverlay = overlay;
                 viewer._dimensionUnitSelector = unitSelector;
-                // initialize overlay text
+                // initialize overlay text (cm default)
                 updateOverlayText(unitSelector.value);
               } catch (appendErr) {
                 // ignore overlay attach errors
