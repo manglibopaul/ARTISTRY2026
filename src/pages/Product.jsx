@@ -728,6 +728,24 @@ const Product = () => {
                 attachTarget.appendChild(overlay);
                 attachTarget.appendChild(unitSelector);
 
+                // Fallback: if overlay isn't visible (some environments render model-viewer in shadow/root),
+                // append elements to document.body after a short delay so they are always visible for debugging.
+                setTimeout(() => {
+                  try {
+                    const visible = !!(overlay && overlay.offsetParent);
+                    if (!visible && typeof document !== 'undefined' && document.body) {
+                      // ensure very high z-index when appended to body
+                      svg.style.zIndex = '200000';
+                      overlay.style.zIndex = '200001';
+                      unitSelector.style.zIndex = '200002';
+                      if (!document.body.contains(svg)) document.body.appendChild(svg);
+                      if (!document.body.contains(overlay)) document.body.appendChild(overlay);
+                      if (!document.body.contains(unitSelector)) document.body.appendChild(unitSelector);
+                      viewer._dimensionAppendedToBody = true;
+                    }
+                  } catch (_) {}
+                }, 120);
+
                 // keep references so we can remove them on cleanup
                 viewer._dimensionOverlay = overlay;
                 viewer._dimensionUnitSelector = unitSelector;
