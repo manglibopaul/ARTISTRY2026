@@ -5,7 +5,7 @@ import { assets } from '../assets/assets';
 import { getArtisanPath } from '../utils/artisanUrl';
 import { getProductPath } from '../utils/productUrl';
 
-const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}) => {
+const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType, stock}) => {
 
     const navigate = useNavigate()
     const { currency } = useShop();
@@ -73,7 +73,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
     <div className='text-gray cursor-pointer block h-full group'>
       <a href={productHref} className='block w-full text-left'>
         <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
-          <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center'>
+          <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center relative'>
             <img
               className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out'
               src={imageUrl}
@@ -85,6 +85,11 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType}
                 }
               }}
             />
+            {typeof stock !== 'undefined' && Number(stock) <= 0 && (
+              <div className='absolute left-2 top-2 inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700'>
+                Sold out
+              </div>
+            )}
           </div>
           <div className='pt-2 flex flex-col gap-0.5 text-center'>
             <p className='text-sm font-medium text-gray-800 line-clamp-1'>{name}</p>
