@@ -466,6 +466,125 @@ const Product = () => {
       } catch (e) {
         // ignore detection errors
       }
+
+      // Compute a simple axis-aligned bounding box from mesh geometries
+      try {
+        const model = viewer.model || viewer.scene || null;
+        const sceneRoot = model && (model.scene || model);
+        if (sceneRoot && typeof sceneRoot.traverse === 'function') {
+          let minX = Infinity, minY = Infinity, minZ = Infinity;
+          let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+          sceneRoot.traverse((node) => {
+            try {
+              if (!node || !node.geometry) return;
+              const geom = node.geometry;
+              // If geometry already has a boundingBox, use it
+              if (geom.boundingBox) {
+                const b = geom.boundingBox;
+                if (b.min && b.max) {
+                  if (b.min.x < minX) minX = b.min.x;
+                  if (b.min.y < minY) minY = b.min.y;
+                  if (b.min.z < minZ) minZ = b.min.z;
+                  if (b.max.x > maxX) maxX = b.max.x;
+                  if (b.max.y > maxY) maxY = b.max.y;
+                  if (b.max.z > maxZ) maxZ = b.max.z;
+                }
+              } else if (geom.attributes && geom.attributes.position) {
+                const pos = geom.attributes.position.array;
+                for (let i = 0; i < pos.length; i += 3) {
+                  const x = pos[i];
+                  const y = pos[i + 1];
+                  const z = pos[i + 2];
+                  if (x < minX) minX = x;
+                  if (y < minY) minY = y;
+                  if (z < minZ) minZ = z;
+                  if (x > maxX) maxX = x;
+                  if (y > maxY) maxY = y;
+                  if (z > maxZ) maxZ = z;
+                }
+              }
+            } catch (inner) {
+              // ignore per-node failures
+            }
+          });
+
+          if (minX !== Infinity) {
+            const width = maxX - minX;
+            const height = maxY - minY;
+            const depth = maxZ - minZ;
+
+            // Create a simple overlay showing dimensions (assumes model units are meters)
+            const overlay = document.createElement('div');
+            overlay.className = 'model-dimensions-overlay';
+            overlay.style.position = 'absolute';
+            overlay.style.right = '12px';
+            overlay.style.top = '12px';
+            overlay.style.background = 'rgba(0,0,0,0.7)';
+            overlay.style.color = 'white';
+            overlay.style.padding = '8px 10px';
+            overlay.style.borderRadius = '8px';
+            overlay.style.fontSize = '12px';
+            overlay.style.lineHeight = '1.25';
+            overlay.style.whiteSpace = 'pre';
+            overlay.style.zIndex = '9999';
+            const fmt = (v) => Number(v).toFixed(2);
+            // store raw dimensions so we can convert units later
+            viewer._dimensionRaw = { width, height, depth };
+
+            // helper to format overlay text according to selected unit
+            const updateOverlayText = (unit) => {
+              const raw = viewer._dimensionRaw || { width: 0, height: 0, depth: 0 };
+              let factor = 1; // meters
+              let label = 'm';
+              if (unit === 'cm') { factor = 100; label = 'cm'; }
+              if (unit === 'in') { factor = 39.3700787; label = 'in'; }
+              const fmtVal = (v) => Number(v * factor).toFixed(2);
+              overlay.innerText = `W: ${fmtVal(raw.width)} ${label}\nH: ${fmtVal(raw.height)} ${label}\nD: ${fmtVal(raw.depth)} ${label}`;
+            };
+
+            // create unit selector
+            const unitSelector = document.createElement('select');
+            const opts = [ ['m', 'm'], ['cm', 'cm'], ['in', 'in'] ];
+            opts.forEach(([val, text]) => {
+              const o = document.createElement('option'); o.value = val; o.innerText = text; unitSelector.appendChild(o);
+            });
+            unitSelector.value = 'm';
+            unitSelector.style.position = 'absolute';
+            unitSelector.style.right = '12px';
+            unitSelector.style.top = '80px';
+            unitSelector.style.zIndex = '10000';
+            unitSelector.style.padding = '4px 6px';
+            unitSelector.style.borderRadius = '6px';
+            unitSelector.style.fontSize = '12px';
+            unitSelector.style.background = 'rgba(255,255,255,0.95)';
+            unitSelector.style.border = '1px solid rgba(0,0,0,0.1)';
+
+            unitSelector.addEventListener('change', (e) => {
+              try { updateOverlayText(e.target.value); } catch (_) {}
+            });
+
+            if (modelViewerRef.current) {
+              // ensure the container is positioned so absolute overlay works
+              try {
+                const parent = modelViewerRef.current;
+                if (!parent.style.position) parent.style.position = parent.style.position || 'relative';
+                parent.appendChild(overlay);
+                parent.appendChild(unitSelector);
+                // keep references so we can remove them on cleanup
+                viewer._dimensionOverlay = overlay;
+                viewer._dimensionUnitSelector = unitSelector;
+                // initialize overlay text
+                updateOverlayText(unitSelector.value);
+              } catch (appendErr) {
+                // ignore overlay attach errors
+              }
+            }
+          }
+        }
+      } catch (dimErr) {
+        console.warn('Dimension calculation failed', dimErr);
+      }
     };
     const handleError = () => {
       setArLoading(false);
@@ -496,6 +615,8 @@ const Product = () => {
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
+      try { if (viewer && viewer._dimensionOverlay && viewer._dimensionOverlay.parentNode) viewer._dimensionOverlay.parentNode.removeChild(viewer._dimensionOverlay); } catch(e) {}
+      try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector.parentNode) viewer._dimensionUnitSelector.parentNode.removeChild(viewer._dimensionUnitSelector); } catch(e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
