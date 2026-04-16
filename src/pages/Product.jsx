@@ -694,8 +694,17 @@ const Product = () => {
                   svg.appendChild(dLabel);
                 };
 
-                // attach svg to modal container
-                modalContainer.appendChild(svg);
+                // attach svg and overlays to the viewer container so they align with the canvas
+                const attachTarget = viewerContainer;
+                if (attachTarget && attachTarget.style) attachTarget.style.position = attachTarget.style.position || 'relative';
+                // ensure visibility above viewer but below modal controls
+                svg.style.zIndex = '10050';
+                overlay.style.zIndex = '10060';
+                unitSelector.style.zIndex = '10061';
+
+                attachTarget.appendChild(svg);
+                attachTarget.appendChild(overlay);
+                attachTarget.appendChild(unitSelector);
 
                 // keep references so we can remove them on cleanup
                 viewer._dimensionOverlay = overlay;
