@@ -514,6 +514,28 @@ const Product = () => {
             const height = maxY - minY;
             const depth = maxZ - minZ;
 
+            console.log('Model bbox computed:', { width, height, depth });
+
+            // If debug flag present in URL, create a visible debug badge on the page
+            try {
+              if (typeof window !== 'undefined' && window.location && String(window.location.search || '').includes('dimdebug=1')) {
+                const dbg = document.createElement('div');
+                dbg.id = 'dim-debug-badge';
+                dbg.style.position = 'fixed';
+                dbg.style.right = '12px';
+                dbg.style.bottom = '12px';
+                dbg.style.background = 'rgba(0,0,0,0.85)';
+                dbg.style.color = 'white';
+                dbg.style.padding = '8px 10px';
+                dbg.style.borderRadius = '8px';
+                dbg.style.zIndex = '99999';
+                dbg.style.fontSize = '13px';
+                dbg.innerText = `Dimensions: W=${width.toFixed(2)}m H=${height.toFixed(2)}m D=${depth.toFixed(2)}m`;
+                document.body.appendChild(dbg);
+                viewer._dimensionDebug = dbg;
+              }
+            } catch (dbgErr) { console.warn('Failed to add debug badge', dbgErr); }
+
             // Create a simple overlay showing dimensions (assumes model units are meters)
             const overlay = document.createElement('div');
             overlay.className = 'model-dimensions-overlay';
@@ -803,6 +825,7 @@ const Product = () => {
       try { if (viewer && viewer._dimensionSVG && viewer._dimensionSVG.parentNode) viewer._dimensionSVG.parentNode.removeChild(viewer._dimensionSVG); } catch(e) {}
       try { if (viewer && viewer._dimensionResizeHandler) window.removeEventListener('resize', viewer._dimensionResizeHandler); } catch(e) {}
       try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector._listener) viewer._dimensionUnitSelector.removeEventListener('change', viewer._dimensionUnitSelector._listener); } catch(e) {}
+      try { if (viewer && viewer._dimensionDebug && viewer._dimensionDebug.parentNode) viewer._dimensionDebug.parentNode.removeChild(viewer._dimensionDebug); } catch(e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
