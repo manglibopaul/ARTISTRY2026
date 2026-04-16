@@ -574,6 +574,7 @@ const Product = () => {
                   ? viewerContainer.parentElement.parentElement
                   : viewerContainer.parentElement || viewerContainer;
                 if (modalContainer && modalContainer.style) modalContainer.style.position = modalContainer.style.position || 'relative';
+
                 // style overlay for readability (light background, dark text)
                 overlay.style.background = 'rgba(255,255,255,0.96)';
                 overlay.style.color = '#111';
@@ -582,13 +583,173 @@ const Product = () => {
                 overlay.style.right = '16px';
                 overlay.style.top = '16px';
 
-                modalContainer.appendChild(overlay);
-                modalContainer.appendChild(unitSelector);
+                // Create an SVG overlay that covers the viewer area to draw arrowed dimension lines
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('class', 'model-dim-svg');
+                svg.style.position = 'absolute';
+                svg.style.left = '0';
+                svg.style.top = '0';
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                svg.style.pointerEvents = 'none';
+                svg.style.zIndex = '10005';
+
+                const drawDimensions = () => {
+                  // clear previous
+                  while (svg.firstChild) svg.removeChild(svg.firstChild);
+                  const rect = viewerContainer.getBoundingClientRect();
+                  const w = rect.width || 600;
+                  const h = rect.height || 400;
+
+                  const px = (pX) => Math.round(w * pX);
+                  const py = (pY) => Math.round(h * pY);
+
+                  // Points (percent-based) for visual placement
+                  const left = { x: px(0.12), y: py(0.82) };
+                  const right = { x: px(0.88), y: py(0.82) };
+                  const topRight = { x: px(0.88), y: py(0.18) };
+                  const midRight = { x: px(0.88), y: py(0.5) };
+
+                  // defs for arrow markers
+                  const defs = document.createElementNS(svgNS, 'defs');
+                  const marker = document.createElementNS(svgNS, 'marker');
+                  marker.setAttribute('id', 'arrow');
+                  marker.setAttribute('markerWidth', '8');
+                  marker.setAttribute('markerHeight', '8');
+                  marker.setAttribute('refX', '6');
+                  marker.setAttribute('refY', '3');
+                  marker.setAttribute('orient', 'auto');
+                  const mpath = document.createElementNS(svgNS, 'path');
+                  mpath.setAttribute('d', 'M0,0 L6,3 L0,6 L2,3 z');
+                  mpath.setAttribute('fill', '#1976d2');
+                  marker.appendChild(mpath);
+                  defs.appendChild(marker);
+                  svg.appendChild(defs);
+
+                  const makeLine = (x1, y1, x2, y2) => {
+                    const line = document.createElementNS(svgNS, 'line');
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    line.setAttribute('stroke', '#1976d2');
+                    line.setAttribute('stroke-width', '3');
+                    line.setAttribute('marker-end', 'url(#arrow)');
+                    line.setAttribute('marker-start', 'url(#arrow)');
+                    line.setAttribute('stroke-linecap', 'round');
+                    return line;
+                  };
+
+                  // width line
+                  svg.appendChild(makeLine(left.x, left.y, right.x, right.y));
+                  // height line
+                  svg.appendChild(makeLine(topRight.x, topRight.y, right.x, right.y));
+                  // depth (diagonal) line from left bottom to right bottom (slightly offset)
+                  svg.appendChild(makeLine(px(0.18), py(0.78), px(0.86), py(0.86)));
+
+                  const makeLabel = (x, y, text) => {
+                    const g = document.createElementNS(svgNS, 'g');
+                    const padding = 8;
+                    const txt = document.createElementNS(svgNS, 'text');
+                    txt.setAttribute('x', x);
+                    txt.setAttribute('y', y);
+                    txt.setAttribute('fill', '#0b2546');
+                    txt.setAttribute('font-size', '13');
+                    txt.setAttribute('font-family', 'Arial, sans-serif');
+                    txt.setAttribute('text-anchor', 'middle');
+                    txt.setAttribute('dominant-baseline', 'middle');
+                    txt.textContent = text;
+
+                    // approximate background rect size based on text length
+                    const rectBg = document.createElementNS(svgNS, 'rect');
+                    const estWidth = Math.max(60, text.length * 7 + padding * 2);
+                    const estHeight = 26;
+                    rectBg.setAttribute('x', x - estWidth / 2);
+                    rectBg.setAttribute('y', y - estHeight / 2 - 2);
+                    rectBg.setAttribute('rx', '14');
+                    rectBg.setAttribute('ry', '14');
+                    rectBg.setAttribute('width', estWidth);
+                    rectBg.setAttribute('height', estHeight);
+                    rectBg.setAttribute('fill', 'white');
+                    rectBg.setAttribute('stroke', '#d0e6ff');
+                    rectBg.setAttribute('stroke-width', '2');
+
+                    g.appendChild(rectBg);
+                    g.appendChild(txt);
+                    return g;
+                  };
+
+                  // create initial labels (values filled by updateOverlayText)
+                  const wLabel = makeLabel((left.x + right.x) / 2, left.y - 28, '');
+                  wLabel.setAttribute('data-dim', 'width');
+                  svg.appendChild(wLabel);
+
+                  const hLabel = makeLabel(right.x + 56, (topRight.y + right.y) / 2, '');
+                  hLabel.setAttribute('data-dim', 'height');
+                  svg.appendChild(hLabel);
+
+                  const dLabel = makeLabel(px(0.5), py(0.88), '');
+                  dLabel.setAttribute('data-dim', 'depth');
+                  svg.appendChild(dLabel);
+                };
+
+                // attach svg to modal container
+                modalContainer.appendChild(svg);
+
                 // keep references so we can remove them on cleanup
                 viewer._dimensionOverlay = overlay;
                 viewer._dimensionUnitSelector = unitSelector;
-                // initialize overlay text (cm default)
-                updateOverlayText(unitSelector.value);
+                viewer._dimensionSVG = svg;
+
+                // updateOverlayText should also update SVG labels
+                const originalUpdate = updateOverlayText;
+                const updateBoth = (unit) => {
+                  originalUpdate(unit);
+                  try {
+                    const raw = viewer._dimensionRaw || { width: 0, height: 0, depth: 0 };
+                    let factor = 1; let label = 'm';
+                    if (unit === 'cm') { factor = 100; label = 'cm'; }
+                    if (unit === 'in') { factor = 39.3700787; label = 'in'; }
+                    const fmtVal = (v) => Number(v * factor).toFixed(0) === '0' ? Number(v * factor).toFixed(2) : Number(v * factor).toFixed(2);
+                    const wText = `${fmtVal(raw.width)} ${label}`;
+                    const hText = `${fmtVal(raw.height)} ${label}`;
+                    const dText = `${fmtVal(raw.depth)} ${label}`;
+                    if (svg) {
+                      const labels = svg.querySelectorAll('[data-dim]');
+                      labels.forEach((g) => {
+                        const dim = g.getAttribute('data-dim');
+                        const textEl = g.querySelector('text');
+                        if (!textEl) return;
+                        if (dim === 'width') textEl.textContent = wText;
+                        if (dim === 'height') textEl.textContent = hText;
+                        if (dim === 'depth') textEl.textContent = dText;
+                        // adjust rect background width
+                        const rect = g.querySelector('rect');
+                        if (rect) {
+                          const estWidth = Math.max(60, (textEl.textContent.length) * 7 + 16);
+                          rect.setAttribute('width', estWidth);
+                          const x = parseFloat(textEl.getAttribute('x')) - estWidth / 2;
+                          rect.setAttribute('x', x);
+                        }
+                      });
+                    }
+                  } catch (e) {}
+                };
+
+                // initialize drawing and text
+                drawDimensions();
+                updateBoth(unitSelector.value);
+
+                // Re-draw when container resizes (simple window resize handler)
+                const onResize = () => { try { drawDimensions(); updateBoth(unitSelector.value); } catch (_) {} };
+                window.addEventListener('resize', onResize);
+                viewer._dimensionResizeHandler = onResize;
+
+                // ensure unit selector updates both
+                unitSelector.removeEventListener('change', unitSelector._listener);
+                unitSelector._listener = (e) => updateBoth(e.target.value);
+                unitSelector.addEventListener('change', unitSelector._listener);
               } catch (appendErr) {
                 // ignore overlay attach errors
               }
@@ -630,6 +791,9 @@ const Product = () => {
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
       try { if (viewer && viewer._dimensionOverlay && viewer._dimensionOverlay.parentNode) viewer._dimensionOverlay.parentNode.removeChild(viewer._dimensionOverlay); } catch(e) {}
       try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector.parentNode) viewer._dimensionUnitSelector.parentNode.removeChild(viewer._dimensionUnitSelector); } catch(e) {}
+      try { if (viewer && viewer._dimensionSVG && viewer._dimensionSVG.parentNode) viewer._dimensionSVG.parentNode.removeChild(viewer._dimensionSVG); } catch(e) {}
+      try { if (viewer && viewer._dimensionResizeHandler) window.removeEventListener('resize', viewer._dimensionResizeHandler); } catch(e) {}
+      try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector._listener) viewer._dimensionUnitSelector.removeEventListener('change', viewer._dimensionUnitSelector._listener); } catch(e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
