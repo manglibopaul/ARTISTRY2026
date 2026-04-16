@@ -832,6 +832,28 @@ const Product = () => {
     viewer.addEventListener('exit-vr', handleExitXR);
 
     modelViewerRef.current.appendChild(viewer);
+    // Debug: create an immediate init badge when debug flag present so we can verify the effect ran
+    try {
+      if (typeof window !== 'undefined' && window.location && String(window.location.search || '').includes('dimdebug=1')) {
+        const init = document.createElement('div');
+        init.id = 'dim-init-badge';
+        init.style.position = 'fixed';
+        init.style.left = '12px';
+        init.style.bottom = '12px';
+        init.style.background = 'rgba(0,128,0,0.85)';
+        init.style.color = 'white';
+        init.style.padding = '6px 8px';
+        init.style.borderRadius = '6px';
+        init.style.zIndex = '99999';
+        init.style.fontSize = '12px';
+        init.innerText = 'dim overlay init';
+        document.body.appendChild(init);
+        viewer._dimensionInit = init;
+        console.log('Dimension overlay init badge appended');
+      }
+    } catch (e) {
+      console.warn('Failed to append init badge', e);
+    }
     
     return () => {
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
@@ -844,6 +866,7 @@ const Product = () => {
       try { if (viewer && viewer._dimensionResizeHandler) window.removeEventListener('resize', viewer._dimensionResizeHandler); } catch(e) {}
       try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector._listener) viewer._dimensionUnitSelector.removeEventListener('change', viewer._dimensionUnitSelector._listener); } catch(e) {}
       try { if (viewer && viewer._dimensionDebug && viewer._dimensionDebug.parentNode) viewer._dimensionDebug.parentNode.removeChild(viewer._dimensionDebug); } catch(e) {}
+      try { if (viewer && viewer._dimensionInit && viewer._dimensionInit.parentNode) viewer._dimensionInit.parentNode.removeChild(viewer._dimensionInit); } catch(e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
