@@ -812,6 +812,45 @@ const Product = () => {
     const handleError = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
+      try {
+        // Create a visible error overlay inside the viewer area with a retry button
+        const viewerContainer = modelViewerRef.current;
+        const errEl = document.createElement('div');
+        errEl.className = 'model-dim-error';
+        errEl.style.position = 'absolute';
+        errEl.style.left = '50%';
+        errEl.style.top = '50%';
+        errEl.style.transform = 'translate(-50%, -50%)';
+        errEl.style.background = 'rgba(255,255,255,0.98)';
+        errEl.style.border = '1px solid rgba(0,0,0,0.08)';
+        errEl.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
+        errEl.style.padding = '14px 18px';
+        errEl.style.borderRadius = '10px';
+        errEl.style.zIndex = '200100';
+        errEl.style.textAlign = 'center';
+        errEl.style.color = '#111';
+        errEl.style.fontSize = '14px';
+        errEl.innerHTML = `<div style="margin-bottom:8px;font-weight:600">Model failed to load</div><div style="margin-bottom:10px;color:#444;font-size:13px">Unable to load 3D preview. Retry or view product images.</div>`;
+        const btn = document.createElement('button');
+        btn.innerText = 'Retry';
+        btn.style.padding = '8px 12px';
+        btn.style.borderRadius = '8px';
+        btn.style.border = '1px solid rgba(0,0,0,0.08)';
+        btn.style.background = '#1976d2';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.onclick = () => {
+          try { setArLoading(true); setArError(''); setShowAR(false); setTimeout(()=>setShowAR(true), 250); } catch(e) {}
+        };
+        errEl.appendChild(btn);
+        if (viewerContainer) {
+          try { viewerContainer.appendChild(errEl); viewer._dimensionErrorOverlay = errEl; } catch(e) {}
+        } else {
+          try { document.body.appendChild(errEl); viewer._dimensionErrorOverlay = errEl; } catch(e) {}
+        }
+      } catch (outerErr) {
+        console.warn('Failed to show error overlay', outerErr);
+      }
     };
     // When entering AR/VR (WebXR) disable camera controls to prevent pinch-zoom in real world
     const handleEnterXR = () => {
@@ -867,6 +906,7 @@ const Product = () => {
       try { if (viewer && viewer._dimensionUnitSelector && viewer._dimensionUnitSelector._listener) viewer._dimensionUnitSelector.removeEventListener('change', viewer._dimensionUnitSelector._listener); } catch(e) {}
       try { if (viewer && viewer._dimensionDebug && viewer._dimensionDebug.parentNode) viewer._dimensionDebug.parentNode.removeChild(viewer._dimensionDebug); } catch(e) {}
       try { if (viewer && viewer._dimensionInit && viewer._dimensionInit.parentNode) viewer._dimensionInit.parentNode.removeChild(viewer._dimensionInit); } catch(e) {}
+      try { if (viewer && viewer._dimensionErrorOverlay && viewer._dimensionErrorOverlay.parentNode) viewer._dimensionErrorOverlay.parentNode.removeChild(viewer._dimensionErrorOverlay); } catch(e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
