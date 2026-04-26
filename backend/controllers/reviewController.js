@@ -50,6 +50,7 @@ export const editReview = async (req, res) => {
     } catch (err) {
       // If DB doesn't have `message` column yet, retry without it
       if (isMissingMessageColumnError(err)) {
+        console.warn('Fallback triggered: saving review without `message` column', { reviewId, userId, error: err.message });
         try {
           // Remove message from dataValues and save allowed fields only
           const savedData = { ...review.dataValues };
@@ -135,6 +136,7 @@ export const createReview = async (req, res) => {
       return res.status(201).json({ message: 'Review created', review });
     } catch (err) {
       if (isMissingMessageColumnError(err)) {
+        console.warn('Fallback triggered: creating review without `message` column', { productId, orderId: reviewOrderId, userId, error: err.message });
         try {
           const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
           return res.status(201).json({ message: 'Review created (without message)', review });
