@@ -108,8 +108,11 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   void next;
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Unhandled error:', err && err.stack ? err.stack : err);
+  const isProd = process.env.NODE_ENV === 'production';
+  const message = err && err.message ? err.message : 'Something went wrong!';
+  // In production, avoid leaking detailed errors — send generic message.
+  res.status(500).json({ message: isProd ? 'Something went wrong!' : message });
 });
 
 // Start server
