@@ -111,6 +111,12 @@ const OrderDetails = () => {
     throw new Error(txt || 'Server returned a non-JSON response')
   }
 
+  const isMissingMessageColumnResponse = (text) => {
+    if (!text) return false;
+    const t = String(text).toLowerCase();
+    return t.includes('column "message" does not exist') || (t.includes('unknown column') && t.includes('message')) || t.includes('no such column: message') || t.includes('column not found: message');
+  }
+
   const openInfoModal = (title, message) => {
     setInfoModal({ open: true, title, message });
   };
@@ -390,6 +396,44 @@ const OrderDetails = () => {
       });
       if (!res.ok) {
         const txt = await res.text();
+        // If DB on the server doesn't have the `message` column yet, retry without the message field.
+        if (isMissingMessageColumnResponse(txt) && form.message) {
+          // resend without message
+          const retryData = new FormData();
+          retryData.append('productId', productId);
+          retryData.append('orderId', String(order.id));
+          retryData.append('rating', String(form.rating));
+          if (form.title) retryData.append('title', form.title);
+          retryData.append('comment', form.comment);
+          if (form.imageFile) retryData.append('image', form.imageFile);
+          const retryRes = await fetch(`${apiUrl}/api/reviews`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: retryData,
+          });
+          if (!retryRes.ok) {
+            const rt = await retryRes.text();
+            openInfoModal('Review Failed', rt || txt || 'Failed to submit review');
+            setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
+            return;
+          }
+          // success on retry
+          const newReview = await parseJsonSafe(retryRes);
+          const created = newReview.review || newReview;
+          setOrder(prev => {
+            const items = Array.isArray(prev.items) ? prev.items.map(it => {
+              const pid = it.productId || it.id || it._id;
+              if (Number(pid) === Number(productId)) {
+                const revs = Array.isArray(it.reviews) ? [created, ...it.reviews] : [created];
+                return { ...it, reviews: revs, canReview: false };
+              }
+              return it;
+            }) : prev.items;
+            return { ...prev, items };
+          });
+          openInfoModal('Review Submitted', 'Your review was submitted successfully. (without message)');
+          return;
+        }
         openInfoModal('Review Failed', txt || 'Failed to submit review');
         setReviewForms(prev => ({ ...prev, [productId]: { ...prev[productId], submitting: false } }));
         return;
