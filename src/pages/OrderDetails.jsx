@@ -35,6 +35,7 @@ const OrderDetails = () => {
       reviewId: review.id,
       rating: review.rating,
       comment: review.comment,
+      message: review.message || '',
       images: Array.isArray(review.images) ? review.images : [],
       imageFiles: [], // new uploads
     });
@@ -50,7 +51,7 @@ const OrderDetails = () => {
   // Submit PATCH to backend
   const submitEditReview = async () => {
     if (!editingReview) return;
-    const { productId, reviewId, rating, comment, imageFiles } = editingReview;
+    const { productId, reviewId, rating, comment, message, imageFiles } = editingReview;
     if (!comment || !rating) {
       openInfoModal('Incomplete Review', 'Please provide a rating and comment');
       return;
@@ -62,6 +63,7 @@ const OrderDetails = () => {
       const formData = new FormData();
       formData.append('rating', String(rating));
       formData.append('comment', comment);
+      if (message) formData.append('message', message);
       imageFiles.forEach(f => formData.append('images', f));
       // PATCH endpoint: /api/reviews/:id
       const res = await fetch(`${apiUrl}/api/reviews/${reviewId}`, {
@@ -75,14 +77,15 @@ const OrderDetails = () => {
         setEditSubmitting(false);
         return;
       }
-      const updatedReview = await res.json();
+      const updatedReview = await parseJsonSafe(res);
+      const updated = updatedReview.review || updatedReview;
       // Update local order state
       setOrder(prev => {
         const items = Array.isArray(prev.items) ? prev.items.map(it => {
           const pid = it.productId || it.id || it._id;
           if (Number(pid) === Number(productId)) {
             const revs = Array.isArray(it.reviews)
-              ? it.reviews.map(r => Number(r.id) === Number(reviewId) ? updatedReview : r)
+              ? it.reviews.map(r => Number(r.id) === Number(reviewId) ? updated : r)
               : it.reviews;
             return { ...it, reviews: revs };
           }
@@ -237,9 +240,10 @@ const OrderDetails = () => {
                 const rRes = await fetch(`${apiBase}/api/reviews/product/${prodId}`);
                 if (rRes.ok) {
                   rdata = await parseJsonSafe(rRes);
-                  items[i] = { ...items[i], reviews: rdata };
+                  const list = rdata.reviews || rdata;
+                  items[i] = { ...items[i], reviews: list };
                   const hasUserReview = userId
-                    ? rdata.some(r => Number(r.userId) === Number(userId) && Number(r.orderId) === Number(data.id))
+                    ? list.some(r => Number(r.userId) === Number(userId) && Number(r.orderId) === Number(data.id))
                     : false;
                   items[i].canReview = Boolean(token) && (data.orderStatus === 'completed') && (!userId ? true : !hasUserReview);
                 }
@@ -253,9 +257,9 @@ const OrderDetails = () => {
                 items[i].canReview = Boolean(token) && (data.orderStatus === 'completed');
               }
 
-              if (items[i].canReview) {
+                if (items[i].canReview) {
                 const key = prodId;
-                setReviewForms(prev => ({ ...prev, [key]: prev[key] || { rating: 5, title: '', comment: '', submitting: false } }));
+                setReviewForms(prev => ({ ...prev, [key]: prev[key] || { rating: 5, title: '', comment: '', message: '', submitting: false } }));
               }
             }
           }
@@ -376,6 +380,7 @@ const OrderDetails = () => {
       formData.append('rating', String(form.rating));
       if (form.title) formData.append('title', form.title);
       formData.append('comment', form.comment);
+      if (form.message) formData.append('message', form.message);
       if (form.imageFile) formData.append('image', form.imageFile);
 
       const res = await fetch(`${apiUrl}/api/reviews`, {
@@ -390,12 +395,13 @@ const OrderDetails = () => {
         return;
       }
       const newReview = await parseJsonSafe(res);
+      const created = newReview.review || newReview;
       // Update local order state to include the new review and prevent additional reviews
       setOrder(prev => {
         const items = Array.isArray(prev.items) ? prev.items.map(it => {
           const pid = it.productId || it.id || it._id;
           if (Number(pid) === Number(productId)) {
-            const revs = Array.isArray(it.reviews) ? [newReview, ...it.reviews] : [newReview];
+            const revs = Array.isArray(it.reviews) ? [created, ...it.reviews] : [created];
             return { ...it, reviews: revs, canReview: false };
           }
           return it;
@@ -627,6 +633,20 @@ const OrderDetails = () => {
                           );
                         })}
                       </div>
+                      <textarea
+                        className='w-full border px-2 py-1 mb-2 text-sm rounded'
+                        value={reviewForms[item.productId || item.id || item._id]?.comment || ''}
+                        onChange={e => handleReviewChange(item.productId || item.id || item._id, 'comment', e.target.value)}
+                        rows={3}
+                        placeholder='Write your review...'
+                      />
+                      <input
+                        type='text'
+                        className='w-full border px-2 py-1 mb-2 text-sm rounded'
+                        value={reviewForms[item.productId || item.id || item._id]?.message || ''}
+                        onChange={e => handleReviewChange(item.productId || item.id || item._id, 'message', e.target.value)}
+                        placeholder='Optional short message for the seller (e.g. delivery notes)'
+                      />
                       <input
                         type='file'
                         accept='image/*'
@@ -688,6 +708,13 @@ const OrderDetails = () => {
                                 rows={2}
                                 placeholder='Update your review...'
                               />
+                              <input
+                                type='text'
+                                className='w-full border px-2 py-1 mb-2 text-sm rounded'
+                                value={editingReview.message || ''}
+                                onChange={e => handleEditReviewChange('message', e.target.value)}
+                                placeholder='Optional short message for the seller'
+                              />
                               <label className='text-sm block mb-1'>Add Images</label>
                               <input
                                 type='file'
@@ -732,6 +759,9 @@ const OrderDetails = () => {
                           ) : (
                             <>
                               <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
+                              {r.message && (
+                                <div className='text-xs text-gray-500 mt-1 italic'>Note: {r.message}</div>
+                              )}
                               {/* Support multiple images */}
                               {Array.isArray(r.images) && r.images.length > 0 && (
                                 <div className='flex flex-wrap gap-2 mt-2'>

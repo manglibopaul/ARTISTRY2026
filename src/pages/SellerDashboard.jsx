@@ -180,7 +180,8 @@ const SellerDashboard = () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/reviews/seller`, { headers: { Authorization: `Bearer ${token}` } })
-      setSellerReviews(res.data || [])
+      const list = res.data.reviews || res.data;
+      setSellerReviews(list || [])
     } catch (err) {
       console.error('fetchSellerReviews', err)
       if (err.response?.status === 401) {
@@ -202,7 +203,8 @@ const SellerDashboard = () => {
     try {
       setLoading(true)
       const res = await axios.post(`${apiUrl}/api/reviews/${review.id}/reply`, { reply: draft }, { headers: { Authorization: `Bearer ${token}` } })
-      setSellerReviews(prev => prev.map(r => r.id === res.data.id ? res.data : r))
+      const returned = res.data.review || res.data;
+      setSellerReviews(prev => prev.map(r => r.id === returned.id ? returned : r))
       toast.success('Reply posted')
     } catch (err) {
       console.error('submitReply', err)
@@ -1479,6 +1481,9 @@ const SellerDashboard = () => {
                         <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
                         <div className='text-xs text-gray-500'>{new Date(r.createdAt).toLocaleString()}</div>
                         <div className='text-sm text-gray-700 mt-2'>{r.comment}</div>
+                        {r.message && (
+                          <div className='text-xs text-gray-500 mt-1 italic'>Note: {r.message}</div>
+                        )}
                       </div>
                       <div className='text-sm text-gray-600 ml-4'>Rating: {r.rating}</div>
                     </div>

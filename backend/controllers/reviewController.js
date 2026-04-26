@@ -7,7 +7,7 @@ export const editReview = async (req, res) => {
     if (!review) return res.status(404).json({ message: 'Review not found' });
     if (Number(review.userId) !== Number(userId)) return res.status(403).json({ message: 'You can only edit your own reviews' });
 
-    const { rating, title, comment } = req.body;
+    const { rating, title, comment, message } = req.body;
     let images = review.images || [];
     // If new images are uploaded, replace them
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
@@ -17,10 +17,11 @@ export const editReview = async (req, res) => {
     if (rating !== undefined) review.rating = rating;
     if (title !== undefined) review.title = title;
     if (comment !== undefined) review.comment = comment;
+    if (message !== undefined) review.message = message;
     review.images = images;
 
     await review.save();
-    res.json(review);
+    res.json({ message: 'Review updated', review });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -43,7 +44,7 @@ const toPublicUploadPath = (filePath, filename) => {
 // Create a review — only if the user purchased and the order containing the product is completed
 export const createReview = async (req, res) => {
   try {
-    const { productId, orderId, rating, title, comment } = req.body;
+    const { productId, orderId, rating, title, comment, message } = req.body;
     const userId = req.user.id;
     // Handle multiple images
     let images = [];
@@ -99,8 +100,8 @@ export const createReview = async (req, res) => {
     const user = await User.findByPk(userId);
     const userName = user ? user.name : null;
 
-    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
-    res.status(201).json(review);
+    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, message, images });
+    res.status(201).json({ message: 'Review created', review });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -111,7 +112,7 @@ export const getReviewsForProduct = async (req, res) => {
   try {
     const productId = req.params.id;
     const reviews = await Review.findAll({ where: { productId }, order: [['createdAt', 'DESC']] });
-    res.json(reviews);
+    res.json({ message: 'Reviews loaded', reviews });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -169,7 +170,7 @@ export const getReviewsForSeller = async (req, res) => {
     if (!productIds.length) return res.json([]);
 
     const reviews = await Review.findAll({ where: { productId: productIds }, order: [['createdAt', 'DESC']] });
-    res.json(reviews);
+    res.json({ message: 'Reviews loaded', reviews });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -196,7 +197,7 @@ export const replyToReview = async (req, res) => {
     review.sellerReplyAt = new Date();
     await review.save();
 
-    res.json(review);
+    res.json({ message: 'Reply saved', review });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

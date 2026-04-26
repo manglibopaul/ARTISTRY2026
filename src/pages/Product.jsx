@@ -295,14 +295,15 @@ const Product = () => {
         if (foundId) {
           const res = await fetch(`${apiUrl}/api/reviews/product/${foundId}`);
           if (res.ok) {
-            const data = await res.json();
-            setReviews(data || []);
-            if (data && data.length) {
-              const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1);
-              setAvgRating(avg);
-            } else {
-              setAvgRating(null);
-            }
+              const data = await res.json();
+              const list = data.reviews || data;
+              setReviews(list || []);
+              if (list && list.length) {
+                const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
+                setAvgRating(avg);
+              } else {
+                setAvgRating(null);
+              }
           }
         }
       } catch {
@@ -353,9 +354,10 @@ const Product = () => {
         const res = await fetch(`${apiUrl}/api/reviews/product/${resolvedProductId}`);
         if (res.ok) {
           const data = await res.json();
-          setReviews(data || []);
-          if (data && data.length) {
-            const avg = (data.reduce((s, r) => s + (Number(r.rating) || 0), 0) / data.length).toFixed(1);
+          const list = data.reviews || data;
+          setReviews(list || []);
+          if (list && list.length) {
+            const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
             setAvgRating(avg);
           } else {
             setAvgRating(null);
@@ -794,6 +796,9 @@ const Product = () => {
                   <div className='text-sm text-amber-500'>{renderStars(r.rating)}</div>
                 </div>
                 <div className='text-sm text-gray-700 mt-1'>{r.comment}</div>
+                {r.message && (
+                  <div className='text-xs text-gray-500 mt-1 italic'>Note: {r.message}</div>
+                )}
                 {r.imageUrl && (
                   <img
                     src={resolveUploadImage(r.imageUrl)}

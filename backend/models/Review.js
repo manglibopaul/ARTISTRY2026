@@ -40,6 +40,10 @@ const Review = sequelize.define('Review', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   images: {
     type: DataTypes.JSON,
     allowNull: true, // Array of image URLs
