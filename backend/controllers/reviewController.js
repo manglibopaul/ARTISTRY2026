@@ -52,6 +52,15 @@ export const createReview = async (req, res) => {
       images = req.files.map(f => toPublicUploadPath(f.path, f.filename));
     }
 
+    const isMissingMessageColumnError = (err) => {
+      if (!err || !err.message) return false;
+      const msg = String(err.message).toLowerCase();
+      return msg.includes("column \"message\" does not exist")
+        || msg.includes('unknown column') && msg.includes('message')
+        || msg.includes('no such column: message')
+        || msg.includes('column not found: message');
+    }
+
     if (!productId || !rating || !comment) return res.status(400).json({ message: 'Missing required fields' });
 
     const reviewOrderId = orderId ? Number(orderId) : null;
@@ -74,8 +83,24 @@ export const createReview = async (req, res) => {
         }
       } catch {
         return res.status(400).json({ message: 'Unable to verify the selected order.' });
-      }
-
+        try {
+          await review.save();
+          return res.json({ message: 'Review updated', review });
+        } catch (err) {
+          // If DB doesn't have `message` column yet, retry without it
+          if (isMissingMessageColumnError(err)) {
+            try {
+              delete review.dataValues.message;
+              review.message = undefined;
+              await review.save({ fields: Object.keys(review.dataValues).filter(k => k !== 'message') });
+              return res.json({ message: 'Review updated (without message)', review });
+            } catch (err2) {
+              console.error('review save retry failed:', err2);
+              return res.status(500).json({ message: err2.message || 'Failed to save review' });
+            }
+          }
+          throw err;
+        }
       const existing = await Review.findOne({ where: { productId, userId, orderId: reviewOrderId } });
       if (existing) return res.status(400).json({ message: 'You have already reviewed this product for this order' });
     } else {
@@ -140,8 +165,21 @@ export const checkReviewEligibility = async (req, res) => {
         return res.json({ eligible: false });
       }
     }
-
-    const orders = await Order.findAll({ where: { userId } });
+        try {
+          const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, message, images });
+          return res.status(201).json({ message: 'Review created', review });
+        } catch (err) {
+          if (isMissingMessageColumnError(err)) {
+            try {
+              const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
+              return res.status(201).json({ message: 'Review created (without message)', review });
+            } catch (err2) {
+              console.error('create review retry failed:', err2);
+              return res.status(500).json({ message: err2.message || 'Failed to create review' });
+            }
+          }
+          throw err;
+        }
     const eligible = orders.some(o => {
       try {
         const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
