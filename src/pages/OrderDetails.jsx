@@ -111,10 +111,27 @@ const OrderDetails = () => {
     throw new Error(txt || 'Server returned a non-JSON response')
   }
 
+  const extractMessageFromResponseText = (text) => {
+    if (!text) return '';
+    try {
+      const obj = JSON.parse(text);
+      if (obj && obj.message) return String(obj.message).toLowerCase();
+    } catch (e) {
+      // not JSON, fall through
+    }
+    return String(text).toLowerCase();
+  }
+
   const isMissingMessageColumnResponse = (text) => {
-    if (!text) return false;
-    const t = String(text).toLowerCase();
-    return t.includes('column "message" does not exist') || (t.includes('unknown column') && t.includes('message')) || t.includes('no such column: message') || t.includes('column not found: message');
+    const t = extractMessageFromResponseText(text);
+    if (!t) return false;
+    return t.includes('column "message" does not exist')
+      || t.includes('column \"message\" does not exist')
+      || (t.includes('unknown column') && t.includes('message'))
+      || t.includes('no such column: message')
+      || t.includes('column not found: message')
+      || t.includes('column message does not exist')
+      || t.includes('message\" does not exist');
   }
 
   const openInfoModal = (title, message) => {
