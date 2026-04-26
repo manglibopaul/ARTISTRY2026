@@ -1,3 +1,27 @@
+import Review from '../models/Review.js';
+import Order from '../models/Order.js';
+import safeFindOrderByPk from '../utils/orderUtils.js';
+import User from '../models/User.js';
+import Product from '../models/Product.js';
+
+const toPublicUploadPath = (filePath, filename) => {
+  if (!filePath) return filename ? `/uploads/images/${filename}` : null;
+  const normalized = String(filePath).replace(/\\/g, '/');
+  const marker = '/uploads/';
+  const idx = normalized.lastIndexOf(marker);
+  if (idx >= 0) return normalized.slice(idx);
+  return filename ? `/uploads/images/${filename}` : null;
+};
+
+const isMissingMessageColumnError = (err) => {
+  if (!err || !err.message) return false;
+  const msg = String(err.message).toLowerCase();
+  return msg.includes("column \"message\" does not exist")
+    || (msg.includes('unknown column') && msg.includes('message'))
+    || msg.includes('no such column: message')
+    || msg.includes('column not found: message');
+};
+
 // Edit a review (user can only edit their own)
 export const editReview = async (req, res) => {
   try {
@@ -20,25 +44,31 @@ export const editReview = async (req, res) => {
     if (message !== undefined) review.message = message;
     review.images = images;
 
-    await review.save();
-    res.json({ message: 'Review updated', review });
+    try {
+      await review.save();
+      return res.json({ message: 'Review updated', review });
+    } catch (err) {
+      // If DB doesn't have `message` column yet, retry without it
+      if (isMissingMessageColumnError(err)) {
+        try {
+          // Remove message from dataValues and save allowed fields only
+          const savedData = { ...review.dataValues };
+          delete savedData.message;
+          const fields = Object.keys(savedData);
+          await review.save({ fields });
+          // Refresh review from DB to return canonical data
+          const refreshed = await Review.findByPk(reviewId);
+          return res.json({ message: 'Review updated (without message)', review: refreshed });
+        } catch (err2) {
+          console.error('review save retry failed:', err2);
+          return res.status(500).json({ message: err2.message || 'Failed to save review' });
+        }
+      }
+      throw err;
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
-import Review from '../models/Review.js';
-import Order from '../models/Order.js';
-import safeFindOrderByPk from '../utils/orderUtils.js';
-import User from '../models/User.js';
-import Product from '../models/Product.js';
-
-const toPublicUploadPath = (filePath, filename) => {
-  if (!filePath) return filename ? `/uploads/images/${filename}` : null;
-  const normalized = String(filePath).replace(/\\/g, '/');
-  const marker = '/uploads/';
-  const idx = normalized.lastIndexOf(marker);
-  if (idx >= 0) return normalized.slice(idx);
-  return filename ? `/uploads/images/${filename}` : null;
 };
 
 // Create a review — only if the user purchased and the order containing the product is completed
@@ -50,15 +80,6 @@ export const createReview = async (req, res) => {
     let images = [];
     if (req.files && Array.isArray(req.files)) {
       images = req.files.map(f => toPublicUploadPath(f.path, f.filename));
-    }
-
-    const isMissingMessageColumnError = (err) => {
-      if (!err || !err.message) return false;
-      const msg = String(err.message).toLowerCase();
-      return msg.includes("column \"message\" does not exist")
-        || msg.includes('unknown column') && msg.includes('message')
-        || msg.includes('no such column: message')
-        || msg.includes('column not found: message');
     }
 
     if (!productId || !rating || !comment) return res.status(400).json({ message: 'Missing required fields' });
@@ -83,24 +104,8 @@ export const createReview = async (req, res) => {
         }
       } catch {
         return res.status(400).json({ message: 'Unable to verify the selected order.' });
-        try {
-          await review.save();
-          return res.json({ message: 'Review updated', review });
-        } catch (err) {
-          // If DB doesn't have `message` column yet, retry without it
-          if (isMissingMessageColumnError(err)) {
-            try {
-              delete review.dataValues.message;
-              review.message = undefined;
-              await review.save({ fields: Object.keys(review.dataValues).filter(k => k !== 'message') });
-              return res.json({ message: 'Review updated (without message)', review });
-            } catch (err2) {
-              console.error('review save retry failed:', err2);
-              return res.status(500).json({ message: err2.message || 'Failed to save review' });
-            }
-          }
-          throw err;
-        }
+      }
+
       const existing = await Review.findOne({ where: { productId, userId, orderId: reviewOrderId } });
       if (existing) return res.status(400).json({ message: 'You have already reviewed this product for this order' });
     } else {
@@ -125,8 +130,21 @@ export const createReview = async (req, res) => {
     const user = await User.findByPk(userId);
     const userName = user ? user.name : null;
 
-    const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, message, images });
-    res.status(201).json({ message: 'Review created', review });
+    try {
+      const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, message, images });
+      return res.status(201).json({ message: 'Review created', review });
+    } catch (err) {
+      if (isMissingMessageColumnError(err)) {
+        try {
+          const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
+          return res.status(201).json({ message: 'Review created (without message)', review });
+        } catch (err2) {
+          console.error('create review retry failed:', err2);
+          return res.status(500).json({ message: err2.message || 'Failed to create review' });
+        }
+      }
+      throw err;
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -165,21 +183,8 @@ export const checkReviewEligibility = async (req, res) => {
         return res.json({ eligible: false });
       }
     }
-        try {
-          const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, message, images });
-          return res.status(201).json({ message: 'Review created', review });
-        } catch (err) {
-          if (isMissingMessageColumnError(err)) {
-            try {
-              const review = await Review.create({ productId, orderId: reviewOrderId, userId, userName, rating, title, comment, images });
-              return res.status(201).json({ message: 'Review created (without message)', review });
-            } catch (err2) {
-              console.error('create review retry failed:', err2);
-              return res.status(500).json({ message: err2.message || 'Failed to create review' });
-            }
-          }
-          throw err;
-        }
+
+    const orders = await Order.findAll({ where: { userId } });
     const eligible = orders.some(o => {
       try {
         const items = Array.isArray(o.items) ? o.items : JSON.parse(o.items || '[]');
@@ -240,4 +245,3 @@ export const replyToReview = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
