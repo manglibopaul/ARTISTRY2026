@@ -890,7 +890,7 @@ const SellerDashboard = () => {
             <button
               onClick={() => setSelectedTab('shipping')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'shipping' ? 'bg-black text-white' : 'bg-gray-200'}`}>
-              Shipping
+                Payment & Shipping
             </button>
             <button
               onClick={() => setSelectedTab('returns')}
@@ -1636,11 +1636,11 @@ const SellerDashboard = () => {
           </div>
         )}
 
-        {/* ===== SHIPPING SETTINGS TAB ===== */}
+        {/* ===== PAYMENT & SHIPPING SETTINGS TAB ===== */}
         {selectedTab === 'shipping' && (
           <div className='bg-white rounded-lg shadow-lg p-6'>
             {/* Payment Settings FIRST for priority */}
-            <h2 className='text-2xl font-bold mb-6'>Payment Settings</h2>
+            <h2 className='text-2xl font-bold mb-6'>Payment & Shipping</h2>
             <div className='space-y-6'>
               <div>
                 <div className='space-y-4'>
