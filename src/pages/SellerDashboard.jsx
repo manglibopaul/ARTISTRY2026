@@ -1566,8 +1566,51 @@ const SellerDashboard = () => {
               )}
             </div>
 
-            {/* Full product inventory table */}
-            <div className='overflow-x-auto'>
+            {/* Mobile-friendly inventory list (visible on small screens) */}
+            <div className='block sm:hidden space-y-3'>
+              {products.map(p => (
+                <div key={p.id} className='border rounded p-3 flex justify-between items-start'>
+                  <div>
+                    <div className='font-medium text-sm'>{p.name}</div>
+                    <div className='text-sm text-gray-600 mt-1'>Stock: {p.stock}</div>
+                  </div>
+
+                  <div className='flex flex-col items-end gap-2'>
+                    <div className='flex items-center gap-2'>
+                      <input type='number' min='1' placeholder='Add qty' id={`restock-${p.id}`} className='w-20 px-2 py-1 border rounded' />
+                      <button
+                        onClick={async () => {
+                          const input = document.getElementById(`restock-${p.id}`)
+                          const qty = Number(input?.value || 0)
+                          if (qty <= 0) return toast.error('Enter a quantity to add')
+                          try {
+                            await axios.put(`${apiUrl}/api/products/${p.id}`, { stock: Number(p.stock) + qty }, {
+                              headers: { Authorization: `Bearer ${token}` },
+                            })
+                            toast.success('Stock updated')
+                            fetchProducts()
+                          } catch (err) {
+                            console.error(err)
+                            toast.error('Failed to update stock')
+                          }
+                        }}
+                        className='bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded'
+                      >
+                        Restock
+                      </button>
+                    </div>
+
+                    <div className='flex gap-2'>
+                      <button onClick={() => handleEdit(p)} className='bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm'>Edit</button>
+                      <button onClick={() => setDeleteConfirm(p.id)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm'>Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop/tablet inventory (hidden on small screens) */}
+            <div className='hidden sm:block overflow-x-auto'>
               <table className='w-full'>
                 <thead className='bg-gray-50 border-b border-gray-200'>
                   <tr>
