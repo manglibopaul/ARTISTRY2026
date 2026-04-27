@@ -445,12 +445,14 @@ const AdminDashboard = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-      <div className="mb-4 flex gap-2">
-        <button className={`px-4 py-2 rounded ${selectedTab === 'customers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('customers')}>Customers</button>
-        <button className={`px-4 py-2 rounded ${selectedTab === 'sellers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('sellers')}>Sellers</button>
-        <button className={`px-4 py-2 rounded ${selectedTab === 'orders' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('orders')}>Orders</button>
-        <button className={`px-4 py-2 rounded ${selectedTab === 'support' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('support')}>Support Chat</button>
-        <button className={`px-4 py-2 rounded ${selectedTab === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('bin')}>Bin</button>
+      <div className="mb-4">
+        <div className='flex gap-2 overflow-x-auto pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'customers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('customers')}>Customers</button>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'sellers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('sellers')}>Sellers</button>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'orders' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('orders')}>Orders</button>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'support' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('support')}>Support Chat</button>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('bin')}>Bin</button>
+        </div>
       </div>
       {/* Customers Tab */}
       {selectedTab === 'customers' && (
@@ -461,35 +463,57 @@ const AdminDashboard = () => {
           ) : customerError ? (
             <div className="text-red-600">{customerError === 'Invalid token' ? 'Session expired. Please log in again.' : customerError}</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border">
-                <thead>
-                  <tr>
-                    <th className="text-left p-3 font-semibold">Name</th>
-                    <th className="text-left p-3 font-semibold">Email</th>
-                    <th className="text-left p-3 font-semibold">Phone</th>
-                    <th className="text-left p-3 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customers.map(u => (
-                    <tr key={u.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{u.name}</td>
-                      <td className="p-3">{u.email}</td>
-                      <td className="p-3">{u.phone || '-'}</td>
-                      <td className="p-3 flex gap-2">
-                        <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
-                        <button onClick={() => {
-                          setConfirmMessage('Delete this customer? This cannot be undone.');
-                          setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
-                          setConfirmOpen(true);
-                        }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
-                      </td>
+            <>
+              {/* Mobile list */}
+              <div className='block sm:hidden space-y-3'>
+                {customers.map(u => (
+                  <div key={u.id} className='border rounded p-3'>
+                    <div className='font-medium'>{u.name}</div>
+                    <div className='text-sm text-gray-600'>{u.email}</div>
+                    <div className='text-sm text-gray-500'>{u.phone || '-'}</div>
+                    <div className='mt-3 flex gap-2'>
+                      <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
+                      <button onClick={() => {
+                        setConfirmMessage('Delete this customer? This cannot be undone.');
+                        setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
+                        setConfirmOpen(true);
+                      }} className='px-3 py-1 rounded bg-red-600 text-white text-sm'>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop/tablet table */}
+              <div className='hidden sm:block overflow-x-auto'>
+                <table className="min-w-full border">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-3 font-semibold">Name</th>
+                      <th className="text-left p-3 font-semibold">Email</th>
+                      <th className="text-left p-3 font-semibold">Phone</th>
+                      <th className="text-left p-3 font-semibold">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {customers.map(u => (
+                      <tr key={u.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3">{u.name}</td>
+                        <td className="p-3">{u.email}</td>
+                        <td className="p-3">{u.phone || '-'}</td>
+                        <td className="p-3 flex gap-2">
+                          <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
+                          <button onClick={() => {
+                            setConfirmMessage('Delete this customer? This cannot be undone.');
+                            setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
+                            setConfirmOpen(true);
+                          }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -502,47 +526,76 @@ const AdminDashboard = () => {
           ) : sellerError ? (
             <div className="text-red-600">{sellerError}</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border">
-                <thead>
-                  <tr>
-                    <th className="text-left p-3 font-semibold">Name</th>
-                    <th className="text-left p-3 font-semibold">Store Name</th>
-                    <th className="text-left p-3 font-semibold">Email</th>
-                    <th className="text-left p-3 font-semibold">Verified</th>
-                    <th className="text-left p-3 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sellers.map(s => (
-                    <tr key={s.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{s.name}</td>
-                      <td className="p-3">{s.storeName}</td>
-                      <td className="p-3">{s.email}</td>
-                      <td className="p-3">
+            <>
+              {/* Mobile list */}
+              <div className='block sm:hidden space-y-3'>
+                {sellers.map(s => (
+                  <div key={s.id} className='border rounded p-3'>
+                    <div className='flex justify-between items-start'>
+                      <div>
+                        <div className='font-medium'>{s.name}</div>
+                        <div className='text-sm text-gray-600'>{s.storeName}</div>
+                        <div className='text-sm text-gray-500'>{s.email}</div>
+                      </div>
+                      <div>
                         {s.isVerified ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
-                            ✓ Yes
-                          </span>
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">✓ Yes</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
-                            ✗ No
-                          </span>
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">✗ No</span>
                         )}
-                      </td>
-                      <td className="p-3 flex gap-2">
-                        <button onClick={() => { setViewSeller(s); setViewSellerModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
-                        <button onClick={() => {
-                          setConfirmMessage('Delete this seller? This cannot be undone.');
-                          setConfirmAction(() => () => { deleteSeller(s.id); setConfirmOpen(false); });
-                          setConfirmOpen(true);
-                        }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
-                      </td>
+                      </div>
+                    </div>
+                    <div className='mt-3 flex gap-2'>
+                      <button onClick={() => { setViewSeller(s); setViewSellerModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
+                      <button onClick={() => {
+                        setConfirmMessage('Delete this seller? This cannot be undone.');
+                        setConfirmAction(() => () => { deleteSeller(s.id); setConfirmOpen(false); });
+                        setConfirmOpen(true);
+                      }} className='px-3 py-1 rounded bg-red-600 text-white text-sm'>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop/tablet table */}
+              <div className='hidden sm:block overflow-x-auto'>
+                <table className="min-w-full border">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-3 font-semibold">Name</th>
+                      <th className="text-left p-3 font-semibold">Store Name</th>
+                      <th className="text-left p-3 font-semibold">Email</th>
+                      <th className="text-left p-3 font-semibold">Verified</th>
+                      <th className="text-left p-3 font-semibold">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {sellers.map(s => (
+                      <tr key={s.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3">{s.name}</td>
+                        <td className="p-3">{s.storeName}</td>
+                        <td className="p-3">{s.email}</td>
+                        <td className="p-3">
+                          {s.isVerified ? (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">✓ Yes</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">✗ No</span>
+                          )}
+                        </td>
+                        <td className="p-3 flex gap-2">
+                          <button onClick={() => { setViewSeller(s); setViewSellerModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
+                          <button onClick={() => {
+                            setConfirmMessage('Delete this seller? This cannot be undone.');
+                            setConfirmAction(() => () => { deleteSeller(s.id); setConfirmOpen(false); });
+                            setConfirmOpen(true);
+                          }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -557,58 +610,95 @@ const AdminDashboard = () => {
           ) : orders.length === 0 ? (
             <div className="text-gray-500">No orders found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border">
-                <thead>
-                  <tr>
-                    <th className="text-left p-3 font-semibold">Order ID</th>
-                    <th className="text-left p-3 font-semibold">Customer</th>
-                    <th className="text-left p-3 font-semibold">Items</th>
-                    <th className="text-left p-3 font-semibold">Artist</th>
-                    <th className="text-left p-3 font-semibold">Mode of Delivery</th>
-                    <th className="text-left p-3 font-semibold">Status</th>
-                    <th className="text-left p-3 font-semibold">Created</th>
-                    <th className="text-left p-3 font-semibold">Completed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map(o => {
-                    let artisans = [];
-                    let deliveryModes = [];
-                    if (Array.isArray(o.items)) {
-                      o.items.forEach(item => {
-                        if (item.sellerStoreName && !artisans.includes(item.sellerStoreName)) {
-                          artisans.push(item.sellerStoreName);
-                        } else if (item.sellerName && !artisans.includes(item.sellerName)) {
-                          artisans.push(item.sellerName);
-                        }
-                        if (item.deliveryMode && !deliveryModes.includes(item.deliveryMode)) {
-                          deliveryModes.push(item.deliveryMode);
-                        }
-                      });
-                    }
-                    if (artisans.length === 0) artisans = ['-'];
-                    if (deliveryModes.length === 0) deliveryModes = [o.paymentMethod || '-'];
-                    return (
-                      <tr key={o.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3 font-medium">#{o.id}</td>
-                        <td className="p-3">{o.firstName} {o.lastName}</td>
-                        <td className="p-3">{Array.isArray(o.items) ? o.items.length : 0}</td>
-                        <td className="p-3">{artisans.join(', ')}</td>
-                        <td className="p-3">{deliveryModes.map(mode => mode.charAt(0).toUpperCase() + mode.slice(1)).join(', ')}</td>
-                        <td className="p-3">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${o.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : o.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
-                            {o.orderStatus}
-                          </span>
-                        </td>
-                        <td className="p-3">{new Date(o.createdAt).toLocaleString()}</td>
-                        <td className="p-3">{o.completedAt ? new Date(o.completedAt).toLocaleString() : '-'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile cards */}
+              <div className='block sm:hidden space-y-3'>
+                {orders.map(o => {
+                  let artisans = [];
+                  let deliveryModes = [];
+                  if (Array.isArray(o.items)) {
+                    o.items.forEach(item => {
+                      if (item.sellerStoreName && !artisans.includes(item.sellerStoreName)) artisans.push(item.sellerStoreName);
+                      else if (item.sellerName && !artisans.includes(item.sellerName)) artisans.push(item.sellerName);
+                      if (item.deliveryMode && !deliveryModes.includes(item.deliveryMode)) deliveryModes.push(item.deliveryMode);
+                    });
+                  }
+                  if (artisans.length === 0) artisans = ['-'];
+                  if (deliveryModes.length === 0) deliveryModes = [o.paymentMethod || '-'];
+                  return (
+                    <div key={o.id} className='border rounded p-3'>
+                      <div className='flex justify-between items-start'>
+                        <div>
+                          <div className='font-medium'>Order #{o.id}</div>
+                          <div className='text-sm text-gray-600'>{o.firstName} {o.lastName}</div>
+                          <div className='text-sm text-gray-500'>Items: {Array.isArray(o.items) ? o.items.length : 0}</div>
+                          <div className='text-sm text-gray-500'>Artist: {artisans.join(', ')}</div>
+                        </div>
+                        <div className='text-right'>
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium ${o.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : o.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>{o.orderStatus}</div>
+                        </div>
+                      </div>
+                      <div className='mt-2 text-xs text-gray-500'>Mode: {deliveryModes.map(mode => mode.charAt(0).toUpperCase() + mode.slice(1)).join(', ')}</div>
+                      <div className='mt-2 text-xs text-gray-400'>{new Date(o.createdAt).toLocaleString()}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop/tablet table */}
+              <div className='hidden sm:block overflow-x-auto'>
+                <table className="min-w-full border">
+                  <thead>
+                    <tr>
+                      <th className="text-left p-3 font-semibold">Order ID</th>
+                      <th className="text-left p-3 font-semibold">Customer</th>
+                      <th className="text-left p-3 font-semibold">Items</th>
+                      <th className="text-left p-3 font-semibold">Artist</th>
+                      <th className="text-left p-3 font-semibold">Mode of Delivery</th>
+                      <th className="text-left p-3 font-semibold">Status</th>
+                      <th className="text-left p-3 font-semibold">Created</th>
+                      <th className="text-left p-3 font-semibold">Completed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map(o => {
+                      let artisans = [];
+                      let deliveryModes = [];
+                      if (Array.isArray(o.items)) {
+                        o.items.forEach(item => {
+                          if (item.sellerStoreName && !artisans.includes(item.sellerStoreName)) {
+                            artisans.push(item.sellerStoreName);
+                          } else if (item.sellerName && !artisans.includes(item.sellerName)) {
+                            artisans.push(item.sellerName);
+                          }
+                          if (item.deliveryMode && !deliveryModes.includes(item.deliveryMode)) {
+                            deliveryModes.push(item.deliveryMode);
+                          }
+                        });
+                      }
+                      if (artisans.length === 0) artisans = ['-'];
+                      if (deliveryModes.length === 0) deliveryModes = [o.paymentMethod || '-'];
+                      return (
+                        <tr key={o.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3 font-medium">#{o.id}</td>
+                          <td className="p-3">{o.firstName} {o.lastName}</td>
+                          <td className="p-3">{Array.isArray(o.items) ? o.items.length : 0}</td>
+                          <td className="p-3">{artisans.join(', ')}</td>
+                          <td className="p-3">{deliveryModes.map(mode => mode.charAt(0).toUpperCase() + mode.slice(1)).join(', ')}</td>
+                          <td className="p-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${o.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : o.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>
+                              {o.orderStatus}
+                            </span>
+                          </td>
+                          <td className="p-3">{new Date(o.createdAt).toLocaleString()}</td>
+                          <td className="p-3">{o.completedAt ? new Date(o.completedAt).toLocaleString() : '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -631,82 +721,140 @@ const AdminDashboard = () => {
             <div className="text-gray-500">No soft-deleted records.</div>
           ) : (
             <div className="space-y-6">
-              <div className="overflow-x-auto">
+              {/* Deleted Sellers */}
+              <div>
                 <h3 className="font-semibold mb-2">Deleted Sellers</h3>
-              <table className="min-w-full border">
-                <thead>
-                  <tr>
-                    <th className="text-left p-3 font-semibold">Seller Name</th>
-                    <th className="text-left p-3 font-semibold">Store Name</th>
-                    <th className="text-left p-3 font-semibold">Email</th>
-                    <th className="text-left p-3 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <div className='block sm:hidden space-y-3'>
                   {binSellers.map(seller => (
-                    <tr key={seller.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{seller.name}</td>
-                      <td className="p-3">{seller.storeName}</td>
-                      <td className="p-3">{seller.email}</td>
-                      <td className="p-3 flex gap-2">
+                    <div key={seller.id} className='border rounded p-3'>
+                      <div className='font-medium'>{seller.name}</div>
+                      <div className='text-sm text-gray-600'>{seller.storeName}</div>
+                      <div className='text-sm text-gray-500'>{seller.email}</div>
+                      <div className='mt-3 flex gap-2'>
                         <button onClick={() => {
                           setConfirmMessage('Restore this seller?');
                           setConfirmButtonLabel('Restore');
                           setConfirmButtonColor('bg-green-600');
                           setConfirmAction(() => () => { restoreSeller(seller.id); setConfirmOpen(false); });
                           setConfirmOpen(true);
-                        }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                        }} className="px-3 py-1 rounded bg-green-600 text-white text-sm">Restore</button>
                         <button onClick={() => {
                           setConfirmMessage('Permanently delete this seller? This cannot be undone.');
                           setConfirmButtonLabel('Delete');
                           setConfirmButtonColor('bg-red-600');
                           setConfirmAction(() => () => { permanentDeleteSeller(seller.id); setConfirmOpen(false); });
                           setConfirmOpen(true);
-                        }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
-                      </td>
-                    </tr>
+                        }} className="px-3 py-1 rounded bg-red-600 text-white text-sm">Delete</button>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                <div className='hidden sm:block overflow-x-auto'>
+                  <table className="min-w-full border">
+                    <thead>
+                      <tr>
+                        <th className="text-left p-3 font-semibold">Seller Name</th>
+                        <th className="text-left p-3 font-semibold">Store Name</th>
+                        <th className="text-left p-3 font-semibold">Email</th>
+                        <th className="text-left p-3 font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {binSellers.map(seller => (
+                        <tr key={seller.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3">{seller.name}</td>
+                          <td className="p-3">{seller.storeName}</td>
+                          <td className="p-3">{seller.email}</td>
+                          <td className="p-3 flex gap-2">
+                            <button onClick={() => {
+                              setConfirmMessage('Restore this seller?');
+                              setConfirmButtonLabel('Restore');
+                              setConfirmButtonColor('bg-green-600');
+                              setConfirmAction(() => () => { restoreSeller(seller.id); setConfirmOpen(false); });
+                              setConfirmOpen(true);
+                            }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                            <button onClick={() => {
+                              setConfirmMessage('Permanently delete this seller? This cannot be undone.');
+                              setConfirmButtonLabel('Delete');
+                              setConfirmButtonColor('bg-red-600');
+                              setConfirmAction(() => () => { permanentDeleteSeller(seller.id); setConfirmOpen(false); });
+                              setConfirmOpen(true);
+                            }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Deleted Customers */}
+              <div>
                 <h3 className="font-semibold mb-2">Deleted Customers</h3>
-                <table className="min-w-full border">
-                  <thead>
-                    <tr>
-                      <th className="text-left p-3 font-semibold">Customer Name</th>
-                      <th className="text-left p-3 font-semibold">Email</th>
-                      <th className="text-left p-3 font-semibold">Phone</th>
-                      <th className="text-left p-3 font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {binCustomers.map(customer => (
-                      <tr key={customer.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{customer.name}</td>
-                        <td className="p-3">{customer.email}</td>
-                        <td className="p-3">{customer.phone || '-'}</td>
-                        <td className="p-3 flex gap-2">
-                          <button onClick={() => {
-                            setConfirmMessage('Restore this customer?');
-                            setConfirmButtonLabel('Restore');
-                            setConfirmButtonColor('bg-green-600');
-                            setConfirmAction(() => () => { restoreCustomer(customer.id); setConfirmOpen(false); });
-                            setConfirmOpen(true);
-                          }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
-                          <button onClick={() => {
-                            setConfirmMessage('Permanently delete this customer? This cannot be undone.');
-                            setConfirmButtonLabel('Delete');
-                            setConfirmButtonColor('bg-red-600');
-                            setConfirmAction(() => () => { permanentDeleteCustomer(customer.id); setConfirmOpen(false); });
-                            setConfirmOpen(true);
-                          }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
-                        </td>
+                <div className='block sm:hidden space-y-3'>
+                  {binCustomers.map(customer => (
+                    <div key={customer.id} className='border rounded p-3'>
+                      <div className='font-medium'>{customer.name}</div>
+                      <div className='text-sm text-gray-600'>{customer.email}</div>
+                      <div className='text-sm text-gray-500'>{customer.phone || '-'}</div>
+                      <div className='mt-3 flex gap-2'>
+                        <button onClick={() => {
+                          setConfirmMessage('Restore this customer?');
+                          setConfirmButtonLabel('Restore');
+                          setConfirmButtonColor('bg-green-600');
+                          setConfirmAction(() => () => { restoreCustomer(customer.id); setConfirmOpen(false); });
+                          setConfirmOpen(true);
+                        }} className="px-3 py-1 rounded bg-green-600 text-white text-sm">Restore</button>
+                        <button onClick={() => {
+                          setConfirmMessage('Permanently delete this customer? This cannot be undone.');
+                          setConfirmButtonLabel('Delete');
+                          setConfirmButtonColor('bg-red-600');
+                          setConfirmAction(() => () => { permanentDeleteCustomer(customer.id); setConfirmOpen(false); });
+                          setConfirmOpen(true);
+                        }} className="px-3 py-1 rounded bg-red-600 text-white text-sm">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className='hidden sm:block overflow-x-auto'>
+                  <table className="min-w-full border">
+                    <thead>
+                      <tr>
+                        <th className="text-left p-3 font-semibold">Customer Name</th>
+                        <th className="text-left p-3 font-semibold">Email</th>
+                        <th className="text-left p-3 font-semibold">Phone</th>
+                        <th className="text-left p-3 font-semibold">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {binCustomers.map(customer => (
+                        <tr key={customer.id} className="border-b hover:bg-gray-50">
+                          <td className="p-3">{customer.name}</td>
+                          <td className="p-3">{customer.email}</td>
+                          <td className="p-3">{customer.phone || '-'}</td>
+                          <td className="p-3 flex gap-2">
+                            <button onClick={() => {
+                              setConfirmMessage('Restore this customer?');
+                              setConfirmButtonLabel('Restore');
+                              setConfirmButtonColor('bg-green-600');
+                              setConfirmAction(() => () => { restoreCustomer(customer.id); setConfirmOpen(false); });
+                              setConfirmOpen(true);
+                            }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
+                            <button onClick={() => {
+                              setConfirmMessage('Permanently delete this customer? This cannot be undone.');
+                              setConfirmButtonLabel('Delete');
+                              setConfirmButtonColor('bg-red-600');
+                              setConfirmAction(() => () => { permanentDeleteCustomer(customer.id); setConfirmOpen(false); });
+                              setConfirmOpen(true);
+                            }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
