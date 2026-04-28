@@ -824,7 +824,7 @@ const SellerDashboard = () => {
       <div className='bg-black text-white p-4 sm:p-6'>
         <div className='max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
           <div>
-            <h1 className='text-xl sm:text-3xl font-bold'>Seller Dashboard</h1>
+            <h1 className='text-xl sm:text-3xl font-bold'>Artist Dashboard</h1>
             {seller && <p className='text-gray-400 text-sm sm:text-base'>{seller.storeName}</p>}
           </div>
           <div className='flex gap-2 sm:gap-3 w-full sm:w-auto'>
