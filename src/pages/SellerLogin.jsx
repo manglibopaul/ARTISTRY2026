@@ -128,7 +128,7 @@ const SellerLogin = () => {
     <div className='min-h-screen bg-gray-100 flex items-center justify-center px-4'>
       <div className='bg-white rounded-lg shadow-lg p-8 w-full max-w-md'>
         <h2 className='text-2xl font-bold mb-6 text-center'>
-          {isLogin ? 'Seller Sign In' : 'Seller Sign Up'}
+          {isLogin ? 'Artist Sign In' : 'Artist Sign Up'}
         </h2>
 
         {error && (

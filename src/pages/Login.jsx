@@ -336,13 +336,13 @@ const Login = () => {
         <div className='mt-4 text-center text-sm text-gray-600'>
           {mode === 'Sign In' ? (
             <>
-              Are you a seller?{' '}
+              Are you an artist?{' '}
               <button
                 type='button'
                 onClick={() => navigate('/seller/login')}
                 className='text-black underline'
               >
-                Seller Sign In
+                Artist Sign In
               </button>
             </>
           ) : (
@@ -353,7 +353,7 @@ const Login = () => {
                 onClick={() => navigate('/seller/login?mode=signup')}
                 className='text-black underline'
               >
-                Seller Sign Up
+                Artist Sign Up
               </button>
             </>
           )}

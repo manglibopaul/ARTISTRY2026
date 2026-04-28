@@ -100,13 +100,13 @@ const ArtisanDirectory = () => {
                   onClick={() => navigate('/seller/login?mode=signup')}
                   className='px-5 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:bg-gray-100 transition'
                 >
-                  Seller Sign Up
+                  Artist Sign Up
                 </button>
                 <button
                   onClick={() => navigate('/seller/login')}
                   className='px-5 py-2.5 rounded-full border border-white/30 text-sm font-semibold text-white hover:bg-white/10 transition'
                 >
-                  Seller Sign In
+                  Artist Sign In
                 </button>
               </div>
             </div>
