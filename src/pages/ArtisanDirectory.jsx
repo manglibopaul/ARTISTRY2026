@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react'
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { ShopContext } from '../context/ShopContext'
@@ -66,6 +66,25 @@ const ArtisanDirectory = () => {
     fetchSellers()
   }, [fetchArtisanTypes, fetchSellers])
 
+  // reveal animation for artist cards using IntersectionObserver
+  const cardsObservedRef = useRef(false)
+  useEffect(() => {
+    if (cardsObservedRef.current) return
+    const nodes = Array.from(document.querySelectorAll('.artist-card'))
+    if (!nodes || nodes.length === 0) return
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          obs.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.12 })
+    nodes.forEach(n => obs.observe(n))
+    cardsObservedRef.current = true
+    return () => obs.disconnect()
+  }, [sellers, filteredSellers])
+
   const normalizeType = (value) => String(value || '').trim().toLowerCase()
 
   const getSellerProductCount = (sellerId) => {
@@ -98,13 +117,13 @@ const ArtisanDirectory = () => {
               <div className='flex flex-col sm:flex-row gap-2'>
                 <button
                   onClick={() => navigate('/seller/login?mode=signup')}
-                  className='px-5 py-2.5 rounded-full bg-white text-black text-sm font-semibold hover:bg-gray-100 transition'
+                  className='hero-cta px-5 py-2.5 rounded-full text-sm font-semibold btn-primary transition'
                 >
                   Artist Sign Up
                 </button>
                 <button
                   onClick={() => navigate('/seller/login')}
-                  className='px-5 py-2.5 rounded-full border border-white/30 text-sm font-semibold text-white hover:bg-white/10 transition'
+                  className='px-5 py-2.5 rounded-full border border-white/20 text-sm font-semibold text-white hover:bg-white/6 transition'
                 >
                   Artist Sign In
                 </button>
@@ -176,7 +195,7 @@ const ArtisanDirectory = () => {
                 <div
                   key={seller.id}
                   onClick={() => navigate(getArtisanPath(seller))}
-                  className='group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-300 cursor-pointer'
+                  className='artist-card group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-400 cursor-pointer opacity-0 translate-y-6'
                 >
                   {/* Card Header with Avatar */}
                   <div className='bg-gradient-to-r from-gray-100 to-gray-50 p-6 border-b border-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition'>
@@ -201,7 +220,7 @@ const ArtisanDirectory = () => {
                     {/* Craft Type Badge */}
                     {seller.artisanType && (
                       <div className='mb-4'>
-                        <span className='inline-block bg-black text-white text-xs px-3 py-1.5 rounded-full font-semibold'>
+                        <span className='inline-block badge-primary text-xs px-3 py-1.5 rounded-full font-semibold'>
                           {seller.artisanType}
                         </span>
                       </div>
@@ -231,7 +250,7 @@ const ArtisanDirectory = () => {
                       </div>
                     )}
 
-                    {/* Product Count */}
+                    {/* Product Count + CTA */}
                     <div className='flex items-center justify-between text-sm text-gray-600 border-t pt-4'>
                       <div>
                         <span className='font-bold text-gray-900'>{getSellerProductCount(seller.id)}</span>
@@ -239,7 +258,15 @@ const ArtisanDirectory = () => {
                           {getSellerProductCount(seller.id) === 1 ? 'product' : 'products'}
                         </span>
                       </div>
-                      <div className='text-black font-bold group-hover:translate-x-1 transition'>→</div>
+                      <div className='flex items-center gap-3'>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(getArtisanPath(seller)) }}
+                          className='visit-shop inline-block btn-primary text-xs opacity-0 transform translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out'
+                        >
+                          Visit Shop
+                        </button>
+                        <div className='text-black font-bold group-hover:translate-x-1 transition'>→</div>
+                      </div>
                     </div>
                   </div>
                 </div>

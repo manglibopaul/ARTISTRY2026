@@ -5,12 +5,16 @@
 @tailwind utilities;
 
 :root {
-    --color-primary: #b91c1c; /* brand red (tuned) */
-    --color-secondary: #ff7ab6; /* pink (tuned) */
-    --color-accent: #f59e0b; /* amber */
-    --color-muted: #6b7280; /* gray-500 */
-    --color-surface: #f8fafc; /* gray-50 */
-    --color-text: #0f172a; /* slightly deeper text */
+    /* Warm theme variables */
+    --color-primary: #c05621; /* warm terracotta */
+    --color-secondary: #f7e9df; /* soft cream */
+    --color-accent: #d97706; /* amber accent */
+    --color-muted: #7c6b5a; /* warm muted brown */
+    --color-surface: #fffaf6; /* warm surface */
+    --color-text: #2b2b2b; /* warm dark text */
+    --card-bg: #fffaf6;
+    --card-border: rgba(160,120,90,0.12);
+    --btn-radius: 12px;
 }
 
 a.active hr{
@@ -123,3 +127,61 @@ h2 {
         color: white;
     }
 }
+
+/* Artist directory animations and micro-interactions */
+.artist-card {
+    will-change: transform, opacity;
+}
+.artist-card.is-visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    transition: opacity 420ms cubic-bezier(.2,.8,.2,1), transform 420ms cubic-bezier(.2,.8,.2,1);
+}
+
+.artist-card:hover {
+    transform: translateY(-6px) scale(1.01);
+}
+
+@keyframes subtlePulse {
+    0% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+    70% { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.12); }
+    100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+}
+
+.hero-cta { animation: subtlePulse 3.6s ease-in-out infinite; }
+
+.visit-shop { box-shadow: 0 2px 6px rgba(2,6,23,0.06); }
+
+.filter-pill { transition: transform 220ms ease, box-shadow 220ms ease; }
+.filter-pill:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(2,6,23,0.08); }
+
+/* gentle underline animation for hero headline */
+.headline-underline { background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02)); padding: 0.35rem 0.75rem; border-radius: 9999px; display: inline-block; }
+
+/* small entrance helper for larger hero text */
+.animate-hero-fade { opacity: 0; transform: translateY(6px); animation: fadeIn 520ms ease-out forwards 120ms; }
+
+/* Warm theme component helpers */
+.btn-primary {
+    background: linear-gradient(180deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 88%, black 12%));
+    color: white;
+    padding: 0.55rem 1rem;
+    border-radius: var(--btn-radius);
+    box-shadow: 0 8px 24px rgba(192,92,36,0.12);
+    border: none;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(192,92,36,0.14); }
+
+.card-surface { background: var(--card-bg); border: 1px solid var(--card-border); }
+
+.badge-primary {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.35rem 0.8rem;
+    border-radius: 9999px;
+    font-weight: 600;
+}
+
+.hero-cta { background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 80%, #a04f04 20%)); color: white; padding: 0.65rem 1.1rem; border-radius: 9999px; }
+
+.visit-shop { background: var(--color-primary); color: white; border-radius: 9999px; padding: 0.35rem 0.9rem; }
