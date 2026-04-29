@@ -163,7 +163,7 @@ const Navbar = () => {
   }, [userToken])
 
   return (
-    <>
+    <div>
     <div className='fixed inset-x-0 top-0 z-50 backdrop-blur-sm bg-white/70 border-b border-gray-100'>
       <div className='max-w-6xl mx-auto px-4 sm:px-6'>
         <div className='relative z-10 flex items-center justify-between py-3 sm:py-4 font-medium'>
@@ -283,7 +283,7 @@ const Navbar = () => {
 
     {/* Cart Slideout */}
     <CartSlideout isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-    </>
+    </div>
   )
 }
 
