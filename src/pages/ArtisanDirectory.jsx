@@ -69,20 +69,7 @@ const ArtisanDirectory = () => {
   // reveal animation for artist cards using IntersectionObserver
   const cardsObservedRef = useRef(false)
   useEffect(() => {
-    if (cardsObservedRef.current) return
-    const nodes = Array.from(document.querySelectorAll('.artist-card'))
-    if (!nodes || nodes.length === 0) return
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-          obs.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.12 })
-    nodes.forEach(n => obs.observe(n))
-    cardsObservedRef.current = true
-    return () => obs.disconnect()
+    // (moved) placeholder - actual observer runs after `filteredSellers` is defined
   }, [sellers])
 
   const normalizeType = (value) => String(value || '').trim().toLowerCase()
@@ -97,6 +84,24 @@ const ArtisanDirectory = () => {
   const filteredSellers = selectedType
     ? sellers.filter(s => normalizeType(s.artisanType) === normalizeType(selectedType))
     : sellers
+
+  // reveal animation for artist cards using IntersectionObserver
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll('.artist-card'))
+    if (!nodes || nodes.length === 0) return
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible')
+          obs.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.12 })
+    nodes.forEach(n => {
+      if (!n.classList.contains('is-visible')) obs.observe(n)
+    })
+    return () => obs.disconnect()
+  }, [filteredSellers])
 
   return (
     <div className='border-t'>
