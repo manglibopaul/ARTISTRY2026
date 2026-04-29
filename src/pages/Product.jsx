@@ -40,6 +40,8 @@ const Product = () => {
   const [detectedParts, setDetectedParts] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
   const [showPartsList, setShowPartsList] = useState(false);
+  const reviewsRef = useRef(null);
+  const [reviewsInView, setReviewsInView] = useState(false);
 
   const normalizeToHex = (color) => {
     if (!color || typeof window === 'undefined') return null;
@@ -392,6 +394,20 @@ const Product = () => {
   },[fetchProductData])
 
   useEffect(() => {
+    if (!reviewsRef.current) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          setReviewsInView(true);
+          obs.disconnect();
+        }
+      })
+    }, { threshold: 0.08 });
+    obs.observe(reviewsRef.current);
+    return () => obs.disconnect();
+  }, [reviewsRef]);
+
+  useEffect(() => {
     const availableColors = getAvailableColors(productData);
     if (availableColors.length > 0) {
       setCartColor(availableColors[0]);
@@ -696,10 +712,11 @@ const Product = () => {
                   aria-label='Quantity'
                 />
                 <button 
-                  onClick={() => {
-                    if (productData.stock <= 0) {
-                      return;
-                    }
+                  onClick={(e) => {
+                    if (productData.stock <= 0) return;
+                    const btnRect = e.currentTarget.getBoundingClientRect();
+                    // dispatch fly event with start coords and image
+                    window.dispatchEvent(new CustomEvent('cart:add', { detail: { image, start: { left: btnRect.left, top: btnRect.top, width: btnRect.width, height: btnRect.height } } }));
                     const availableColors = getAvailableColors(productData);
                     const availableSizes = getAvailableSizes(productData);
                     addToCart(
@@ -769,7 +786,7 @@ const Product = () => {
         <div className='flex'>
           <b className='border px-5 py-3 text-sm'>Reviews</b>
         </div>
-        <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500'>
+        <div ref={reviewsRef} className={`${reviewsInView ? 'enter-to' : 'enter-from'} flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500`}>
           <div className='mb-4'>
             {avgRating ? (
               <div className='text-sm text-gray-700'>
