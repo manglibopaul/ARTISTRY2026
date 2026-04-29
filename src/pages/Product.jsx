@@ -41,7 +41,7 @@ const Product = () => {
   const [selectedParts, setSelectedParts] = useState([]);
   const [showPartsList, setShowPartsList] = useState(false);
   const reviewsRef = useRef(null);
-  const [reviewsInView, setReviewsInView] = useState(false);
+  const [reviewsInView, setReviewsInView] = useState(true);
 
   const normalizeToHex = (color) => {
     if (!color || typeof window === 'undefined') return null;
