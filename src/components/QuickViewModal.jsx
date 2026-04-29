@@ -40,7 +40,32 @@ const QuickViewModal = ({ open, onClose, productId, initialImage }) => {
 
   if (!open) return null
 
-  const image = (product && Array.isArray(product.image) && product.image.length) ? product.image[0] : (initialImage || '')
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
+
+  // Normalize image URL (product.image can be various shapes across API versions)
+  let image = initialImage || ''
+  if (product) {
+    if (Array.isArray(product.image) && product.image.length) {
+      const first = product.image[0]
+      if (typeof first === 'object' && first !== null) {
+        const candidate = first.url || first.path || first.filename || ''
+        if (candidate) {
+          if (candidate.startsWith('http')) image = candidate
+          else if (candidate.startsWith('/')) image = `${apiUrl}${candidate}`
+          else image = `${apiUrl}/uploads/images/${candidate}`
+        }
+      } else if (typeof first === 'string') {
+        if (first.startsWith('http')) image = first
+        else if (first.startsWith('/')) image = `${apiUrl}${first}`
+        else image = `${apiUrl}/uploads/images/${first}`
+      }
+    } else if (product.image && typeof product.image === 'string') {
+      const first = product.image
+      if (first.startsWith('http')) image = first
+      else if (first.startsWith('/')) image = `${apiUrl}${first}`
+      else image = `${apiUrl}/uploads/images/${first}`
+    }
+  }
 
   const handleAdd = () => {
     if (!product) return
@@ -107,7 +132,9 @@ const QuickViewModal = ({ open, onClose, productId, initialImage }) => {
                 {product?.modelUrl && (
                   <button onClick={() => { window.open(product.modelUrl, '_blank'); onClose() }} className='px-4 py-2 rounded bg-gradient-to-r from-pink-500 to-yellow-400 text-white'>View AR</button>
                 )}
-                <button onClick={onClose} className="px-4 py-2 rounded border">Close</button>
+                <div className="ml-auto">
+                  <button onClick={onClose} className="px-4 py-2 rounded border">Close</button>
+                </div>
               </div>
             </div>
           </div>
