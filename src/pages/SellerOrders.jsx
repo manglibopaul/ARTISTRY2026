@@ -15,8 +15,8 @@ const SellerOrders = () => {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
       });
       setOrders(res.data || []);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load seller orders');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load artist orders');
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ const SellerOrders = () => {
 
   return (
     <div className='my-6 px-3 sm:px-4'>
-      <h2 className='text-xl sm:text-2xl font-semibold mb-4'>Seller — Orders</h2>
+      <h2 className='text-xl sm:text-2xl font-semibold mb-4'>Artist — Orders</h2>
       {loading && <p>Loading orders…</p>}
       {error && <p className='text-red-600'>{error}</p>}
       {!loading && orders.length === 0 && <p>No orders for your products yet.</p>}

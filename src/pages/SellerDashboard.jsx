@@ -854,7 +854,7 @@ const SellerDashboard = () => {
       <div className='max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8'>
         {!isSellerVerified && (
           <div className='mb-4 sm:mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900'>
-            <p className='text-sm sm:text-base font-medium'>Your seller account is pending admin verification.</p>
+            <p className='text-sm sm:text-base font-medium'>Your artist account is pending admin verification.</p>
             <p className='text-xs sm:text-sm mt-1'>You can browse your dashboard, but product uploads are locked until an admin verifies your account.</p>
           </div>
         )}

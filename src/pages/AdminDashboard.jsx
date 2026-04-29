@@ -32,7 +32,7 @@ function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg p-6 min-w-[340px] max-w-[95vw]">
-        <div className="mb-4 text-lg font-bold">Seller Verification</div>
+        <div className="mb-4 text-lg font-bold">Artist Verification</div>
         <div className="mb-2"><span className="font-semibold">Full Name:</span> {seller.name}</div>
         <div className="mb-2"><span className="font-semibold">Store Name:</span> {seller.storeName}</div>
         <div className="mb-2"><span className="font-semibold">Phone Number:</span> {seller.phone || '-'}</div>
@@ -150,7 +150,7 @@ const AdminDashboard = () => {
           setViewSeller(prev => ({ ...prev, isVerified: true }));
           setVerificationModalOpen(false);
           setViewSellerModalOpen(false);
-          setSuccessMessage('Seller verified!');
+          setSuccessMessage('Artist verified!');
           setSuccessModalOpen(true);
         } catch (err) {
           setSuccessMessage('Verification failed: ' + (err.message || 'error'));
@@ -448,7 +448,7 @@ const AdminDashboard = () => {
       <div className="mb-4">
         <div className='flex gap-2 overflow-x-auto pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
           <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'customers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('customers')}>Customers</button>
-          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'sellers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('sellers')}>Sellers</button>
+          <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'sellers' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('sellers')}>Artists</button>
           <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'orders' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('orders')}>Orders</button>
           <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'support' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('support')}>Support Chat</button>
           <button className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded ${selectedTab === 'bin' ? 'bg-red-600 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedTab('bin')}>Bin</button>
@@ -520,9 +520,9 @@ const AdminDashboard = () => {
       {/* Sellers Tab */}
       {selectedTab === 'sellers' && (
         <div className="bg-white rounded shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Sellers</h2>
+          <h2 className="text-xl font-semibold mb-4">Artists</h2>
           {loadingSellers ? (
-            <div>Loading sellers...</div>
+            <div>Loading artists...</div>
           ) : sellerError ? (
             <div className="text-red-600">{sellerError}</div>
           ) : (
@@ -545,10 +545,10 @@ const AdminDashboard = () => {
                         )}
                       </div>
                     </div>
-                    <div className='mt-3 flex gap-2'>
+                      <div className='mt-3 flex gap-2'>
                       <button onClick={() => { setViewSeller(s); setViewSellerModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
                       <button onClick={() => {
-                        setConfirmMessage('Delete this seller? This cannot be undone.');
+                        setConfirmMessage('Delete this artist? This cannot be undone.');
                         setConfirmAction(() => () => { deleteSeller(s.id); setConfirmOpen(false); });
                         setConfirmOpen(true);
                       }} className='px-3 py-1 rounded bg-red-600 text-white text-sm'>Delete</button>
@@ -585,7 +585,7 @@ const AdminDashboard = () => {
                         <td className="p-3 flex gap-2">
                           <button onClick={() => { setViewSeller(s); setViewSellerModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
                           <button onClick={() => {
-                            setConfirmMessage('Delete this seller? This cannot be undone.');
+                            setConfirmMessage('Delete this artist? This cannot be undone.');
                             setConfirmAction(() => () => { deleteSeller(s.id); setConfirmOpen(false); });
                             setConfirmOpen(true);
                           }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
@@ -712,7 +712,7 @@ const AdminDashboard = () => {
       {/* Bin Tab */}
       {selectedTab === 'bin' && (
         <div className="bg-white rounded shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Bin (Soft-Deleted Sellers & Customers)</h2>
+          <h2 className="text-xl font-semibold mb-4">Bin (Soft-Deleted Artists & Customers)</h2>
           {loadingBin ? (
             <div>Loading bin sellers...</div>
           ) : binError ? (
@@ -723,7 +723,7 @@ const AdminDashboard = () => {
             <div className="space-y-6">
               {/* Deleted Sellers */}
               <div>
-                <h3 className="font-semibold mb-2">Deleted Sellers</h3>
+                <h3 className="font-semibold mb-2">Deleted Artists</h3>
                 <div className='block sm:hidden space-y-3'>
                   {binSellers.map(seller => (
                     <div key={seller.id} className='border rounded p-3'>
@@ -732,14 +732,14 @@ const AdminDashboard = () => {
                       <div className='text-sm text-gray-500'>{seller.email}</div>
                       <div className='mt-3 flex gap-2'>
                         <button onClick={() => {
-                          setConfirmMessage('Restore this seller?');
+                          setConfirmMessage('Restore this artist?');
                           setConfirmButtonLabel('Restore');
                           setConfirmButtonColor('bg-green-600');
                           setConfirmAction(() => () => { restoreSeller(seller.id); setConfirmOpen(false); });
                           setConfirmOpen(true);
                         }} className="px-3 py-1 rounded bg-green-600 text-white text-sm">Restore</button>
                         <button onClick={() => {
-                          setConfirmMessage('Permanently delete this seller? This cannot be undone.');
+                          setConfirmMessage('Permanently delete this artist? This cannot be undone.');
                           setConfirmButtonLabel('Delete');
                           setConfirmButtonColor('bg-red-600');
                           setConfirmAction(() => () => { permanentDeleteSeller(seller.id); setConfirmOpen(false); });
@@ -754,7 +754,7 @@ const AdminDashboard = () => {
                   <table className="min-w-full border">
                     <thead>
                       <tr>
-                        <th className="text-left p-3 font-semibold">Seller Name</th>
+                        <th className="text-left p-3 font-semibold">Artist Name</th>
                         <th className="text-left p-3 font-semibold">Store Name</th>
                         <th className="text-left p-3 font-semibold">Email</th>
                         <th className="text-left p-3 font-semibold">Actions</th>
@@ -768,14 +768,14 @@ const AdminDashboard = () => {
                           <td className="p-3">{seller.email}</td>
                           <td className="p-3 flex gap-2">
                             <button onClick={() => {
-                              setConfirmMessage('Restore this seller?');
+                              setConfirmMessage('Restore this artist?');
                               setConfirmButtonLabel('Restore');
                               setConfirmButtonColor('bg-green-600');
                               setConfirmAction(() => () => { restoreSeller(seller.id); setConfirmOpen(false); });
                               setConfirmOpen(true);
                             }} className="px-3 py-1 rounded bg-green-600 text-white">Restore</button>
                             <button onClick={() => {
-                              setConfirmMessage('Permanently delete this seller? This cannot be undone.');
+                              setConfirmMessage('Permanently delete this artist? This cannot be undone.');
                               setConfirmButtonLabel('Delete');
                               setConfirmButtonColor('bg-red-600');
                               setConfirmAction(() => () => { permanentDeleteSeller(seller.id); setConfirmOpen(false); });
@@ -864,7 +864,7 @@ const AdminDashboard = () => {
       <ViewCustomerModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} customer={viewCustomer} />
       <ViewSellerModal open={viewSellerModalOpen} onClose={() => setViewSellerModalOpen(false)} seller={viewSeller} onVerifyClick={handleVerifyClick} uploadBaseUrl={normalizedApiBase} />
       <ConfirmModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={confirmAction} message={confirmMessage} buttonLabel={confirmButtonLabel} buttonColor={confirmButtonColor} />
-      <ConfirmModal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)} onConfirm={() => { handleVerifySeller(); setVerificationModalOpen(false); }} message={`Verify seller "${viewSeller?.storeName || 'N/A'}"? This will approve them for the platform.`} buttonLabel="Verify" buttonColor="bg-green-600" />
+      <ConfirmModal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)} onConfirm={() => { handleVerifySeller(); setVerificationModalOpen(false); }} message={`Verify artist "${viewSeller?.storeName || 'N/A'}"? This will approve them for the platform.`} buttonLabel="Verify" buttonColor="bg-green-600" />
       <SuccessModal open={successModalOpen} onClose={() => setSuccessModalOpen(false)} message={successMessage} />
       <ErrorModal
         open={errorModalOpen}

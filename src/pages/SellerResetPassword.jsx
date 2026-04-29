@@ -47,7 +47,7 @@ const SellerResetPassword = () => {
   return (
     <div className='min-h-screen bg-gray-100 flex items-center justify-center px-4'>
       <div className='bg-white rounded-lg shadow-lg p-8 w-full max-w-md'>
-        <h2 className='text-2xl font-bold mb-6 text-center'>Reset Seller Password</h2>
+        <h2 className='text-2xl font-bold mb-6 text-center'>Reset Artist Password</h2>
         <form onSubmit={onSubmit} className='space-y-4'>
           <input
             value={password}
