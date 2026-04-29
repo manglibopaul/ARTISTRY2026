@@ -106,7 +106,7 @@ const ArtisanDirectory = () => {
   return (
     <div className='border-t'>
         {/* Hero Section */}
-          <div className='warm-hero py-12 sm:py-16'>
+          <div className='bg-gradient-to-r from-gray-900 to-black py-12 sm:py-16'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='text-center text-white mb-8'>
             <h1 className='text-4xl sm:text-5xl font-bold mb-3'>Discover Artists</h1>

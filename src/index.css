@@ -5,16 +5,12 @@
 @tailwind utilities;
 
 :root {
-    /* Warm theme variables */
-    --color-primary: #c05621; /* warm terracotta */
-    --color-secondary: #f7e9df; /* soft cream */
-    --color-accent: #d97706; /* amber accent */
-    --color-muted: #7c6b5a; /* warm muted brown */
-    --color-surface: #fffaf6; /* warm surface */
-    --color-text: #2b2b2b; /* warm dark text */
-    --card-bg: #fffaf6;
-    --card-border: rgba(160,120,90,0.12);
-    --btn-radius: 12px;
+    --color-primary: #b91c1c; /* brand red (tuned) */
+    --color-secondary: #ff7ab6; /* pink (tuned) */
+    --color-accent: #f59e0b; /* amber */
+    --color-muted: #6b7280; /* gray-500 */
+    --color-surface: #f8fafc; /* gray-50 */
+    --color-text: #0f172a; /* slightly deeper text */
 }
 
 a.active hr{
@@ -39,11 +35,7 @@ body {
     color: var(--color-text);
 }
 
-/* Warm background for the site */
-body {
-    background: linear-gradient(180deg, #fff7f2 0%, #fff2ea 8%, #f6e6dc 30%, #efe2d4 60%, #f3efe9 100%);
-    background-attachment: fixed;
-}
+/* site background stays dark by section-specific gradients */
 
 /* Safe area padding for notched devices */
 @supports (padding: env(safe-area-inset-bottom)) {
@@ -114,10 +106,7 @@ h2 {
     animation: floatUp 6s ease-in-out infinite;
 }
 
-.warm-hero {
-    background: linear-gradient(90deg, #3b2b24 0%, #7a4b2a 35%, #f6e6dc 100%);
-    color: #2b1b12;
-}
+/* keep hero classes as section-specific utilities (use Tailwind utilities in JSX) */
 
 @keyframes bounceSlow {
     0%,100% { transform: translateY(0); }
