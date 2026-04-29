@@ -740,8 +740,14 @@ const Product = () => {
           {/* -------- Seller Info -------- */}
           {sellerData && (
             <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-white flex items-center gap-4'>
-              <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700'>
-                {sellerData.storeName ? sellerData.storeName[0] : 'S'}
+              <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700 overflow-hidden'>
+                {(
+                  sellerData.logo || sellerData.image || sellerData.profileImage
+                ) ? (
+                  <img src={(sellerData.logo || sellerData.image || sellerData.profileImage).startsWith('http') ? (sellerData.logo || sellerData.image || sellerData.profileImage) : `${apiUrl}${sellerData.logo || sellerData.image || sellerData.profileImage}`} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' />
+                ) : (
+                  <span className='text-sm font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
+                )}
               </div>
               <div className='flex-1'>
                 <button onClick={() => navigate(getArtisanPath(sellerData))} className='hover:text-black transition'>
