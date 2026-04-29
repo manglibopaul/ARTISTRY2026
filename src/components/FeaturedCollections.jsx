@@ -27,7 +27,7 @@ const FeaturedCollections = () => {
         <div className='py-12 sm:py-16 bg-white'>
             <div className='max-w-6xl xl:max-w-[1400px] mx-auto px-4 sm:px-6'>
                 <div className='text-center py-6 sm:py-8'>
-                    <Title text1={'FEATURED'} text2={'PRODUCTS'} />
+                    <Title size='xl' text1={'FEATURED'} text2={'PRODUCTS'} />
                     <p className='w-full sm:w-3/4 lg:w-2/3 m-auto sm:text-base md:text-lg text-gray-600 mt-3'>
                         Explore our curated handmade products
                     </p>
@@ -41,9 +41,9 @@ const FeaturedCollections = () => {
                         {featuredProducts.map((item, index) => (
                             <div
                                 key={index}
-                                className='snap-center shrink-0 w-[80%] sm:w-[46%] md:w-[32%] lg:w-[24%] px-2'
+                                className='snap-center shrink-0 w-[90%] sm:w-[60%] md:w-[44%] lg:w-[34%] px-3'
                             >
-                                <div className='p-1'>
+                                <div className='p-2'>
                                     <ProductItem
                                         id={item._id || item.id}
                                         image={item.image}
