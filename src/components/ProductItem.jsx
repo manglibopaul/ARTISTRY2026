@@ -77,7 +77,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
         <div className='bg-white p-3 pb-6 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
           <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
             <img
-              className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out rounded-md'
+              className='w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-500 ease-out rounded-md'
               src={imageUrl}
               alt={name}
               loading='lazy'
@@ -87,6 +87,25 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
                 }
               }}
             />
+            {/* Hover CTA overlay */}
+            <div className='absolute inset-0 flex items-end justify-center p-4 opacity-0 translate-y-4 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none'>
+              <div className='bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex gap-2 pointer-events-auto shadow-md'>
+                <span
+                  role='button'
+                  onClick={(e) => { e.preventDefault(); navigate(productHref) }}
+                  className='text-sm font-semibold text-gray-800 cursor-pointer select-none'
+                >
+                  View
+                </span>
+                <span
+                  role='button'
+                  onClick={(e) => { e.preventDefault(); navigate(`${productHref}?add=1`) }}
+                  className='text-sm font-semibold text-white bg-black rounded px-3 py-1 cursor-pointer select-none'
+                >
+                  Add
+                </span>
+              </div>
+            </div>
             {/* Quick View removed: clicking the card navigates to product page */}
             {typeof stock !== 'undefined' && Number(stock) <= 0 && (
               <div className='absolute left-2 top-2 inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700'>
