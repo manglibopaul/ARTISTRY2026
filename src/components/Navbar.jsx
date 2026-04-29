@@ -279,7 +279,8 @@ const Navbar = () => {
         </div>
 
     </div>
-    
+  </div>
+
     {/* Cart Slideout */}
     <CartSlideout isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </>
