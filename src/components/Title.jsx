@@ -1,11 +1,17 @@
 import React from 'react'
 
-const Title = ({text1,text2}) => {
+const Title = ({text1, text2}) => {
   return (
-    <div className='inline-flex gap-2 items-center mb-3'>
-        <p className='text-gray-500'>{text1} <span className='text-gray-700 font-medium'>{text2}</span></p>
-        <p className='w-8 sm:w-12 h-[1px] sm:h-[2px] bg-gray-700'></p>
-      
+    <div className='flex flex-col items-center mb-4'>
+      <div className='flex items-center gap-4'>
+        <div className='text-center'>
+          <p className='text-xs tracking-wider uppercase text-gray-500 mb-1'>{text1}</p>
+          <p className='text-xl sm:text-2xl md:text-3xl font-bold text-gray-900'>{text2}</p>
+        </div>
+        <div className='hidden sm:block flex-1 max-w-[220px]'>
+          <div className='h-0.5 bg-gradient-to-r from-pink-400 via-amber-300 to-transparent rounded' />
+        </div>
+      </div>
     </div>
   )
 }
