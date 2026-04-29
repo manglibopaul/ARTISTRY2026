@@ -83,7 +83,7 @@ const ArtisanDirectory = () => {
     nodes.forEach(n => obs.observe(n))
     cardsObservedRef.current = true
     return () => obs.disconnect()
-  }, [sellers, filteredSellers])
+  }, [sellers])
 
   const normalizeType = (value) => String(value || '').trim().toLowerCase()
 
