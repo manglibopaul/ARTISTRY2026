@@ -164,31 +164,31 @@ const Navbar = () => {
 
   return (
     <>
-    <div className='relative z-50 flex items-center justify-between py-4 sm:py-5 px-2 sm:px-0 font-medium'>
+    <div className='fixed inset-x-0 top-0 z-50 backdrop-blur-sm bg-white/70 border-b border-gray-100'>
+      <div className='max-w-6xl mx-auto px-4 sm:px-6'>
+        <div className='relative z-10 flex items-center justify-between py-3 sm:py-4 font-medium'>
 
-        <Link to='/' className='text-2xl sm:text-3xl font-bold text-gray-900'>ARTISTRY</Link>
-      
-      <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
+          <Link to='/' className='flex items-center gap-3'>
+            <span className='inline-block w-9 h-9 rounded-lg bg-gradient-to-br from-pink-500 to-amber-400 shadow-md flex items-center justify-center text-white font-bold'>A</span>
+            <span className='text-lg sm:text-2xl font-bold text-gray-900 tracking-wide'>ARTISTRY</span>
+          </Link>
 
-        <button type='button' onClick={() => navigateWithHardFallback('/')} className='flex flex-col items-center gap-1'>
-            <p>HOME</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+          <ul className='hidden lg:flex gap-8 text-sm text-gray-700 items-center'>
+
+        <button type='button' onClick={() => navigateWithHardFallback('/')} className='flex flex-col items-center gap-1 hover:text-gray-900'>
+          <p className='uppercase tracking-wide'>Home</p>
         </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='flex flex-col items-center gap-1'>
-          <p>PRODUCTS</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+        <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='flex flex-col items-center gap-1 hover:text-gray-900'>
+          <p className='uppercase tracking-wide'>Products</p>
         </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='flex flex-col items-center gap-1'>
-            <p>ARTISTS</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+        <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='flex flex-col items-center gap-1 hover:text-gray-900'>
+          <p className='uppercase tracking-wide'>Artists</p>
         </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/about')} className='flex flex-col items-center gap-1'>
-          <p>ABOUT US</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+        <button type='button' onClick={() => navigateWithHardFallback('/about')} className='flex flex-col items-center gap-1 hover:text-gray-900'>
+          <p className='uppercase tracking-wide'>About</p>
         </button>
         <button onClick={handleSupportClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
-          <p>SUPPORT</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+          <p className='uppercase tracking-wide'>Support</p>
         </button>
       </ul>
       <div className='flex items-center gap-2 sm:gap-3'>
@@ -196,9 +196,9 @@ const Navbar = () => {
           <img src={assets.search_icon} className='w-4 h-4' alt='Search' loading='lazy' />
         </button>
 
-        <button onClick={() => setCartOpen(true)} aria-label='Cart' className='relative w-8 h-8 flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100'>
+        <button onClick={() => setCartOpen(true)} aria-label='Cart' className='relative w-9 h-9 flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100'>
           <img src={assets.cart_icon} className='w-4 h-4' alt='Cart' loading='lazy' />
-          <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px]'>{getCartCount()}</p>
+          <p className='absolute -right-2 -top-2 w-5 h-5 text-center flex items-center justify-center bg-black text-white rounded-full text-[10px]'>{getCartCount()}</p>
         </button>
 
         <Link to='/chat' className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100' aria-label='Chat'>
@@ -247,7 +247,7 @@ const Navbar = () => {
         )}
 
         
-        <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-6 cursor-pointer sm:hidden p-1' alt="" loading="lazy" />
+        <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-6 cursor-pointer lg:hidden p-1' alt="" loading="lazy" />
       </div>
 
       {/* Floating More button moved to a top-level portal in App.jsx to avoid stacking-context issues */}
