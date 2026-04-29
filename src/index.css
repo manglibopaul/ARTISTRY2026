@@ -39,6 +39,12 @@ body {
     color: var(--color-text);
 }
 
+/* Warm background for the site */
+body {
+    background: linear-gradient(180deg, #fff7f2 0%, #fff2ea 8%, #f6e6dc 30%, #efe2d4 60%, #f3efe9 100%);
+    background-attachment: fixed;
+}
+
 /* Safe area padding for notched devices */
 @supports (padding: env(safe-area-inset-bottom)) {
     body {
@@ -106,6 +112,11 @@ h2 {
 
 .hero-float {
     animation: floatUp 6s ease-in-out infinite;
+}
+
+.warm-hero {
+    background: linear-gradient(90deg, #3b2b24 0%, #7a4b2a 35%, #f6e6dc 100%);
+    color: #2b1b12;
 }
 
 @keyframes bounceSlow {
