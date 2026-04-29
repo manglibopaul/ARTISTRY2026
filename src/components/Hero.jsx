@@ -34,16 +34,16 @@ const Hero = () => {
   };
 
   return (
-    <div className='bg-gradient-to-r from-white to-yellow-50 rounded-2xl border border-amber-100 overflow-hidden shadow-sm py-6'>
+    <div className='bg-gradient-to-r from-white to-yellow-50 rounded-3xl border border-amber-100 overflow-hidden shadow-sm py-6'>
       <div className='flex flex-col sm:flex-row items-stretch'>
         {/* Hero left side */}
-        <div className='w-full sm:w-1/2 overflow-hidden relative rounded-l-2xl'>
-          <img className='w-full h-full object-cover transform transition-transform duration-700 hover:scale-105 hero-float rounded-l-2xl' src={assets.hero_img} alt="Preview crochet" />
+        <div className='w-full sm:w-1/2 overflow-hidden relative rounded-l-3xl'>
+          <img className='w-full h-full object-cover transform transition-transform duration-700 hover:scale-105 hero-float rounded-l-3xl' src={assets.hero_img} alt="Preview crochet" />
           <div className='absolute left-6 top-6 bg-white/90 px-4 py-1.5 rounded-full text-sm font-medium shadow-sm animate-bounce-slow'>Support local artists</div>
         </div>
 
         {/* Hero right side */}
-        <div className='w-full sm:w-1/2 flex items-center justify-center py-12 sm:py-8 px-6 sm:px-12 bg-white/40 rounded-r-2xl overflow-hidden'>
+        <div className='w-full sm:w-1/2 flex items-center justify-center py-12 sm:py-8 px-6 sm:px-12 bg-white/40 rounded-r-3xl overflow-hidden'>
           <div className='text-[#222222] space-y-4 max-w-lg'>
             <div className='flex items-center gap-3'>
               <p className='w-10 md:w-12 h-[2px] bg-[#414141]'></p>
