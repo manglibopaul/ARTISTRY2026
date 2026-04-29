@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { getArtisanPath } from '../utils/artisanUrl';
 import { getProductPath } from '../utils/productUrl';
-import QuickViewModal from './QuickViewModal'
+// Quick view feature removed — the product card now links directly to product page
 
 const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType, stock}) => {
 
@@ -69,7 +69,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
     }
 
   const productHref = getProductPath({ id, name })
-  const [quickOpen, setQuickOpen] = useState(false)
+  // quick view removed
 
   return (
     <div className='text-gray cursor-pointer block h-full group'>
@@ -87,8 +87,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
                 }
               }}
             />
-            {/* Quick View overlay */}
-            <button type='button' onClick={(e)=>{ e.preventDefault(); setQuickOpen(true); }} className='absolute right-2 bottom-2 bg-white/90 px-3 py-1 rounded-full text-sm shadow-sm hover:shadow-md transition'>Quick View</button>
+            {/* Quick View removed: clicking the card navigates to product page */}
             {typeof stock !== 'undefined' && Number(stock) <= 0 && (
               <div className='absolute left-2 top-2 inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700'>
                 Sold out
@@ -118,7 +117,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
         </button>
       )}
 
-      <QuickViewModal open={quickOpen} onClose={() => setQuickOpen(false)} productId={id} initialImage={imageUrl} />
+      {/* QuickView component removed */}
     </div>
   )
 }
