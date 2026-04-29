@@ -74,10 +74,10 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
   return (
     <div className='text-gray cursor-pointer block h-full group'>
       <a href={productHref} className='block w-full text-left'>
-        <div className='bg-white p-2 pb-4 shadow-lg hover:shadow-2xl transition-all duration-300 ease-out group-hover:-rotate-1 rounded-sm'>
-          <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center relative'>
+        <div className='bg-white p-3 pb-6 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
+          <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
             <img
-              className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out'
+              className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out rounded-md'
               src={imageUrl}
               alt={name}
               loading='lazy'
@@ -94,7 +94,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
               </div>
             )}
           </div>
-          <div className='pt-2 flex flex-col gap-0.5 text-center'>
+          <div className='pt-3 flex flex-col gap-0.5 text-center'>
             <p className='text-sm font-medium text-gray-800 line-clamp-1'>{name}</p>
             <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
           </div>
@@ -108,7 +108,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
             e.preventDefault()
             navigate(getArtisanPath(sellerData))
           }}
-          className='mt-2 w-full text-left p-2 bg-gray-50 rounded border border-gray-200 hover:border-black hover:bg-white transition text-xs'
+          className='mt-2 w-full text-left p-2 bg-gray-50 rounded border border-gray-200 hover:border-black hover:bg-white transition text-xs opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 duration-300'
         >
           <p className='font-bold text-gray-900 line-clamp-1'>{sellerData.storeName}</p>
           {sellerData.artisanType && (
