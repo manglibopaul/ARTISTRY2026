@@ -43,7 +43,7 @@ const Hero = () => {
         </div>
 
         {/* Hero right side */}
-        <div className='w-full sm:w-1/2 flex items-center justify-center py-12 sm:py-8 px-6 sm:px-12 bg-white/40'>
+        <div className='w-full sm:w-1/2 flex items-center justify-center py-12 sm:py-8 px-6 sm:px-12 bg-white/40 rounded-r-2xl overflow-hidden'>
           <div className='text-[#222222] space-y-4 max-w-lg'>
             <div className='flex items-center gap-3'>
               <p className='w-10 md:w-12 h-[2px] bg-[#414141]'></p>
