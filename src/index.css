@@ -81,6 +81,22 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+@keyframes floatUp {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+
+.hero-float {
+    animation: floatUp 6s ease-in-out infinite;
+}
+
+@keyframes bounceSlow {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+.animate-bounce-slow { animation: bounceSlow 3s infinite; }
+
 @media (max-width:640px) {
     a.active{
         background-color: black;
