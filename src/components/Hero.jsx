@@ -39,7 +39,7 @@ const Hero = () => {
         {/* Hero left side */}
         <div className='w-full sm:w-1/2 overflow-hidden relative'>
           <img className='w-full object-cover transform transition-transform duration-700 hover:scale-105 hero-float' src={assets.hero_img} alt="Preview crochet" />
-          <div className='absolute left-4 top-4 bg-white/90 px-3 py-1 rounded-full text-sm font-medium shadow-sm animate-bounce-slow'>Free shipping over ₱1500</div>
+          <div className='absolute left-4 top-4 bg-white/90 px-3 py-1 rounded-full text-sm font-medium shadow-sm animate-bounce-slow'>Support local artists</div>
         </div>
 
         {/* Hero right side */}
