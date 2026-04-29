@@ -530,6 +530,38 @@ const Product = () => {
     }
   }, [selectedParts, modelViewerElementRef.current, showAR]);
 
+  // compute seller image URL (robust fallback) for rendering
+  const sellerImageUrl = (() => {
+    if (!sellerData) return null;
+    const candidate = sellerData.logo || sellerData.image || sellerData.profileImage || sellerData.avatar || sellerData.imageUrl || sellerData.picture || sellerData.photo || sellerData.profile_pic || sellerData.profilePicture || null;
+    if (candidate) {
+      let url = String(candidate);
+      if (!url.startsWith('http') && url.startsWith('/')) url = `${apiUrl}${url}`;
+      return url;
+    }
+    try {
+      const found = products.find(p => (p.sellerId && sellerData.id && String(p.sellerId) === String(sellerData.id)) || (p.sellerId && sellerData._id && String(p.sellerId) === String(sellerData._id)));
+      if (found && found.image && found.image.length > 0) return getImageUrl(found.image[0]);
+    } catch (e) {}
+    return null;
+  })();
+
+  // compute seller image URL (robust fallback) for rendering
+  const sellerImageUrl = (() => {
+    if (!sellerData) return null;
+    const candidate = sellerData.logo || sellerData.image || sellerData.profileImage || sellerData.avatar || sellerData.imageUrl || sellerData.picture || sellerData.photo || sellerData.profile_pic || sellerData.profilePicture || null;
+    if (candidate) {
+      let url = String(candidate);
+      if (!url.startsWith('http') && url.startsWith('/')) url = `${apiUrl}${url}`;
+      return url;
+    }
+    try {
+      const found = products.find(p => (p.sellerId && sellerData.id && String(p.sellerId) === String(sellerData.id)) || (p.sellerId && sellerData._id && String(p.sellerId) === String(sellerData._id)));
+      if (found && found.image && found.image.length > 0) return getImageUrl(found.image[0]);
+    } catch (e) {}
+    return null;
+  })();
+
   const handleNextImage = () => {
     if (productData.image && productData.image.length > 0) {
       const nextIndex = (currentImageIndex + 1) % productData.image.length;
@@ -741,10 +773,8 @@ const Product = () => {
           {sellerData && (
             <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-white flex items-center gap-4'>
               <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700 overflow-hidden'>
-                {(
-                  sellerData.logo || sellerData.image || sellerData.profileImage
-                ) ? (
-                  <img src={(sellerData.logo || sellerData.image || sellerData.profileImage).startsWith('http') ? (sellerData.logo || sellerData.image || sellerData.profileImage) : `${apiUrl}${sellerData.logo || sellerData.image || sellerData.profileImage}`} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' />
+                {sellerImageUrl ? (
+                  <img src={sellerImageUrl} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' />
                 ) : (
                   <span className='text-sm font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
                 )}
