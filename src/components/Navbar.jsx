@@ -170,26 +170,35 @@ const Navbar = () => {
       
       <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
 
-        <button type='button' onClick={() => navigateWithHardFallback('/')} className='flex flex-col items-center gap-1'>
-            <p>HOME</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/collection')} className='flex flex-col items-center gap-1'>
-          <p>PRODUCTS</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className='flex flex-col items-center gap-1'>
-            <p>ARTISTS</p>
-            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </button>
-        <button type='button' onClick={() => navigateWithHardFallback('/about')} className='flex flex-col items-center gap-1'>
-          <p>ABOUT US</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </button>
-        <button onClick={handleSupportClick} className='flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
-          <p>SUPPORT</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-        </button>
+        {(() => {
+          const isActive = (path) => {
+            return location.pathname === path || (path !== '/' && location.pathname.startsWith(path))
+          }
+          return (
+            <>
+              <button type='button' onClick={() => navigateWithHardFallback('/')} className={`nav-button flex flex-col items-center gap-1 ${isActive('/') ? 'text-black' : 'text-gray-700'}`}>
+                  <p>HOME</p>
+                  <hr className='w-2/4 border-none h-[2px] bg-current nav-underline' />
+              </button>
+              <button type='button' onClick={() => navigateWithHardFallback('/collection')} className={`nav-button flex flex-col items-center gap-1 ${isActive('/collection') ? 'text-black' : 'text-gray-700'}`}>
+                <p>PRODUCTS</p>
+                <hr className='w-2/4 border-none h-[2px] bg-current nav-underline' />
+              </button>
+              <button type='button' onClick={() => navigateWithHardFallback('/artisans')} className={`nav-button flex flex-col items-center gap-1 ${isActive('/artisans') ? 'text-black' : 'text-gray-700'}`}>
+                  <p>ARTISTS</p>
+                  <hr className='w-2/4 border-none h-[2px] bg-current nav-underline' />
+              </button>
+              <button type='button' onClick={() => navigateWithHardFallback('/about')} className={`nav-button flex flex-col items-center gap-1 ${isActive('/about') ? 'text-black' : 'text-gray-700'}`}>
+                <p>ABOUT US</p>
+                <hr className='w-2/4 border-none h-[2px] bg-current nav-underline' />
+              </button>
+              <button onClick={handleSupportClick} className='nav-button flex flex-col items-center gap-1 cursor-pointer hover:text-gray-900 text-gray-700'>
+                <p>SUPPORT</p>
+                <hr className='w-2/4 border-none h-[2px] bg-current nav-underline' />
+              </button>
+            </>
+          )
+        })()}
       </ul>
       <div className='flex items-center gap-2 sm:gap-3'>
         <button onClick={() => setShowSearch(true)} aria-label='Search' className='w-8 h-8 flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100'>

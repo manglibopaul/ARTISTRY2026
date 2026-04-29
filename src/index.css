@@ -161,6 +161,17 @@ h2 {
 /* small entrance helper for larger hero text */
 .animate-hero-fade { opacity: 0; transform: translateY(6px); animation: fadeIn 520ms ease-out forwards 120ms; }
 
+/* Navbar effects */
+.nav-button { position: relative; transition: color 180ms ease; }
+.nav-button p { letter-spacing: 0.06em; }
+.nav-underline { display: block; opacity: 0; transform: scaleX(0); transform-origin: left; transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.8,.2,1); }
+.nav-button:hover .nav-underline { opacity: 1; transform: scaleX(1); }
+.nav-button.text-black .nav-underline, .nav-button.text-black .nav-underline { opacity: 1; transform: scaleX(1); }
+.nav-button:active { transform: translateY(1px); }
+
+/* subtle backdrop and nav spacing */
+.nav-backdrop { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)); }
+
 /* Warm theme component helpers */
 .btn-primary {
     background: linear-gradient(180deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 88%, black 12%));
