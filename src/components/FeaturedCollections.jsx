@@ -28,7 +28,7 @@ const FeaturedCollections = () => {
             <div className='max-w-6xl xl:max-w-[1400px] mx-auto px-4 sm:px-6'>
                 <div className='text-center py-6 sm:py-8'>
                     <Title text1={'FEATURED'} text2={'PRODUCTS'} />
-                    <p className='w-full sm:w-3/4 lg:w-2/3 m-auto sm:text-sm md:text-base text-gray-600 mt-3'>
+                    <p className='w-full sm:w-3/4 lg:w-2/3 m-auto sm:text-base md:text-lg text-gray-600 mt-3'>
                         Explore our curated handmade products
                     </p>
                 </div>
