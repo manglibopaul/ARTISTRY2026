@@ -555,15 +555,15 @@ const Product = () => {
                   }} 
                   src={imgUrl} 
                   key={index} 
-                  className={`w-[20%] sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition-all min-h-[40px] sm:min-h-[60px] ${isActive ? 'border-2 border-black' : 'border border-gray-300'}`}
+                  className={`w-20 sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition transform hover:scale-105 duration-200 min-h-[48px] sm:min-h-[60px] ${isActive ? 'ring-2 ring-black' : 'border border-gray-200'}`}
                   alt={`Product view ${index + 1}`}
                 />
               )
             })}
           </div>
           <div className='w-full sm:w-[80%] relative'>
-              <div className='w-full h-[300px] sm:h-[360px] md:h-[420px] bg-gray-50 rounded overflow-hidden flex items-center justify-center'>
-                <img className='max-w-full max-h-full w-auto h-full object-contain' src={image} alt="" />
+              <div className='w-full h-[360px] sm:h-[420px] md:h-[520px] bg-white rounded overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300'>
+                <img className='max-w-full max-h-full w-auto h-full object-contain transition-transform duration-500 hover:scale-105' src={image} alt="" />
               </div>
               {productData.image && productData.image.length > 1 && (
                 <>
@@ -662,7 +662,7 @@ const Product = () => {
               {/* ⭐ View AR button */}
               <button 
                 onClick={()=>setShowAR(true)} 
-                className={`border border-black px-6 py-3 text-sm w-full sm:w-auto bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition-colors duration-200 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
+                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
                 disabled={!productData.modelUrl}
               >
                 View AR
@@ -709,7 +709,7 @@ const Product = () => {
                       availableSizes.length ? selectedSize : null,
                     );
                   }} 
-                  className={`bg-black text-white px-6 py-3 text-sm active:bg-pink-700 flex-1 sm:flex-none ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`bg-black text-white px-6 py-3 text-sm rounded-md active:opacity-90 shadow-md hover:shadow-lg flex-1 sm:flex-none ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={productData.stock <= 0}
                 >
                   {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
@@ -722,34 +722,28 @@ const Product = () => {
 
           {/* -------- Seller Info -------- */}
           {sellerData && (
-            <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50'>
-              <div className='flex items-start justify-between gap-4'>
-                <div className='flex-1'>
-                  <button
-                    onClick={() => navigate(getArtisanPath(sellerData))}
-                    className='hover:text-black transition'
-                  >
-                    <h3 className='font-bold text-lg text-left text-gray-900 hover:underline'>
-                      {sellerData.storeName}
-                    </h3>
-                  </button>
-                  {sellerData.expertise && sellerData.expertise.length > 0 && (
-                    <div className='mt-2 flex flex-wrap gap-1'>
-                      {sellerData.expertise.slice(0, 2).map(tag => (
-                        <span key={tag} className='text-xs bg-white text-gray-600 px-2 py-0.5 rounded border border-gray-300'>
-                          {tag}
-                        </span>
-                      ))}
-                      {sellerData.expertise.length > 2 && (
-                        <span className='text-xs text-gray-500'>+{sellerData.expertise.length - 2} more</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => navigate(getArtisanPath(sellerData))}
-                  className='text-sm font-medium text-black hover:bg-black hover:text-white px-4 py-2 rounded border border-black transition'
-                >
+            <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-white flex items-center gap-4'>
+              <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700'>
+                {sellerData.storeName ? sellerData.storeName[0] : 'S'}
+              </div>
+              <div className='flex-1'>
+                <button onClick={() => navigate(getArtisanPath(sellerData))} className='hover:text-black transition'>
+                  <h3 className='font-bold text-md text-left text-gray-900 hover:underline'>
+                    {sellerData.storeName}
+                  </h3>
+                </button>
+                {sellerData.expertise && sellerData.expertise.length > 0 && (
+                  <div className='mt-2 flex flex-wrap gap-2'>
+                    {sellerData.expertise.slice(0, 3).map(tag => (
+                      <span key={tag} className='text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded border border-gray-100'>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <button onClick={() => navigate(getArtisanPath(sellerData))} className='text-sm font-medium text-black border border-gray-300 hover:bg-black hover:text-white px-3 py-2 rounded transition'>
                   View Shop →
                 </button>
               </div>

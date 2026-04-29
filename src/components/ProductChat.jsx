@@ -117,12 +117,12 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
         </div>
       </div>
 
-      <div ref={scrollRef} className='max-h-60 overflow-y-auto space-y-2 mb-3'>
+      <div ref={scrollRef} className='max-h-64 overflow-y-auto space-y-3 mb-3'>
         {messages.length === 0 ? (
           <div className='text-sm text-gray-500'>No messages yet. Ask the seller a question.</div>
         ) : (
           messages.map(m => (
-            <div key={m.id || Math.random()} className={`p-2 rounded ${m.sender === 'user' ? 'bg-blue-50 self-end ml-auto text-right' : 'bg-gray-100 self-start text-left'}`}>
+            <div key={m.id || Math.random()} className={`p-2 rounded-lg ${m.sender === 'user' ? 'bg-blue-50 self-end ml-auto text-right' : 'bg-gray-100 self-start text-left'}`}>
               {m.meta?.imageUrl && (
                 <img src={resolveUploadUrl(m.meta.imageUrl)} alt='Chat attachment' className='mb-1 rounded max-h-40 w-auto border border-gray-200 inline-block' />
               )}
@@ -132,8 +132,7 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
           ))
         )}
       </div>
-
-      <div className='flex gap-2'>
+      <div className='flex gap-2 items-center'>
         <input
           ref={imageInputRef}
           type='file'
@@ -141,9 +140,9 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
           className='hidden'
           onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
         />
-        <button onClick={() => imageInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0'>Image</button>
+        <button onClick={() => imageInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0 bg-gray-50 hover:bg-gray-100'>Image</button>
         <input value={text} onChange={(e) => setText(e.target.value)} className='flex-1 min-w-0 px-3 py-2 border rounded text-sm' placeholder='Write a message...' />
-        <button onClick={sendMessage} className='bg-black text-white px-4 py-2 rounded text-sm whitespace-nowrap shrink-0'>Send</button>
+        <button onClick={sendMessage} className='bg-black text-white px-4 py-2 rounded-md text-sm whitespace-nowrap shrink-0'>Send</button>
       </div>
       {selectedImage && <div className='mt-2 text-xs text-gray-600 truncate'>Attached: {selectedImage.name}</div>}
     </div>
