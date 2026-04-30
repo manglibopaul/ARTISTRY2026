@@ -133,6 +133,37 @@ function ViewCustomerModal({ open, onClose, customer }) {
   );
 }
 
+function ViewOrderModal({ open, onClose, order }) {
+  if (!open || !order) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-6 min-w-[360px] max-w-[95vw] max-h-[90vh] overflow-auto">
+        <div className="mb-4 text-lg font-bold">Order #{order.id}</div>
+        <div className="mb-2"><span className="font-semibold">Customer:</span> {order.firstName} {order.lastName} ({order.email || '-'})</div>
+        <div className="mb-2"><span className="font-semibold">Status:</span> {order.orderStatus}</div>
+        <div className="mb-2"><span className="font-semibold">Mode:</span> {order.paymentMethod || '-'}</div>
+        <div className="mb-2"><span className="font-semibold">Created:</span> {order.createdAt ? new Date(order.createdAt).toLocaleString() : '-'}</div>
+        <div className="mb-4"><span className="font-semibold">Completed:</span> {order.completedAt ? new Date(order.completedAt).toLocaleString() : '-'}</div>
+        <div className="mb-3 font-semibold">Items</div>
+        <div className="space-y-3">
+          {Array.isArray(order.items) && order.items.length > 0 ? order.items.map((it, idx) => (
+            <div key={idx} className="border rounded p-3">
+              <div className="font-medium">{it.name || it.title || 'Item'}</div>
+              <div className="text-sm text-gray-600">Qty: {it.quantity || it.qty || 1} • Seller: {it.sellerStoreName || it.sellerName || '-'}</div>
+              <div className="text-sm text-gray-500">Price: {typeof it.price !== 'undefined' ? (Number(it.price).toLocaleString()) : '-'}</div>
+            </div>
+          )) : (
+            <div className="text-gray-500">No items listed.</div>
+          )}
+        </div>
+        <div className="flex justify-end mt-4">
+          <button onClick={onClose} className="px-4 py-2 rounded border">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const AdminDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -467,10 +498,36 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [orderError, setOrderError] = useState(null);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderPage, setOrderPage] = useState(1);
+  const ORDER_PAGE_SIZE = 8;
   useEffect(() => {
     if (selectedTab === 'orders') fetchOrders();
     // eslint-disable-next-line
   }, [selectedTab]);
+
+  // Derived filtered & paginated orders
+  const filteredOrders = React.useMemo(() => {
+    const q = (orderSearch || '').trim().toLowerCase();
+    return (orders || []).filter(o => {
+      if (orderStatusFilter !== 'all' && String(o.orderStatus || '').toLowerCase() !== String(orderStatusFilter).toLowerCase()) return false;
+      if (!q) return true;
+      // match by id, buyer name, email, or product name
+      if (String(o.id || '').toLowerCase().includes(q)) return true;
+      if (((o.firstName || '') + ' ' + (o.lastName || '')).toLowerCase().includes(q)) return true;
+      if ((o.email || '').toLowerCase().includes(q)) return true;
+      if (Array.isArray(o.items) && o.items.some(it => (it.name || it.title || '').toLowerCase().includes(q))) return true;
+      return false;
+    });
+  }, [orders, orderSearch, orderStatusFilter]);
+
+  const totalOrderPages = Math.max(1, Math.ceil((filteredOrders || []).length / ORDER_PAGE_SIZE));
+  useEffect(() => { if (orderPage > totalOrderPages) setOrderPage(1) }, [totalOrderPages]);
+  const paginatedOrders = React.useMemo(() => (filteredOrders || []).slice((orderPage - 1) * ORDER_PAGE_SIZE, orderPage * ORDER_PAGE_SIZE), [filteredOrders, orderPage]);
+
+  const [viewOrder, setViewOrder] = useState(null);
+  const [viewOrderModalOpen, setViewOrderModalOpen] = useState(false);
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -699,9 +756,28 @@ const AdminDashboard = () => {
             <div className="text-gray-500">No orders found.</div>
           ) : (
             <>
+              <div className='mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+                <div className='max-w-md w-full'>
+                  <input value={orderSearch} onChange={(e) => { setOrderSearch(e.target.value); setOrderPage(1); }} placeholder='Search id, buyer, email, product...' className='w-full px-3 py-2 border rounded text-sm' />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <select value={orderStatusFilter} onChange={(e) => { setOrderStatusFilter(e.target.value); setOrderPage(1); }} className='px-3 py-2 border rounded text-sm'>
+                    <option value='all'>All status</option>
+                    <option value='pending'>pending</option>
+                    <option value='shipped'>shipped</option>
+                    <option value='completed'>completed</option>
+                    <option value='cancelled'>cancelled</option>
+                  </select>
+                  <div className='hidden sm:flex items-center gap-2'>
+                    <button disabled={orderPage<=1} onClick={() => setOrderPage(p => Math.max(1, p-1))} className='px-3 py-1 border rounded disabled:opacity-50'>Prev</button>
+                    <button disabled={orderPage*ORDER_PAGE_SIZE >= filteredOrders.length} onClick={() => setOrderPage(p => p+1)} className='px-3 py-1 border rounded disabled:opacity-50'>Next</button>
+                  </div>
+                </div>
+              </div>
+
               {/* Mobile cards */}
               <div className='block sm:hidden space-y-3'>
-                {orders.map(o => {
+                {paginatedOrders.map(o => {
                   let artisans = [];
                   let deliveryModes = [];
                   if (Array.isArray(o.items)) {
@@ -738,7 +814,7 @@ const AdminDashboard = () => {
                 <table className="min-w-full border">
                   <thead>
                     <tr>
-                      <th className="text-left p-3 font-semibold">Order ID</th>
+                      <th className="text-left p-3 font-semibold sticky top-0 bg-white z-10">Order ID</th>
                       <th className="text-left p-3 font-semibold">Customer</th>
                       <th className="text-left p-3 font-semibold">Items</th>
                       <th className="text-left p-3 font-semibold">Artist</th>
@@ -749,7 +825,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map(o => {
+                    {paginatedOrders.map(o => {
                       let artisans = [];
                       let deliveryModes = [];
                       if (Array.isArray(o.items)) {
@@ -768,7 +844,7 @@ const AdminDashboard = () => {
                       if (deliveryModes.length === 0) deliveryModes = [o.paymentMethod || '-'];
                       return (
                         <tr key={o.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3 font-medium">#{o.id}</td>
+                          <td className="p-3 font-medium"><button onClick={() => { setViewOrder(o); setViewOrderModalOpen(true); }} className='text-blue-600 hover:underline'>#{o.id}</button></td>
                           <td className="p-3">{o.firstName} {o.lastName}</td>
                           <td className="p-3">{Array.isArray(o.items) ? o.items.length : 0}</td>
                           <td className="p-3">{artisans.join(', ')}</td>
