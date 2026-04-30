@@ -21,6 +21,7 @@ const SellerDashboard = () => {
   const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
   const [replyDrafts, setReplyDrafts] = useState({})
   const [lowStockThreshold, setLowStockThreshold] = useState(5)
+  const [productThresholds, setProductThresholds] = useState({})
   const [loading, setLoading] = useState(false)
   const [viewOrder, setViewOrder] = useState(null)
   const [showForm, setShowForm] = useState(false)
