@@ -217,6 +217,9 @@ const AdminDashboard = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerPage, setCustomerPage] = useState(1);
   const CUSTOMER_PAGE_SIZE = 8;
+  const [sellerSearch, setSellerSearch] = useState('');
+  const [sellerPage, setSellerPage] = useState(1);
+  const SELLER_PAGE_SIZE = 8;
   const [sellers, setSellers] = useState([]);
   const [loadingSellers, setLoadingSellers] = useState(false);
   const [sellerError, setSellerError] = useState(null);
@@ -355,6 +358,29 @@ const AdminDashboard = () => {
     if (parts.length === 0) return '?';
     if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
     return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  }
+
+  // Sellers filtered & paginated
+  const filteredSellers = React.useMemo(() => {
+    const q = (sellerSearch || '').trim().toLowerCase();
+    if (!q) return Array.isArray(sellers) ? sellers : [];
+    return (sellers || []).filter(s => (s.name || '').toLowerCase().includes(q) || (s.storeName || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q));
+  }, [sellers, sellerSearch]);
+
+  const totalSellerPages = Math.max(1, Math.ceil((filteredSellers || []).length / SELLER_PAGE_SIZE));
+  useEffect(() => { if (sellerPage > totalSellerPages) setSellerPage(1) }, [totalSellerPages]);
+  const paginatedSellers = React.useMemo(() => (filteredSellers || []).slice((sellerPage - 1) * SELLER_PAGE_SIZE, sellerPage * SELLER_PAGE_SIZE), [filteredSellers, sellerPage]);
+
+  const verifySellerById = async (id) => {
+    try {
+      const res = await authFetch(`/sellers/${id}/verify`, { method: 'PATCH' });
+      if (!res.ok) throw new Error(await readErrorMessage(res));
+      setSellers(prev => (Array.isArray(prev) ? prev.map(s => s.id === id ? ({ ...s, isVerified: true }) : s) : prev));
+      setSuccessMessage('Artist verified!');
+      setSuccessModalOpen(true);
+    } catch (err) {
+      openErrorModal('Verification failed', err.message || 'error');
+    }
   }
 
   // State for bin (soft-deleted sellers)
@@ -570,21 +596,30 @@ const AdminDashboard = () => {
             <div className="text-red-600">{sellerError}</div>
           ) : (
             <>
+              <div className='mb-3'>
+                <div className='max-w-md'>
+                  <input value={sellerSearch} onChange={(e) => { setSellerSearch(e.target.value); setSellerPage(1); }} placeholder='Search name, store, email...' className='w-full px-3 py-2 border rounded text-sm' />
+                </div>
+              </div>
+
               {/* Mobile list */}
               <div className='block sm:hidden space-y-3'>
-                {sellers.map(s => (
+                {paginatedSellers.map(s => (
                   <div key={s.id} className='border rounded p-3'>
                     <div className='flex justify-between items-start'>
-                      <div>
-                        <div className='font-medium'>{s.name}</div>
-                        <div className='text-sm text-gray-600'>{s.storeName}</div>
-                        <div className='text-sm text-gray-500'>{s.email}</div>
+                      <div className='flex items-start gap-3'>
+                        <div className='w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(s.name)}</div>
+                        <div>
+                          <div className='font-medium'>{s.name}</div>
+                          <div className='text-sm text-gray-600'>{s.storeName}</div>
+                          <div className='text-sm text-gray-500'>{s.email}</div>
+                        </div>
                       </div>
                       <div>
                         {s.isVerified ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">✓ Yes</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">✗ No</span>
+                          <button onClick={() => verifySellerById(s.id)} className='inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium'>Verify</button>
                         )}
                       </div>
                     </div>
@@ -601,6 +636,13 @@ const AdminDashboard = () => {
               </div>
 
               {/* Desktop/tablet table */}
+              <div className='flex items-center justify-between gap-3 mb-3 hidden sm:flex'>
+                <div className='text-sm text-gray-600'>Showing {Math.min(1 + (sellerPage-1)*SELLER_PAGE_SIZE, filteredSellers.length)}–{Math.min(sellerPage*SELLER_PAGE_SIZE, filteredSellers.length)} of {filteredSellers.length}</div>
+                <div className='flex items-center gap-2'>
+                  <button disabled={sellerPage<=1} onClick={() => setSellerPage(p => Math.max(1, p-1))} className='px-3 py-1 border rounded disabled:opacity-50'>Prev</button>
+                  <button disabled={sellerPage*SELLER_PAGE_SIZE >= filteredSellers.length} onClick={() => setSellerPage(p => p+1)} className='px-3 py-1 border rounded disabled:opacity-50'>Next</button>
+                </div>
+              </div>
               <div className='hidden sm:block overflow-x-auto'>
                 <table className="min-w-full border">
                   <thead>
@@ -613,16 +655,19 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {sellers.map(s => (
+                    {paginatedSellers.map(s => (
                       <tr key={s.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{s.name}</td>
+                        <td className="p-3 flex items-center gap-3">
+                          <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(s.name)}</div>
+                          <div>{s.name}</div>
+                        </td>
                         <td className="p-3">{s.storeName}</td>
-                        <td className="p-3">{s.email}</td>
+                        <td className="p-3 truncate max-w-xs">{s.email}</td>
                         <td className="p-3">
                           {s.isVerified ? (
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">✓ Yes</span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">✗ No</span>
+                            <button onClick={() => verifySellerById(s.id)} className='px-3 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white text-sm'>Verify</button>
                           )}
                         </td>
                         <td className="p-3 flex gap-2">
