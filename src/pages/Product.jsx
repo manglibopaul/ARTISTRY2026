@@ -445,6 +445,26 @@ const Product = () => {
   useEffect(() => {
     if (!productData || !showAR || !modelViewerRef.current) return
     if (!productData.modelUrl) return
+    // Lazy-load the model-viewer module only when AR is requested
+    const ensureModelViewer = async () => {
+      try {
+        if (typeof window !== 'undefined' && !window.customElements?.get('model-viewer')) {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.type = 'module';
+            s.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js';
+            s.onload = () => resolve();
+            s.onerror = (e) => reject(e);
+            document.head.appendChild(s);
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to load model-viewer script dynamically', e);
+      }
+    };
+
+    // load the module first
+    ensureModelViewer().catch(() => {});
 
     setArLoading(true);
     setArError('');
