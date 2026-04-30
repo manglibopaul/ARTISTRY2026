@@ -1403,7 +1403,15 @@ const SellerDashboard = () => {
                       </div>
                       <div className='flex gap-2'>
                         <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm flex-1'>View</button>
-                        <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm flex-1'>Delete</button>
+                        <button
+                          onClick={() => {
+                            if (order.orderStatus === 'completed') return toast.info('Completed orders cannot be deleted')
+                            setOrderDeleteConfirm(order)
+                          }}
+                          disabled={order.orderStatus === 'completed'}
+                          className={`px-4 py-2 rounded text-sm flex-1 ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
+                          {order.orderStatus === 'completed' ? 'Completed' : 'Delete'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1499,7 +1507,15 @@ const SellerDashboard = () => {
                                 className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
                                 {order.orderStatus === 'completed' ? 'Completed' : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (order.orderStatus === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (order.orderStatus === 'processing' ? 'Ship' : 'Process'))}
                               </button>
-                              <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm'>Delete</button>
+                              <button
+                                onClick={() => {
+                                  if (order.orderStatus === 'completed') return toast.info('Completed orders cannot be deleted')
+                                  setOrderDeleteConfirm(order)
+                                }}
+                                disabled={order.orderStatus === 'completed'}
+                                className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
+                                {order.orderStatus === 'completed' ? 'Completed' : 'Delete'}
+                              </button>
                             </div>
                           </td>
                         </tr>
