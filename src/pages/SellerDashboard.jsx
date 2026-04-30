@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react'
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -12,6 +12,10 @@ const SellerDashboard = () => {
   const [seller, setSeller] = useState(null)
   const [products, setProducts] = useState([])
   const [sellerOrders, setSellerOrders] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 8
   const [selectedTab, setSelectedTab] = useState('products')
   const [sellerReviews, setSellerReviews] = useState([])
   const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
@@ -192,6 +196,30 @@ const SellerDashboard = () => {
       setLoading(false)
     }
   }
+
+  // Filtered & paginated orders for the list view
+  const filteredOrders = useMemo(() => {
+    const q = (searchQuery || '').trim().toLowerCase()
+    return (Array.isArray(sellerOrders) ? sellerOrders : []).filter(o => {
+      if (statusFilter && statusFilter !== 'all' && String(o.orderStatus) !== String(statusFilter)) return false
+      if (!q) return true
+      // match id, buyer name, email, or product titles
+      if (String(o.id).includes(q)) return true
+      if ((o.firstName || '').toLowerCase().includes(q)) return true
+      if ((o.lastName || '').toLowerCase().includes(q)) return true
+      if ((o.email || '').toLowerCase().includes(q)) return true
+      if (Array.isArray(o.sellerItems)) {
+        for (const it of o.sellerItems) {
+          if ((it.name || it.title || '').toLowerCase().includes(q)) return true
+        }
+      }
+      return false
+    })
+  }, [sellerOrders, searchQuery, statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil((filteredOrders || []).length / PAGE_SIZE))
+  useEffect(() => { if (currentPage > totalPages) setCurrentPage(1) }, [totalPages])
+  const paginatedOrders = useMemo(() => (filteredOrders || []).slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [filteredOrders, currentPage])
 
   const handleReplyChange = (reviewId, text) => {
     setReplyDrafts(prev => ({ ...prev, [reviewId]: text }))
@@ -1264,11 +1292,26 @@ const SellerDashboard = () => {
 
         {selectedTab === 'orders' && (
           <div className='bg-white rounded-lg shadow-lg overflow-hidden'>
-            <div className='p-4 sm:p-6 border-b border-gray-200'>
-              <h2 className='text-xl sm:text-2xl font-bold'>Orders ({sellerOrders.length})</h2>
+                <div className='p-4 sm:p-6 border-b border-gray-200'>
+              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+                <h2 className='text-xl sm:text-2xl font-bold'>Orders ({sellerOrders.length})</h2>
+
+                <div className='flex items-center gap-2'>
+                  <input value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }} placeholder='Search by order id, buyer, email, product...' className='px-3 py-2 border rounded w-64 text-sm' />
+                  <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }} className='px-3 py-2 border rounded text-sm'>
+                    <option value='all'>All status</option>
+                    <option value='pending'>pending</option>
+                    <option value='processing'>processing</option>
+                    <option value='ready_for_pickup'>ready for pickup</option>
+                    <option value='shipped'>shipped</option>
+                    <option value='completed'>completed</option>
+                    <option value='cancelled'>cancelled</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {loading && !sellerOrders.length ? (
+                {loading && !sellerOrders.length ? (
               <div className='p-6 text-center text-gray-500'>Loading orders...</div>
             ) : sellerOrders.length === 0 ? (
               <div className='p-6 text-center text-gray-500'>No orders yet for your products.</div>
@@ -1276,7 +1319,7 @@ const SellerDashboard = () => {
               <>
                 {/* Mobile card view */}
                 <div className='sm:hidden divide-y divide-gray-200'>
-                  {sellerOrders.map((order) => (
+                  {paginatedOrders.map((order) => (
                     <div key={order.id} className='p-4'>
                       <div className='flex justify-between items-start mb-2'>
                         <div>
@@ -1377,7 +1420,7 @@ const SellerDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {sellerOrders.map((order) => (
+                      {paginatedOrders.map((order) => (
                         <tr key={order.id} className='border-b border-gray-200 hover:bg-gray-50'>
                           {/* selection checkbox removed */}
                           <td className='px-6 py-4 text-sm font-medium text-gray-900'>#{order.id} <div className='text-xs text-gray-500'>{new Date(order.createdAt).toLocaleDateString()}</div></td>
