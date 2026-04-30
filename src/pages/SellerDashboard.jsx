@@ -195,10 +195,7 @@ const SellerDashboard = () => {
     setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
-  const selectAllOrders = () => {
-    if (selectedOrderIds.length === sellerOrders.length) setSelectedOrderIds([])
-    else setSelectedOrderIds(sellerOrders.map(o => o.id))
-  }
+  // selectAll now inlined in checkbox to avoid accidental global references
 
   const bulkUpdateStatus = async (status) => {
     if (!selectedOrderIds.length) return toast.info('Select orders to update')
@@ -1411,7 +1408,11 @@ const SellerDashboard = () => {
                     <thead className='bg-gray-50 border-b border-gray-200'>
                       <tr>
                         <th className='px-4 py-3 text-left text-sm font-medium text-gray-700 w-12'>
-                          <input type='checkbox' checked={selectedOrderIds.length === sellerOrders.length && sellerOrders.length > 0} onChange={selectAllOrders} />
+                          <input
+                            type='checkbox'
+                            checked={selectedOrderIds.length === sellerOrders.length && sellerOrders.length > 0}
+                            onChange={() => setSelectedOrderIds(prev => (prev.length === sellerOrders.length ? [] : sellerOrders.map(o => o.id)))}
+                          />
                         </th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Order</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Buyer</th>
