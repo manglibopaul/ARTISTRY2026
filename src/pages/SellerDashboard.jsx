@@ -1644,23 +1644,26 @@ const SellerDashboard = () => {
             <div className='space-y-6'>
               <div>
                 <div className='space-y-4'>
-                  <div className='flex flex-col sm:flex-row gap-3'>
-                    <label className='flex items-center gap-2 text-sm'>
-                      <input
-                        type='checkbox'
-                        checked={paymentSettings.acceptsCOD}
-                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsCOD: e.target.checked }))}
-                      />
-                      Accept Cash on Delivery (COD)
-                    </label>
-                    <label className='flex items-center gap-2 text-sm'>
-                      <input
-                        type='checkbox'
-                        checked={paymentSettings.acceptsGCash}
-                        onChange={(e) => setPaymentSettings(prev => ({ ...prev, acceptsGCash: e.target.checked }))}
-                      />
-                      Accept GCash
-                    </label>
+                  <div className='flex flex-col sm:flex-row gap-4 items-start'>
+                    <div className='flex items-center gap-3'>
+                      <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${paymentSettings.acceptsCOD ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        <button aria-pressed={paymentSettings.acceptsCOD} onClick={() => setPaymentSettings(prev => ({ ...prev, acceptsCOD: !prev.acceptsCOD }))} className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${paymentSettings.acceptsCOD ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </div>
+                      <div>
+                        <div className='text-sm font-medium'>Accept Cash on Delivery (COD)</div>
+                        <div className='text-xs text-gray-500'>Enable to allow COD payments at pickup/delivery.</div>
+                      </div>
+                    </div>
+
+                    <div className='flex items-center gap-3'>
+                      <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${paymentSettings.acceptsGCash ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        <button aria-pressed={paymentSettings.acceptsGCash} onClick={() => setPaymentSettings(prev => ({ ...prev, acceptsGCash: !prev.acceptsGCash }))} className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${paymentSettings.acceptsGCash ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </div>
+                      <div>
+                        <div className='text-sm font-medium'>Accept GCash</div>
+                        <div className='text-xs text-gray-500'>Buyers can pay via GCash using your QR code.</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
@@ -1686,27 +1689,37 @@ const SellerDashboard = () => {
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash QR Code</label>
-                    <input
-                      type='file'
-                      accept='image/*'
-                      onChange={(e) => uploadGcashQr(e.target.files?.[0])}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                    />
-                    <p className='text-xs text-gray-500 mt-1'>Upload a clear QR image so buyers can scan during checkout.</p>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>GCash QR Code</label>
+                    <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
+                      <label className='inline-flex items-center px-4 py-2 bg-white border rounded-lg cursor-pointer text-sm hover:bg-gray-50'>
+                        <input type='file' accept='image/*' onChange={(e) => uploadGcashQr(e.target.files?.[0])} className='hidden' />
+                        Upload QR
+                      </label>
+                      <div className='text-xs text-gray-500'>Upload a clear QR image so buyers can scan during checkout.</div>
+                    </div>
                     {paymentSettings.gcashQr && (
-                      <img
-                        src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
-                        alt='GCash QR'
-                        className='mt-2 w-36 h-36 object-contain border rounded bg-white p-1'
-                      />
+                      <div className='mt-3 flex items-start gap-3'>
+                        <img
+                          loading='lazy' decoding='async'
+                          src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
+                          alt='GCash QR'
+                          className='w-36 h-36 object-contain border rounded bg-white p-1'
+                        />
+                        <div className='flex flex-col gap-2'>
+                          <button onClick={() => { setPaymentSettings(prev => ({ ...prev, gcashQr: '' })); toast.info('GCash QR removed'); }} className='text-sm px-3 py-2 bg-red-50 text-red-700 border rounded hover:bg-red-100'>Remove QR</button>
+                          <button onClick={() => savePaymentSettings()} className='text-sm px-3 py-2 bg-black text-white rounded hover:bg-gray-900'>Save Payment Settings</button>
+                        </div>
+                      </div>
                     )}
                   </div>
 
                   <div className='pt-2'>
-                    <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
-                      Save Payment Settings
-                    </button>
+                    <div className='flex items-center gap-3'>
+                      <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
+                        Save Payment Settings
+                      </button>
+                      <div aria-live='polite' className='text-sm text-gray-500'>Changes are saved to your profile</div>
+                    </div>
                     {showPaymentConfirm && (
                       <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
                         <div className='bg-white rounded-lg shadow-lg p-6 max-w-sm w-full'>
