@@ -12,6 +12,7 @@ const SellerDashboard = () => {
   const [seller, setSeller] = useState(null)
   const [products, setProducts] = useState([])
   const [sellerOrders, setSellerOrders] = useState([])
+  const [selectedOrderIds, setSelectedOrderIds] = useState([])
   const [selectedTab, setSelectedTab] = useState('products')
   const [sellerReviews, setSellerReviews] = useState([])
   const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
@@ -189,6 +190,50 @@ const SellerDashboard = () => {
         navigate('/seller/login')
       }
     } finally {
+
+  const toggleSelectOrder = (id) => {
+    setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const selectAllOrders = () => {
+    if (selectedOrderIds.length === sellerOrders.length) setSelectedOrderIds([])
+    else setSelectedOrderIds(sellerOrders.map(o => o.id))
+  }
+
+  const bulkUpdateStatus = async (status) => {
+    if (!selectedOrderIds.length) return toast.info('Select orders to update')
+    const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
+    setSellerOrders(prev.map(o => selectedOrderIds.includes(o.id) ? ({ ...o, orderStatus: status }) : o))
+    try {
+      await Promise.all(selectedOrderIds.map(id => axios.put(`${apiUrl}/api/orders/${id}/status-seller`, { orderStatus: status }, { headers: { Authorization: `Bearer ${token}` } })))
+      toast.success('Order statuses updated')
+      setSelectedOrderIds([])
+      fetchSellerOrders()
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update some orders')
+      setSellerOrders(prev)
+      fetchSellerOrders()
+    }
+  }
+
+  const bulkDeleteOrders = async () => {
+    if (!selectedOrderIds.length) return toast.info('Select orders to delete')
+    if (!confirm(`Delete ${selectedOrderIds.length} selected orders? This cannot be undone.`)) return
+    const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
+    setSellerOrders(prev.filter(o => !selectedOrderIds.includes(o.id)))
+    try {
+      await Promise.all(selectedOrderIds.map(id => axios.delete(`${apiUrl}/api/orders/seller/${id}`, { headers: { Authorization: `Bearer ${token}` } })))
+      toast.success('Selected orders deleted')
+      setSelectedOrderIds([])
+      fetchSellerOrders()
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to delete some orders')
+      setSellerOrders(prev)
+      fetchSellerOrders()
+    }
+  }
       setLoading(false)
     }
   }
@@ -1348,12 +1393,27 @@ const SellerDashboard = () => {
                   ))}
                 </div>
 
-                {/* Desktop table view */}
+                {/* Desktop table view with selection & bulk actions */}
                 <div className='hidden sm:block overflow-x-auto'>
+                  {selectedOrderIds.length > 0 && (
+                    <div className='p-3 bg-gray-50 border-b flex items-center justify-between gap-3'>
+                      <div className='text-sm font-medium'>{selectedOrderIds.length} selected</div>
+                      <div className='flex items-center gap-2'>
+                        <button onClick={() => bulkUpdateStatus('shipped')} className='px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600'>Mark Shipped</button>
+                        <button onClick={() => bulkUpdateStatus('completed')} className='px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700'>Mark Completed</button>
+                        <button onClick={() => bulkDeleteOrders()} className='px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600'>Delete</button>
+                        <button onClick={() => setSelectedOrderIds([])} className='px-3 py-1 bg-white border rounded text-sm'>Clear</button>
+                      </div>
+                    </div>
+                  )}
+
                   <table className='w-full'>
                     <thead className='bg-gray-50 border-b border-gray-200'>
                       <tr>
-                        <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Order ID</th>
+                        <th className='px-4 py-3 text-left text-sm font-medium text-gray-700 w-12'>
+                          <input type='checkbox' checked={selectedOrderIds.length === sellerOrders.length && sellerOrders.length > 0} onChange={selectAllOrders} />
+                        </th>
+                        <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Order</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Buyer</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Items</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Total</th>
@@ -1364,7 +1424,10 @@ const SellerDashboard = () => {
                     <tbody>
                       {sellerOrders.map((order) => (
                         <tr key={order.id} className='border-b border-gray-200 hover:bg-gray-50'>
-                          <td className='px-6 py-4 text-sm font-medium text-gray-900'>{order.id}</td>
+                          <td className='px-4 py-4 text-sm text-gray-700'>
+                            <input type='checkbox' checked={selectedOrderIds.includes(order.id)} onChange={() => toggleSelectOrder(order.id)} />
+                          </td>
+                          <td className='px-6 py-4 text-sm font-medium text-gray-900'>#{order.id} <div className='text-xs text-gray-500'>{new Date(order.createdAt).toLocaleDateString()}</div></td>
                           <td className='px-6 py-4 text-sm text-gray-700'>
                             {order.firstName || order.lastName ? (
                               <>
@@ -1376,53 +1439,36 @@ const SellerDashboard = () => {
                             )}
                           </td>
                           <td className='px-6 py-4 text-sm text-gray-700'>
-                            {order.sellerItems.map((it, idx) => {
-                              const img = Array.isArray(it.image) && it.image.length > 0 ? it.image[0] : (typeof it.image === 'string' ? it.image : null)
-                              let imgSrc = null
-                              if (img) {
-                                if (typeof img === 'object' && img.url) imgSrc = img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`
-                                else if (typeof img === 'string') imgSrc = img.startsWith('http') ? img : `${apiUrl}${img}`
-                              }
-                              return (
-                                <div key={idx} className='flex items-center gap-3 mb-2'>
-                                  {imgSrc ? (
-                                    <img src={imgSrc} alt={it.name || 'Product'} className='w-12 h-12 object-cover rounded border flex-shrink-0' />
-                                  ) : (
-                                    <div className='w-12 h-12 bg-gray-100 rounded border flex items-center justify-center text-gray-400 text-xs flex-shrink-0'>N/A</div>
-                                  )}
-                                  <div>
-                                    <span className='font-medium'>{it.name ?? it.title ?? `Product ${it.productId ?? it.id ?? ''}`}</span>
-                                    <div className='text-xs text-gray-500'>x{it.quantity ?? it.qty ?? it.q ?? 1} · ₱{it.price ?? it.unitPrice ?? ''}</div>
+                            <div className='flex items-center gap-3'>
+                              {order.sellerItems.slice(0,3).map((it, idx) => {
+                                const img = Array.isArray(it.image) && it.image.length > 0 ? it.image[0] : (typeof it.image === 'string' ? it.image : null)
+                                let imgSrc = null
+                                if (img) {
+                                  if (typeof img === 'object' && img.url) imgSrc = img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`
+                                  else if (typeof img === 'string') imgSrc = img.startsWith('http') ? img : `${apiUrl}${img}`
+                                }
+                                return (
+                                  <div key={idx} className='flex items-center gap-2'>
+                                    {imgSrc ? (
+                                      <img loading='lazy' decoding='async' src={imgSrc} alt={it.name || 'Product'} className='w-10 h-10 object-cover rounded border flex-shrink-0' />
+                                    ) : (
+                                      <div className='w-10 h-10 bg-gray-100 rounded border flex items-center justify-center text-gray-400 text-xs flex-shrink-0'>N/A</div>
+                                    )}
                                   </div>
-                                </div>
-                              )
-                            })}
+                                )
+                              })}
+                              {order.sellerItems.length > 3 && <div className='text-xs text-gray-500'>+{order.sellerItems.length - 3} more</div>}
+                            </div>
                           </td>
                           <td className='px-6 py-4 text-sm text-gray-700'>₱{order.total}</td>
                           <td className='px-6 py-4 text-sm text-gray-700'>
-                            <select
-                              value={order.orderStatus}
-                              onChange={e => {
-                                const newStatus = e.target.value;
-                                setStatusChangeConfirm({ open: true, order, newStatus });
-                              }}
-                              className='px-2 py-1 border rounded'>
-                              <option value='pending'>pending</option>
-                              <option value='processing'>processing</option>
-                              {order.paymentMethod === 'pickup' && (
-                                <option value='ready_for_pickup'>ready for pickup</option>
-                              )}
-                              {order.paymentMethod !== 'pickup' && order.method !== 'pickup' && (
-                                <option value='shipped'>shipped</option>
-                              )}
-                              <option value='completed'>completed</option>
-                              <option value='cancelled'>cancelled</option>
-                            </select>
+                            <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${order.orderStatus === 'completed' ? 'bg-green-100 text-green-800' : order.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}`}>{order.orderStatus}</div>
                           </td>
                           <td className='px-6 py-4 text-sm text-gray-700'>
                             <div className='flex gap-2'>
-                            <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded'>View</button>
-                            <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded'>Delete</button>
+                              <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm'>View</button>
+                              <button onClick={() => { setStatusChangeConfirm({ open: true, order, newStatus: order.orderStatus === 'processing' ? 'shipped' : 'processing' }) }} className='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm'>{order.orderStatus === 'processing' ? 'Ship' : 'Process'}</button>
+                              <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm'>Delete</button>
                             </div>
                           </td>
                         </tr>
