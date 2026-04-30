@@ -1612,10 +1612,13 @@ const SellerDashboard = () => {
               ) : (
                 <div className='grid gap-3'>
                   {products.filter(p => Number(p.stock) <= lowStockThreshold).map(p => (
-                    <div key={p.id} className='flex items-center justify-between border p-3 rounded'>
-                      <div>
-                        <div className='font-medium'>{p.name}</div>
-                        <div className='text-sm text-gray-600'>Stock: {p.stock}</div>
+                    <div key={p.id} className='flex items-center justify-between border p-3 rounded hover:shadow-sm transition-shadow'>
+                      <div className='flex items-center gap-3'>
+                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
+                        <div>
+                          <div className='font-medium'>{p.name}</div>
+                          <div className='text-sm text-gray-600 mt-1'>Stock: <span className={`${Number(p.stock) <= lowStockThreshold ? 'text-red-600 font-semibold' : ''}`}>{p.stock}</span></div>
+                        </div>
                       </div>
                       <div className='flex items-center gap-2'>
                         <input type='number' min='1' placeholder='Add qty' id={`restock-${p.id}`} className='w-24 px-2 py-1 border rounded' />
@@ -1649,10 +1652,14 @@ const SellerDashboard = () => {
             {/* Mobile-friendly inventory list (visible on small screens) */}
             <div className='block sm:hidden space-y-3'>
               {products.map(p => (
-                <div key={p.id} className='border rounded p-3 flex justify-between items-start'>
-                  <div>
-                    <div className='font-medium text-sm'>{p.name}</div>
-                    <div className='text-sm text-gray-600 mt-1'>Stock: {p.stock}</div>
+                <div key={p.id} className='border rounded p-3 flex justify-between items-start hover:shadow-sm transition-shadow'>
+                  <div className='flex items-start gap-3'>
+                    <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-14 h-14 object-cover rounded-md bg-gray-100' />
+                    <div>
+                      <div className='font-medium text-sm'>{p.name}</div>
+                      <div className='text-sm text-gray-600 mt-1'>Stock: <span className={`${Number(p.stock) <= lowStockThreshold ? 'text-red-600 font-semibold' : ''}`}>{p.stock}</span></div>
+                      <div className='text-xs text-gray-500 mt-1'>ID: {p.id}</div>
+                    </div>
                   </div>
 
                   <div className='flex flex-col items-end gap-2'>
@@ -1696,17 +1703,48 @@ const SellerDashboard = () => {
                   <tr>
                     <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Product</th>
                     <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Stock</th>
+                    <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Threshold</th>
                     <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map(p => (
-                    <tr key={p.id} className='border-b border-gray-200 hover:bg-gray-50'>
-                      <td className='px-6 py-4 text-sm font-medium text-gray-900'>{p.name}</td>
+                    <tr key={p.id} className='border-b border-gray-200 hover:bg-gray-50 transition-colors'>
+                      <td className='px-6 py-4 text-sm font-medium text-gray-900 flex items-center gap-3'>
+                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
+                        <div className='truncate'>{p.name}</div>
+                      </td>
                       <td className='px-6 py-4 text-sm text-gray-700'>{p.stock}</td>
+                      <td className='px-6 py-4 text-sm text-gray-700'>
+                        <div className='flex items-center gap-2'>
+                          <input type='number' min='0' value={productThresholds[p.id] ?? lowStockThreshold} onChange={(e) => setProductThresholds(prev => ({ ...prev, [p.id]: Number(e.target.value || 0) }))} className='w-20 px-2 py-1 border rounded' />
+                          <button onClick={async () => {
+                            try {
+                              const val = Number(productThresholds[p.id] ?? lowStockThreshold)
+                              await axios.put(`${apiUrl}/api/products/${p.id}`, { lowStockThreshold: val }, { headers: { Authorization: `Bearer ${token}` } })
+                              toast.success('Threshold saved')
+                              fetchProducts()
+                            } catch (err) {
+                              console.error('save threshold', err)
+                              toast.error('Failed to save threshold')
+                            }
+                          }} className='bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm'>Save</button>
+                        </div>
+                      </td>
                       <td className='px-6 py-4 text-sm space-x-2'>
                         <button onClick={() => handleEdit(p)} className='bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded'>Edit</button>
                         <button onClick={() => setDeleteConfirm(p.id)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded'>Delete</button>
+                        <button onClick={async () => {
+                          const qty = 1
+                          try {
+                            await axios.put(`${apiUrl}/api/products/${p.id}`, { stock: Number(p.stock) + qty }, { headers: { Authorization: `Bearer ${token}` } })
+                            toast.success('Stock +1')
+                            fetchProducts()
+                          } catch (err) {
+                            console.error(err)
+                            toast.error('Failed to update stock')
+                          }
+                        }} className='bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded'>+1</button>
                       </td>
                     </tr>
                   ))}
