@@ -88,10 +88,17 @@ const SellerDashboard = () => {
   const [convoPollId, setConvoPollId] = useState(null)
 
   const resolveImageUrl = (image) => {
-    if (!image) return ''
+    const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-family="Arial, Helvetica, sans-serif" font-size="14">No image</text></svg>'
+    if (!image) return placeholder
 
-    if (typeof image === 'object' && image.url) {
-      return image.url.startsWith('http') ? image.url : `${apiUrl}${image.url}`
+    // handle arrays (e.g., image collections)
+    if (Array.isArray(image) && image.length > 0) image = image[0]
+
+    // object shape { url } or { path } or { filename }
+    if (typeof image === 'object') {
+      const url = image.url || image.path || image.filename || image.src
+      if (!url) return placeholder
+      return String(url).startsWith('http') ? String(url) : `${apiUrl}${url}`
     }
 
     if (typeof image === 'string') {
@@ -100,7 +107,7 @@ const SellerDashboard = () => {
       return `${apiUrl}/uploads/images/${image}`
     }
 
-    return ''
+    return placeholder
   }
 
   const formatCurrency = (value) => {
@@ -1615,7 +1622,7 @@ const SellerDashboard = () => {
                   {products.filter(p => Number(p.stock) <= lowStockThreshold).map(p => (
                     <div key={p.id} className='flex items-center justify-between border p-3 rounded hover:shadow-sm transition-shadow'>
                       <div className='flex items-center gap-3'>
-                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
+                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} loading='lazy' onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = resolveImageUrl(null) }} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
                         <div>
                           <div className='font-medium'>{p.name}</div>
                           <div className='text-sm text-gray-600 mt-1'>Stock: <span className={`${Number(p.stock) <= lowStockThreshold ? 'text-red-600 font-semibold' : ''}`}>{p.stock}</span></div>
@@ -1655,7 +1662,7 @@ const SellerDashboard = () => {
               {products.map(p => (
                 <div key={p.id} className='border rounded p-3 flex justify-between items-start hover:shadow-sm transition-shadow'>
                   <div className='flex items-start gap-3'>
-                    <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-14 h-14 object-cover rounded-md bg-gray-100' />
+                    <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} loading='lazy' onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = resolveImageUrl(null) }} className='w-14 h-14 object-cover rounded-md bg-gray-100' />
                     <div>
                       <div className='font-medium text-sm'>{p.name}</div>
                       <div className='text-sm text-gray-600 mt-1'>Stock: <span className={`${Number(p.stock) <= lowStockThreshold ? 'text-red-600 font-semibold' : ''}`}>{p.stock}</span></div>
@@ -1712,7 +1719,7 @@ const SellerDashboard = () => {
                   {products.map(p => (
                     <tr key={p.id} className='border-b border-gray-200 hover:bg-gray-50 transition-colors'>
                       <td className='px-6 py-4 text-sm font-medium text-gray-900 flex items-center gap-3'>
-                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
+                        <img src={resolveImageUrl((p.images && p.images[0]) || p.image || p.thumbnail)} alt={p.name} loading='lazy' onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = resolveImageUrl(null) }} className='w-12 h-12 object-cover rounded-md bg-gray-100' />
                         <div className='truncate'>{p.name}</div>
                       </td>
                       <td className='px-6 py-4 text-sm text-gray-700'>{p.stock}</td>
