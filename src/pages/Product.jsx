@@ -37,6 +37,7 @@ const Product = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showAdded, setShowAdded] = useState(false);
   const [detectedParts, setDetectedParts] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
   const [showPartsList, setShowPartsList] = useState(false);
@@ -575,7 +576,7 @@ const Product = () => {
 
         {/* -------------------------product images----------------- */}
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-1/4 w-full gap-3 pb-2 sm:pb-0'>
+          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-1/4 w-full gap-3 pb-2 sm:pb-0 sm:sticky sm:top-28'>
             {productData.image && productData.image.map((item,index)=>{
               const imgUrl = getImageUrl(item);
               const isActive = image === imgUrl;
@@ -700,7 +701,7 @@ const Product = () => {
                 View AR
               </button>
 
-              <div className='flex items-center gap-2 w-full sm:w-auto'>
+              <div className='flex items-center gap-2 w-full sm:w-auto relative'>
                 <input
                   type='number'
                   min={1}
@@ -741,12 +742,18 @@ const Product = () => {
                       availableColors.length ? cartColor : null,
                       availableSizes.length ? selectedSize : null,
                     );
+                    // show temporary added feedback
+                    try { setShowAdded(true); setTimeout(()=>setShowAdded(false), 900); } catch(e){}
                   }} 
                   className={`bg-black text-white px-6 py-3 text-sm rounded-md active:opacity-90 shadow-md hover:shadow-lg flex-1 sm:flex-none ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={productData.stock <= 0}
                 >
                   {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
                 </button>
+                {/* added feedback badge */}
+                <div aria-hidden={!showAdded} className={`absolute -top-3 right-0 transform translate-x-1/2 transition-all duration-300 ${showAdded ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+                  <div className='bg-black text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md'>Added ✓</div>
+                </div>
               </div>
             </div>
           </div>

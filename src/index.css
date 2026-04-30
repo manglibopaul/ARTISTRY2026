@@ -213,3 +213,21 @@ h2 {
 
 /* Slightly reduce the extra whitespace in product header sections */
 .product-header-tight { margin-top: 0.25rem; margin-bottom: 0.5rem; }
+
+/* Engagement animations */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 420ms cubic-bezier(.2,.8,.2,1) both; }
+
+.thumbnail-img { transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease; }
+.thumbnail-img:hover { transform: translateY(-6px) scale(1.04); box-shadow: 0 10px 24px rgba(2,6,23,0.06); }
+
+.product-image-frame img { transition: transform 420ms ease; }
+.product-image-frame:hover img { transform: scale(1.03) rotate(-0.2deg); }
+
+.add-feedback { pointer-events: none; }
+
+/* Thumbnail active accent */
+.thumbnail-active { box-shadow: 0 6px 18px rgba(2,6,23,0.06); border-color: transparent !important; transform: scale(1.03); }
+
+/* Small accessibility: announce badge visually hidden counterpart */
+.sr-announce { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
