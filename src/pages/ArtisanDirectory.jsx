@@ -196,19 +196,20 @@ const ArtisanDirectory = () => {
 
             {/* Artists Grid */}
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {filteredSellers.map(seller => (
+              {filteredSellers.map((seller, idx) => (
                 <div
                   key={seller.id}
                   onClick={() => navigate(getArtisanPath(seller))}
-                  className='artist-card group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-xl transition-all duration-400 cursor-pointer opacity-0 translate-y-6'
+                  className='artist-card group bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-black hover:shadow-2xl transition-all duration-500 cursor-pointer opacity-0 translate-y-6'
+                  style={{ transitionDelay: `${idx * 60}ms` }}
                 >
                   {/* Card Header with Avatar */}
-                  <div className='bg-gradient-to-r from-gray-100 to-gray-50 p-6 border-b border-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition'>
+                  <div className='bg-gradient-to-r from-gray-100 to-gray-50 p-6 border-b border-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition relative'>
                     {seller.avatar ? (
                       <img
                         src={resolveAvatarUrl(seller.avatar)}
                         alt={seller.storeName}
-                        className='w-16 h-16 rounded-full object-cover mb-4 border-2 border-white shadow-md'
+                        className='w-16 h-16 rounded-full object-cover mb-4 border-2 border-white shadow-md avatar-img'
                       />
                     ) : (
                       <div className='w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-bold text-xl mb-4 border-2 border-white shadow-md'>
@@ -225,14 +226,14 @@ const ArtisanDirectory = () => {
                     {/* Craft Type Badge */}
                     {seller.artisanType && (
                       <div className='mb-4'>
-                        <span className='inline-block badge-primary text-xs px-3 py-1.5 rounded-full font-semibold'>
+                        <span className='inline-block badge-primary text-xs px-3 py-1.5 rounded-full font-semibold shadow-sm'>
                           {seller.artisanType}
                         </span>
                       </div>
                     )}
 
                     {/* Bio */}
-                    <p className='text-sm text-gray-700 mb-4 line-clamp-2 leading-relaxed'>
+                    <p className='text-sm text-gray-700 mb-4 line-clamp-2 leading-relaxed fade-up'>
                       {seller.bio || seller.description || 'Talented artist creating beautiful handmade items'}
                     </p>
 
@@ -266,7 +267,7 @@ const ArtisanDirectory = () => {
                       <div className='flex items-center gap-3'>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(getArtisanPath(seller)) }}
-                          className='visit-shop inline-block btn-primary text-xs opacity-0 transform translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out'
+                          className='visit-shop inline-block btn-primary text-xs opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out'
                         >
                           Visit Shop
                         </button>
