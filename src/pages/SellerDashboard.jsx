@@ -12,7 +12,6 @@ const SellerDashboard = () => {
   const [seller, setSeller] = useState(null)
   const [products, setProducts] = useState([])
   const [sellerOrders, setSellerOrders] = useState([])
-  const [selectedOrderIds, setSelectedOrderIds] = useState([])
   const [selectedTab, setSelectedTab] = useState('products')
   const [sellerReviews, setSellerReviews] = useState([])
   const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
@@ -190,61 +189,6 @@ const SellerDashboard = () => {
         navigate('/seller/login')
       }
     } finally {
-
-  const toggleSelectOrder = (id) => {
-    setSelectedOrderIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-  }
-
-  // selectAll now inlined in checkbox to avoid accidental global references
-
-  const bulkUpdateStatus = async (status) => {
-    if (!selectedOrderIds.length) return toast.info('Select orders to update')
-    const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-    // skip completed orders
-    const idsToUpdate = selectedOrderIds.filter(id => {
-      const o = sellerOrders.find(x => x.id === id)
-      return o && o.orderStatus !== 'completed'
-    })
-    if (!idsToUpdate.length) return toast.info('Selected orders are already completed and will not be changed')
-    setSellerOrders(prev.map(o => idsToUpdate.includes(o.id) ? ({ ...o, orderStatus: status }) : o))
-    try {
-      await Promise.all(idsToUpdate.map(id => axios.put(`${apiUrl}/api/orders/${id}/status-seller`, { orderStatus: status }, { headers: { Authorization: `Bearer ${token}` } })))
-      const skipped = selectedOrderIds.length - idsToUpdate.length
-      toast.success(`Order statuses updated${skipped ? ` (${skipped} skipped)` : ''}`)
-      setSelectedOrderIds([])
-      fetchSellerOrders()
-    } catch (err) {
-      console.error(err)
-      toast.error('Failed to update some orders')
-      setSellerOrders(prev)
-      fetchSellerOrders()
-    }
-  }
-
-  const bulkDeleteOrders = async () => {
-    if (!selectedOrderIds.length) return toast.info('Select orders to delete')
-    // don't allow deleting completed orders
-    const idsToDelete = selectedOrderIds.filter(id => {
-      const o = sellerOrders.find(x => x.id === id)
-      return o && o.orderStatus !== 'completed'
-    })
-    if (!idsToDelete.length) return toast.info('Selected orders cannot be deleted (completed or protected)')
-    if (!confirm(`Delete ${idsToDelete.length} selected orders? This cannot be undone.`)) return
-    const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-    setSellerOrders(prev.filter(o => !idsToDelete.includes(o.id)))
-    try {
-      await Promise.all(idsToDelete.map(id => axios.delete(`${apiUrl}/api/orders/seller/${id}`, { headers: { Authorization: `Bearer ${token}` } })))
-      const skipped = selectedOrderIds.length - idsToDelete.length
-      toast.success(`Selected orders deleted${skipped ? ` (${skipped} skipped)` : ''}`)
-      setSelectedOrderIds([])
-      fetchSellerOrders()
-    } catch (err) {
-      console.error(err)
-      toast.error('Failed to delete some orders')
-      setSellerOrders(prev)
-      fetchSellerOrders()
-    }
-  }
       setLoading(false)
     }
   }
@@ -1418,28 +1362,12 @@ const SellerDashboard = () => {
 
                 {/* Desktop table view with selection & bulk actions */}
                 <div className='hidden sm:block overflow-x-auto'>
-                  {selectedOrderIds.length > 0 && (
-                    <div className='p-3 bg-gray-50 border-b flex items-center justify-between gap-3'>
-                      <div className='text-sm font-medium'>{selectedOrderIds.length} selected</div>
-                      <div className='flex items-center gap-2'>
-                        <button onClick={() => bulkUpdateStatus('shipped')} className='px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600'>Mark Shipped</button>
-                        <button onClick={() => bulkUpdateStatus('completed')} className='px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700'>Mark Completed</button>
-                        <button onClick={() => bulkDeleteOrders()} className='px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600'>Delete</button>
-                        <button onClick={() => setSelectedOrderIds([])} className='px-3 py-1 bg-white border rounded text-sm'>Clear</button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Bulk selection removed per UX request */}
 
                   <table className='w-full'>
                     <thead className='bg-gray-50 border-b border-gray-200'>
                       <tr>
-                        <th className='px-4 py-3 text-left text-sm font-medium text-gray-700 w-12'>
-                          <input
-                            type='checkbox'
-                            checked={selectedOrderIds.length === sellerOrders.length && sellerOrders.length > 0}
-                            onChange={() => setSelectedOrderIds(prev => (prev.length === sellerOrders.length ? [] : sellerOrders.map(o => o.id)))}
-                          />
-                        </th>
+                        {/* selection column removed */}
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Order</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Buyer</th>
                         <th className='px-6 py-3 text-left text-sm font-medium text-gray-700'>Items</th>
@@ -1451,9 +1379,7 @@ const SellerDashboard = () => {
                     <tbody>
                       {sellerOrders.map((order) => (
                         <tr key={order.id} className='border-b border-gray-200 hover:bg-gray-50'>
-                          <td className='px-4 py-4 text-sm text-gray-700'>
-                            <input type='checkbox' checked={selectedOrderIds.includes(order.id)} onChange={() => toggleSelectOrder(order.id)} />
-                          </td>
+                          {/* selection checkbox removed */}
                           <td className='px-6 py-4 text-sm font-medium text-gray-900'>#{order.id} <div className='text-xs text-gray-500'>{new Date(order.createdAt).toLocaleDateString()}</div></td>
                           <td className='px-6 py-4 text-sm text-gray-700'>
                             {order.firstName || order.lastName ? (
