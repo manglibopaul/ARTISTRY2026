@@ -214,6 +214,9 @@ const AdminDashboard = () => {
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerError, setCustomerError] = useState(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerPage, setCustomerPage] = useState(1);
+  const CUSTOMER_PAGE_SIZE = 8;
   const [sellers, setSellers] = useState([]);
   const [loadingSellers, setLoadingSellers] = useState(false);
   const [sellerError, setSellerError] = useState(null);
@@ -334,6 +337,25 @@ const AdminDashboard = () => {
     if (selectedTab === 'customers') fetchCustomers();
     if (selectedTab === 'sellers') fetchSellers();
   }, [selectedTab, fetchCustomers, fetchSellers]);
+
+  // Derived filtered & paginated customers
+  const filteredCustomers = React.useMemo(() => {
+    const q = (customerSearch || '').trim().toLowerCase();
+    if (!q) return Array.isArray(customers) ? customers : [];
+    return (customers || []).filter(c => (c.name || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q));
+  }, [customers, customerSearch]);
+
+  const totalCustomerPages = Math.max(1, Math.ceil((filteredCustomers || []).length / CUSTOMER_PAGE_SIZE));
+  useEffect(() => { if (customerPage > totalCustomerPages) setCustomerPage(1) }, [totalCustomerPages]);
+  const paginatedCustomers = React.useMemo(() => (filteredCustomers || []).slice((customerPage - 1) * CUSTOMER_PAGE_SIZE, customerPage * CUSTOMER_PAGE_SIZE), [filteredCustomers, customerPage]);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  }
 
   // State for bin (soft-deleted sellers)
   const [binSellers, setBinSellers] = useState([]);
@@ -464,13 +486,35 @@ const AdminDashboard = () => {
             <div className="text-red-600">{customerError === 'Invalid token' ? 'Session expired. Please log in again.' : customerError}</div>
           ) : (
             <>
+              <div className='flex items-center justify-between gap-3 mb-3'>
+                <div className='flex items-center gap-2 w-full max-w-md'>
+                  <input value={customerSearch} onChange={(e) => { setCustomerSearch(e.target.value); setCustomerPage(1); }} placeholder='Search name, email, phone...' className='w-full px-3 py-2 border rounded text-sm' />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <button onClick={() => {
+                    // export visible customers to CSV
+                    const rows = filteredCustomers.map(c => [c.name, c.email, c.phone || ''].join(','));
+                    const csv = ['Name,Email,Phone', ...rows].join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'customers.csv'; a.click(); URL.revokeObjectURL(url);
+                  }} className='px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm'>Export</button>
+                </div>
+              </div>
+
               {/* Mobile list */}
               <div className='block sm:hidden space-y-3'>
-                {customers.map(u => (
+                {paginatedCustomers.map(u => (
                   <div key={u.id} className='border rounded p-3'>
-                    <div className='font-medium'>{u.name}</div>
-                    <div className='text-sm text-gray-600'>{u.email}</div>
-                    <div className='text-sm text-gray-500'>{u.phone || '-'}</div>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(u.name)}</div>
+                      <div className='flex-1 min-w-0'>
+                        <div className='font-medium truncate'>{u.name}</div>
+                        <div className='text-sm text-gray-600 truncate'>{u.email}</div>
+                      </div>
+                      <div className='text-sm text-gray-500'>{u.phone || '-'}</div>
+                    </div>
                     <div className='mt-3 flex gap-2'>
                       <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
                       <button onClick={() => {
@@ -484,6 +528,13 @@ const AdminDashboard = () => {
               </div>
 
               {/* Desktop/tablet table */}
+              <div className='flex items-center justify-between gap-3 mb-3 hidden sm:flex'>
+                <div className='text-sm text-gray-600'>Showing {Math.min(1 + (customerPage-1)*CUSTOMER_PAGE_SIZE, filteredCustomers.length)}–{Math.min(customerPage*CUSTOMER_PAGE_SIZE, filteredCustomers.length)} of {filteredCustomers.length}</div>
+                <div className='flex items-center gap-2'>
+                  <button disabled={customerPage<=1} onClick={() => setCustomerPage(p => Math.max(1, p-1))} className='px-3 py-1 border rounded disabled:opacity-50'>Prev</button>
+                  <button disabled={customerPage*CUSTOMER_PAGE_SIZE >= filteredCustomers.length} onClick={() => setCustomerPage(p => p+1)} className='px-3 py-1 border rounded disabled:opacity-50'>Next</button>
+                </div>
+              </div>
               <div className='hidden sm:block overflow-x-auto'>
                 <table className="min-w-full border">
                   <thead>
@@ -495,10 +546,13 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {customers.map(u => (
+                    {paginatedCustomers.map(u => (
                       <tr key={u.id} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{u.name}</td>
-                        <td className="p-3">{u.email}</td>
+                        <td className="p-3 flex items-center gap-3">
+                          <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(u.name)}</div>
+                          <div>{u.name}</div>
+                        </td>
+                        <td className="p-3 truncate max-w-xs">{u.email}</td>
                         <td className="p-3">{u.phone || '-'}</td>
                         <td className="p-3 flex gap-2">
                           <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
