@@ -223,12 +223,19 @@ const SellerDashboard = () => {
 
   const bulkDeleteOrders = async () => {
     if (!selectedOrderIds.length) return toast.info('Select orders to delete')
-    if (!confirm(`Delete ${selectedOrderIds.length} selected orders? This cannot be undone.`)) return
+    // don't allow deleting completed orders
+    const idsToDelete = selectedOrderIds.filter(id => {
+      const o = sellerOrders.find(x => x.id === id)
+      return o && o.orderStatus !== 'completed'
+    })
+    if (!idsToDelete.length) return toast.info('Selected orders cannot be deleted (completed or protected)')
+    if (!confirm(`Delete ${idsToDelete.length} selected orders? This cannot be undone.`)) return
     const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-    setSellerOrders(prev.filter(o => !selectedOrderIds.includes(o.id)))
+    setSellerOrders(prev.filter(o => !idsToDelete.includes(o.id)))
     try {
-      await Promise.all(selectedOrderIds.map(id => axios.delete(`${apiUrl}/api/orders/seller/${id}`, { headers: { Authorization: `Bearer ${token}` } })))
-      toast.success('Selected orders deleted')
+      await Promise.all(idsToDelete.map(id => axios.delete(`${apiUrl}/api/orders/seller/${id}`, { headers: { Authorization: `Bearer ${token}` } })))
+      const skipped = selectedOrderIds.length - idsToDelete.length
+      toast.success(`Selected orders deleted${skipped ? ` (${skipped} skipped)` : ''}`)
       setSelectedOrderIds([])
       fetchSellerOrders()
     } catch (err) {
@@ -326,30 +333,30 @@ const SellerDashboard = () => {
   const uploadGcashQr = async (file) => {
     if (!file) return
     try {
+      setUploadError('')
+      setUploadProgress(0)
       setLoading(true)
       const form = new FormData()
       form.append('image', file)
+
       const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
         },
       })
+
       if (res.data?.paymentSettings) {
-        setPaymentSettings({
-          acceptsCOD: res.data.paymentSettings.acceptsCOD !== false,
-          acceptsGCash: res.data.paymentSettings.acceptsGCash !== false,
-          gcashAccountName: res.data.paymentSettings.gcashAccountName || '',
-          gcashNumber: res.data.paymentSettings.gcashNumber || '',
-          gcashQr: res.data.paymentSettings.gcashQr || '',
-        })
+        setPaymentSettings(res.data.paymentSettings)
       }
       toast.success('GCash QR uploaded')
     } catch (err) {
       console.error('uploadGcashQr', err)
+      setUploadError(err.response?.data?.message || 'Failed to upload GCash QR')
       toast.error(err.response?.data?.message || 'Failed to upload GCash QR')
     } finally {
       setLoading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -1480,7 +1487,18 @@ const SellerDashboard = () => {
                           <td className='px-6 py-4 text-sm text-gray-700'>
                             <div className='flex gap-2'>
                               <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm'>View</button>
-                              <button onClick={() => { setStatusChangeConfirm({ open: true, order, newStatus: order.orderStatus === 'processing' ? 'shipped' : 'processing' }) }} disabled={order.orderStatus === 'completed'} className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>{order.orderStatus === 'processing' ? 'Ship' : 'Process'}</button>
+                              {/* Quick action adapts for pickup vs shipping */}
+                              <button
+                                onClick={() => {
+                                  if (order.orderStatus === 'completed') return toast.info('Completed orders cannot be changed')
+                                  const isPickup = order.paymentMethod === 'pickup' || order.method === 'pickup'
+                                  const newStatus = isPickup ? (order.orderStatus === 'ready_for_pickup' ? 'completed' : 'ready_for_pickup') : (order.orderStatus === 'processing' ? 'shipped' : 'processing')
+                                  setStatusChangeConfirm({ open: true, order, newStatus })
+                                }}
+                                disabled={order.orderStatus === 'completed'}
+                                className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
+                                {order.orderStatus === 'completed' ? 'Completed' : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (order.orderStatus === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (order.orderStatus === 'processing' ? 'Ship' : 'Process'))}
+                              </button>
                               <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm'>Delete</button>
                             </div>
                           </td>
