@@ -200,10 +200,17 @@ const SellerDashboard = () => {
   const bulkUpdateStatus = async (status) => {
     if (!selectedOrderIds.length) return toast.info('Select orders to update')
     const prev = Array.isArray(sellerOrders) ? [...sellerOrders] : []
-    setSellerOrders(prev.map(o => selectedOrderIds.includes(o.id) ? ({ ...o, orderStatus: status }) : o))
+    // skip completed orders
+    const idsToUpdate = selectedOrderIds.filter(id => {
+      const o = sellerOrders.find(x => x.id === id)
+      return o && o.orderStatus !== 'completed'
+    })
+    if (!idsToUpdate.length) return toast.info('Selected orders are already completed and will not be changed')
+    setSellerOrders(prev.map(o => idsToUpdate.includes(o.id) ? ({ ...o, orderStatus: status }) : o))
     try {
-      await Promise.all(selectedOrderIds.map(id => axios.put(`${apiUrl}/api/orders/${id}/status-seller`, { orderStatus: status }, { headers: { Authorization: `Bearer ${token}` } })))
-      toast.success('Order statuses updated')
+      await Promise.all(idsToUpdate.map(id => axios.put(`${apiUrl}/api/orders/${id}/status-seller`, { orderStatus: status }, { headers: { Authorization: `Bearer ${token}` } })))
+      const skipped = selectedOrderIds.length - idsToUpdate.length
+      toast.success(`Order statuses updated${skipped ? ` (${skipped} skipped)` : ''}`)
       setSelectedOrderIds([])
       fetchSellerOrders()
     } catch (err) {
@@ -1352,24 +1359,29 @@ const SellerDashboard = () => {
                       </div>
                       <div className='mb-3'>
                         <select
-                          value={order.orderStatus}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value
-                            try {
-                                const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
-                                  headers: { Authorization: `Bearer ${token}` },
-                                })
-                                // Update local state from response for immediate UI feedback
-                                if (res?.data?.id) {
-                                  setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
-                                }
-                                toast.success('Order status updated')
-                            } catch (err) {
-                              console.error(err)
-                              toast.error(err.response?.data?.message || 'Failed to update status')
-                            }
-                          }}
-                          className='w-full px-3 py-2 border rounded text-sm'>
+                            value={order.orderStatus}
+                            disabled={order.orderStatus === 'completed'}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value
+                              if (order.orderStatus === 'completed') {
+                                toast.info('Completed orders cannot be changed')
+                                return
+                              }
+                              try {
+                                  const res = await axios.put(`${apiUrl}/api/orders/${order.id}/status-seller`, { orderStatus: newStatus }, {
+                                    headers: { Authorization: `Bearer ${token}` },
+                                  })
+                                  // Update local state from response for immediate UI feedback
+                                  if (res?.data?.id) {
+                                    setSellerOrders(prev => (Array.isArray(prev) ? prev.map(o => (Number(o.id) === Number(res.data.id) ? ({ ...o, ...res.data }) : o)) : prev))
+                                  }
+                                  toast.success('Order status updated')
+                              } catch (err) {
+                                console.error(err)
+                                toast.error(err.response?.data?.message || 'Failed to update status')
+                              }
+                            }}
+                            className='w-full px-3 py-2 border rounded text-sm'>
                           <option value='pending'>pending</option>
                           <option value='processing'>processing</option>
                           {order.paymentMethod === 'pickup' && (
@@ -1468,7 +1480,7 @@ const SellerDashboard = () => {
                           <td className='px-6 py-4 text-sm text-gray-700'>
                             <div className='flex gap-2'>
                               <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm'>View</button>
-                              <button onClick={() => { setStatusChangeConfirm({ open: true, order, newStatus: order.orderStatus === 'processing' ? 'shipped' : 'processing' }) }} className='bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm'>{order.orderStatus === 'processing' ? 'Ship' : 'Process'}</button>
+                              <button onClick={() => { setStatusChangeConfirm({ open: true, order, newStatus: order.orderStatus === 'processing' ? 'shipped' : 'processing' }) }} disabled={order.orderStatus === 'completed'} className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>{order.orderStatus === 'processing' ? 'Ship' : 'Process'}</button>
                               <button onClick={() => setOrderDeleteConfirm(order)} className='bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm'>Delete</button>
                             </div>
                           </td>
