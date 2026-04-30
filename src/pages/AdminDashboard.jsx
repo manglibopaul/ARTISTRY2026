@@ -419,6 +419,10 @@ const AdminDashboard = () => {
   const [binCustomers, setBinCustomers] = useState([]);
   const [loadingBin, setLoadingBin] = useState(false);
   const [binError, setBinError] = useState(null);
+  const [binSearch, setBinSearch] = useState('');
+  const [binSellerPage, setBinSellerPage] = useState(1);
+  const [binCustomerPage, setBinCustomerPage] = useState(1);
+  const BIN_PAGE_SIZE = 8;
   useEffect(() => {
     if (selectedTab === 'bin') fetchBinSellers();
     // eslint-disable-next-line
@@ -447,6 +451,25 @@ const AdminDashboard = () => {
       setLoadingBin(false);
     }
   };
+
+  // Derived filtered & paginated bin lists
+  const filteredBinSellers = React.useMemo(() => {
+    const q = (binSearch || '').trim().toLowerCase();
+    if (!q) return Array.isArray(binSellers) ? binSellers : [];
+    return (binSellers || []).filter(s => (s.name || '').toLowerCase().includes(q) || (s.storeName || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q));
+  }, [binSellers, binSearch]);
+  const totalBinSellerPages = Math.max(1, Math.ceil((filteredBinSellers || []).length / BIN_PAGE_SIZE));
+  useEffect(() => { if (binSellerPage > totalBinSellerPages) setBinSellerPage(1); }, [totalBinSellerPages]);
+  const paginatedBinSellers = React.useMemo(() => (filteredBinSellers || []).slice((binSellerPage - 1) * BIN_PAGE_SIZE, binSellerPage * BIN_PAGE_SIZE), [filteredBinSellers, binSellerPage]);
+
+  const filteredBinCustomers = React.useMemo(() => {
+    const q = (binSearch || '').trim().toLowerCase();
+    if (!q) return Array.isArray(binCustomers) ? binCustomers : [];
+    return (binCustomers || []).filter(c => (c.name || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q));
+  }, [binCustomers, binSearch]);
+  const totalBinCustomerPages = Math.max(1, Math.ceil((filteredBinCustomers || []).length / BIN_PAGE_SIZE));
+  useEffect(() => { if (binCustomerPage > totalBinCustomerPages) setBinCustomerPage(1); }, [totalBinCustomerPages]);
+  const paginatedBinCustomers = React.useMemo(() => (filteredBinCustomers || []).slice((binCustomerPage - 1) * BIN_PAGE_SIZE, binCustomerPage * BIN_PAGE_SIZE), [filteredBinCustomers, binCustomerPage]);
 
   // Restore seller from bin
   const restoreSeller = async (id) => {
@@ -885,11 +908,17 @@ const AdminDashboard = () => {
             <div className="text-gray-500">No soft-deleted records.</div>
           ) : (
             <div className="space-y-6">
+              <div className='mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+                <div className='max-w-md w-full'>
+                  <input value={binSearch} onChange={(e) => { setBinSearch(e.target.value); setBinSellerPage(1); setBinCustomerPage(1); }} placeholder='Search deleted artists & customers...' className='w-full px-3 py-2 border rounded text-sm' />
+                </div>
+                <div className='text-sm text-gray-600'>Showing <strong>{filteredBinSellers.length}</strong> deleted artists • <strong>{filteredBinCustomers.length}</strong> deleted customers</div>
+              </div>
               {/* Deleted Sellers */}
               <div>
                 <h3 className="font-semibold mb-2">Deleted Artists</h3>
                 <div className='block sm:hidden space-y-3'>
-                  {binSellers.map(seller => (
+                  {paginatedBinSellers.map(seller => (
                     <div key={seller.id} className='border rounded p-3'>
                       <div className='font-medium'>{seller.name}</div>
                       <div className='text-sm text-gray-600'>{seller.storeName}</div>
@@ -918,16 +947,16 @@ const AdminDashboard = () => {
                   <table className="min-w-full border">
                     <thead>
                       <tr>
-                        <th className="text-left p-3 font-semibold">Artist Name</th>
+                        <th className="text-left p-3 font-semibold">Artist</th>
                         <th className="text-left p-3 font-semibold">Store Name</th>
                         <th className="text-left p-3 font-semibold">Email</th>
                         <th className="text-left p-3 font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {binSellers.map(seller => (
+                      {paginatedBinSellers.map(seller => (
                         <tr key={seller.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">{seller.name}</td>
+                          <td className="p-3 flex items-center gap-3"><div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(seller.name)}</div><div>{seller.name}</div></td>
                           <td className="p-3">{seller.storeName}</td>
                           <td className="p-3">{seller.email}</td>
                           <td className="p-3 flex gap-2">
@@ -951,13 +980,20 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+                <div className='flex items-center justify-between gap-3 mt-2'>
+                  <div className='text-sm text-gray-600'>Page {binSellerPage} of {totalBinSellerPages}</div>
+                  <div className='flex gap-2'>
+                    <button disabled={binSellerPage<=1} onClick={() => setBinSellerPage(p => Math.max(1, p-1))} className='px-3 py-1 border rounded disabled:opacity-50'>Prev</button>
+                    <button disabled={binSellerPage>=totalBinSellerPages} onClick={() => setBinSellerPage(p => Math.min(totalBinSellerPages, p+1))} className='px-3 py-1 border rounded disabled:opacity-50'>Next</button>
+                  </div>
+                </div>
               </div>
 
               {/* Deleted Customers */}
               <div>
                 <h3 className="font-semibold mb-2">Deleted Customers</h3>
                 <div className='block sm:hidden space-y-3'>
-                  {binCustomers.map(customer => (
+                  {paginatedBinCustomers.map(customer => (
                     <div key={customer.id} className='border rounded p-3'>
                       <div className='font-medium'>{customer.name}</div>
                       <div className='text-sm text-gray-600'>{customer.email}</div>
@@ -986,16 +1022,16 @@ const AdminDashboard = () => {
                   <table className="min-w-full border">
                     <thead>
                       <tr>
-                        <th className="text-left p-3 font-semibold">Customer Name</th>
+                        <th className="text-left p-3 font-semibold">Customer</th>
                         <th className="text-left p-3 font-semibold">Email</th>
                         <th className="text-left p-3 font-semibold">Phone</th>
                         <th className="text-left p-3 font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {binCustomers.map(customer => (
+                      {paginatedBinCustomers.map(customer => (
                         <tr key={customer.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">{customer.name}</td>
+                          <td className="p-3 flex items-center gap-3"><div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(customer.name)}</div><div>{customer.name}</div></td>
                           <td className="p-3">{customer.email}</td>
                           <td className="p-3">{customer.phone || '-'}</td>
                           <td className="p-3 flex gap-2">
@@ -1018,6 +1054,13 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className='flex items-center justify-between gap-3 mt-2'>
+                  <div className='text-sm text-gray-600'>Page {binCustomerPage} of {totalBinCustomerPages}</div>
+                  <div className='flex gap-2'>
+                    <button disabled={binCustomerPage<=1} onClick={() => setBinCustomerPage(p => Math.max(1, p-1))} className='px-3 py-1 border rounded disabled:opacity-50'>Prev</button>
+                    <button disabled={binCustomerPage>=totalBinCustomerPages} onClick={() => setBinCustomerPage(p => Math.min(totalBinCustomerPages, p+1))} className='px-3 py-1 border rounded disabled:opacity-50'>Next</button>
+                  </div>
                 </div>
               </div>
             </div>
