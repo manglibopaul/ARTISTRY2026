@@ -207,9 +207,10 @@ const ArtisanDirectory = () => {
                   <div className='bg-gradient-to-r from-gray-100 to-gray-50 p-6 border-b border-gray-200 group-hover:from-gray-200 group-hover:to-gray-100 transition relative'>
                     {seller.avatar ? (
                       <img
-                        src={resolveAvatarUrl(seller.avatar)}
+                        loading='lazy' decoding='async' src={resolveAvatarUrl(seller.avatar)}
                         alt={seller.storeName}
                         className='w-16 h-16 rounded-full object-cover mb-4 border-2 border-white shadow-md avatar-img'
+                        width={64} height={64}
                       />
                     ) : (
                       <div className='w-16 h-16 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-bold text-xl mb-4 border-2 border-white shadow-md'>

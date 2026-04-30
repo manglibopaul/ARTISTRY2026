@@ -3,8 +3,8 @@ import React, { useCallback, useContext, useEffect, useState, useRef } from 'rea
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
-import RelatedProducts from '../components/RelatedProducts';
-import ProductChat from '../components/ProductChat'
+const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
+const ProductChat = React.lazy(() => import('../components/ProductChat'))
 import { getArtisanPath } from '../utils/artisanUrl'
 import { getProductPath } from '../utils/productUrl'
 
@@ -586,9 +586,10 @@ const Product = () => {
                     setImage(imgUrl);
                     setCurrentImageIndex(index);
                   }} 
+                  loading='lazy' decoding='async' 
                   src={imgUrl} 
                   key={index} 
-                  className={`w-20 sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition transform hover:scale-105 duration-200 min-h-[48px] sm:min-h-[60px] ${isActive ? 'ring-2 ring-black' : 'border border-gray-200'}`}
+                  className={`thumbnail-img w-20 sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition transform hover:scale-105 duration-200 min-h-[48px] sm:min-h-[60px] ${isActive ? 'thumbnail-active' : 'border border-gray-200'}`}
                   alt={`Product view ${index + 1}`}
                 />
               )
@@ -596,7 +597,7 @@ const Product = () => {
           </div>
           <div className='w-full sm:w-3/4 relative'>
               <div className='w-full h-[420px] sm:h-[520px] md:h-[640px] bg-white rounded overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 product-image-frame'>
-                <img className='max-w-full max-h-full w-auto h-full object-contain transition-transform duration-500 hover:scale-105' src={image} alt="" />
+                <img loading={currentImageIndex===0?"eager":"lazy"} fetchpriority={currentImageIndex===0?"high":"low"} decoding='async' className='max-w-full max-h-full w-auto h-full object-contain transition-transform duration-500 hover:scale-105' src={image} alt="" />
               </div>
               {productData.image && productData.image.length > 1 && (
                 <>
@@ -765,7 +766,7 @@ const Product = () => {
             <div className='mt-6 p-4 border border-gray-100 rounded-lg bg-gray-50 flex items-center gap-4 product-seller-card'>
               <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-base font-semibold text-gray-700 overflow-hidden shadow'>
                 {sellerImageSrc ? (
-                  <img src={sellerImageSrc} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' />
+                  <img loading='lazy' decoding='async' src={sellerImageSrc} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' width={64} height={64} />
                 ) : (
                   <span className='text-base font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
                 )}
@@ -798,11 +799,13 @@ const Product = () => {
           <div className='mt-6'>
             <h3 className='font-semibold mb-2'>Chat with seller</h3>
             <div className='border rounded p-3'>
-              <ProductChat
-                productId={productData?.id || productData?._id || productRef}
-                sellerId={productData.sellerId || productData.seller?.id || sellerData?.id || null}
-                sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Seller'}
-              />
+              <React.Suspense fallback={<div className='text-sm text-gray-500'>Loading chat…</div>}>
+                <ProductChat
+                  productId={productData?.id || productData?._id || productRef}
+                  sellerId={productData.sellerId || productData.seller?.id || sellerData?.id || null}
+                  sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Seller'}
+                />
+              </React.Suspense>
             </div>
           </div>
         </div>
@@ -839,7 +842,7 @@ const Product = () => {
                 )}
                 {r.imageUrl && (
                   <img
-                    src={resolveUploadImage(r.imageUrl)}
+                    loading='lazy' decoding='async' src={resolveUploadImage(r.imageUrl)}
                     alt='Review attachment'
                     className='mt-2 rounded border border-gray-200 max-h-56 w-auto'
                   />
@@ -858,8 +861,10 @@ const Product = () => {
         </div>
       </div>
 
-      {/* ---------- Related Products ---------- */}
-      <RelatedProducts category={productData.category} subCategory={productData.subCategory}/>
+      {/* ---------- Related Products (lazy) ---------- */}
+      <React.Suspense fallback={<div className='py-6 text-center text-gray-500'>Loading related products…</div>}>
+        <RelatedProducts category={productData.category} subCategory={productData.subCategory}/>
+      </React.Suspense>
 
       
 
