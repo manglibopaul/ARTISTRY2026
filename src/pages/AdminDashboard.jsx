@@ -419,7 +419,6 @@ const AdminDashboard = () => {
   const [binCustomers, setBinCustomers] = useState([]);
   const [loadingBin, setLoadingBin] = useState(false);
   const [binError, setBinError] = useState(null);
-  const [binSearch, setBinSearch] = useState('');
   const [binSellerPage, setBinSellerPage] = useState(1);
   const [binCustomerPage, setBinCustomerPage] = useState(1);
   const BIN_PAGE_SIZE = 8;
@@ -453,20 +452,12 @@ const AdminDashboard = () => {
   };
 
   // Derived filtered & paginated bin lists
-  const filteredBinSellers = React.useMemo(() => {
-    const q = (binSearch || '').trim().toLowerCase();
-    if (!q) return Array.isArray(binSellers) ? binSellers : [];
-    return (binSellers || []).filter(s => (s.name || '').toLowerCase().includes(q) || (s.storeName || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q));
-  }, [binSellers, binSearch]);
+  const filteredBinSellers = React.useMemo(() => (Array.isArray(binSellers) ? binSellers : []), [binSellers]);
   const totalBinSellerPages = Math.max(1, Math.ceil((filteredBinSellers || []).length / BIN_PAGE_SIZE));
   useEffect(() => { if (binSellerPage > totalBinSellerPages) setBinSellerPage(1); }, [totalBinSellerPages]);
   const paginatedBinSellers = React.useMemo(() => (filteredBinSellers || []).slice((binSellerPage - 1) * BIN_PAGE_SIZE, binSellerPage * BIN_PAGE_SIZE), [filteredBinSellers, binSellerPage]);
 
-  const filteredBinCustomers = React.useMemo(() => {
-    const q = (binSearch || '').trim().toLowerCase();
-    if (!q) return Array.isArray(binCustomers) ? binCustomers : [];
-    return (binCustomers || []).filter(c => (c.name || '').toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q));
-  }, [binCustomers, binSearch]);
+  const filteredBinCustomers = React.useMemo(() => (Array.isArray(binCustomers) ? binCustomers : []), [binCustomers]);
   const totalBinCustomerPages = Math.max(1, Math.ceil((filteredBinCustomers || []).length / BIN_PAGE_SIZE));
   useEffect(() => { if (binCustomerPage > totalBinCustomerPages) setBinCustomerPage(1); }, [totalBinCustomerPages]);
   const paginatedBinCustomers = React.useMemo(() => (filteredBinCustomers || []).slice((binCustomerPage - 1) * BIN_PAGE_SIZE, binCustomerPage * BIN_PAGE_SIZE), [filteredBinCustomers, binCustomerPage]);
@@ -908,11 +899,8 @@ const AdminDashboard = () => {
             <div className="text-gray-500">No soft-deleted records.</div>
           ) : (
             <div className="space-y-6">
-              <div className='mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-                <div className='max-w-md w-full'>
-                  <input value={binSearch} onChange={(e) => { setBinSearch(e.target.value); setBinSellerPage(1); setBinCustomerPage(1); }} placeholder='Search deleted artists & customers...' className='w-full px-3 py-2 border rounded text-sm' />
-                </div>
-                <div className='text-sm text-gray-600'>Showing <strong>{filteredBinSellers.length}</strong> deleted artists • <strong>{filteredBinCustomers.length}</strong> deleted customers</div>
+              <div className='mb-3 flex items-center justify-between gap-3'>
+                <div className='text-sm text-gray-600'>Showing <strong>{binSellers.length}</strong> deleted artists • <strong>{binCustomers.length}</strong> deleted customers</div>
               </div>
               {/* Deleted Sellers */}
               <div>
