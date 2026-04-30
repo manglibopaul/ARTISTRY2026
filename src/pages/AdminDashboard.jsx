@@ -486,20 +486,9 @@ const AdminDashboard = () => {
             <div className="text-red-600">{customerError === 'Invalid token' ? 'Session expired. Please log in again.' : customerError}</div>
           ) : (
             <>
-              <div className='flex items-center justify-between gap-3 mb-3'>
-                <div className='flex items-center gap-2 w-full max-w-md'>
+              <div className='mb-3'>
+                <div className='max-w-md'>
                   <input value={customerSearch} onChange={(e) => { setCustomerSearch(e.target.value); setCustomerPage(1); }} placeholder='Search name, email, phone...' className='w-full px-3 py-2 border rounded text-sm' />
-                </div>
-                <div className='flex items-center gap-2'>
-                  <button onClick={() => {
-                    // export visible customers to CSV
-                    const rows = filteredCustomers.map(c => [c.name, c.email, c.phone || ''].join(','));
-                    const csv = ['Name,Email,Phone', ...rows].join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = 'customers.csv'; a.click(); URL.revokeObjectURL(url);
-                  }} className='px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm'>Export</button>
                 </div>
               </div>
 
