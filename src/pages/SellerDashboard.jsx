@@ -102,6 +102,26 @@ const SellerDashboard = () => {
     return ''
   }
 
+  const formatCurrency = (value) => {
+    try {
+      const num = Number(value) || 0
+      return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(num)
+    } catch (e) {
+      return `₱${value}`
+    }
+  }
+
+  const statusBadgeClass = (status) => {
+    switch ((status || '').toString()) {
+      case 'completed': return 'bg-green-100 text-green-800'
+      case 'pending': return 'bg-yellow-100 text-yellow-800'
+      case 'cancelled': return 'bg-red-100 text-red-800'
+      case 'shipped': return 'bg-blue-100 text-blue-800'
+      case 'ready_for_pickup': return 'bg-amber-100 text-amber-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   /* eslint-disable react-hooks/exhaustive-deps */
   // Intentional mount auth/bootstrap flow; keeping stable startup behavior over broad callback refactor.
   useEffect(() => {
@@ -2167,12 +2187,12 @@ const SellerDashboard = () => {
 
                 <div>
                   <h4 className='font-medium'>Order Summary</h4>
-                  <div className='text-sm'>Subtotal: ₱{viewOrder.subtotal}</div>
+                  <div className='text-sm'>Subtotal: {formatCurrency(viewOrder.subtotal)}</div>
                   {viewOrder.paymentMethod !== 'pickup' && (
-                    <div className='text-sm'>Shipping: ₱{viewOrder.shippingFee ?? 0}</div>
+                    <div className='text-sm'>Shipping: {formatCurrency(viewOrder.shippingFee ?? 0)}</div>
                   )}
-                  <div className='text-sm'>Total: ₱{viewOrder.total}</div>
-                  <div className='text-sm'>Status: {viewOrder.orderStatus}</div>
+                  <div className='text-sm'>Total: {formatCurrency(viewOrder.total)}</div>
+                  <div className='text-sm'>Status: <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass(viewOrder.orderStatus)}`}>{viewOrder.orderStatus}</span></div>
                   {/* Show uploaded GCash receipt if present */}
                   {viewOrder.gcashReceipt && (
                     <div className='mt-3'>
@@ -2191,15 +2211,30 @@ const SellerDashboard = () => {
               <div className='mt-4'>
                 <h4 className='font-medium mb-2'>Your Items</h4>
                 <div className='space-y-2'>
-                  {Array.isArray(viewOrder.sellerItems) && viewOrder.sellerItems.map((it, idx) => (
-                    <div key={idx} className='p-3 border rounded flex items-center justify-between'>
-                      <div>
-                        <div className='font-medium'>{it.name || `Product ${it.productId}`}</div>
-                        <div className='text-xs text-gray-600'>Qty: {it.quantity}</div>
+                  {Array.isArray(viewOrder.sellerItems) && viewOrder.sellerItems.map((it, idx) => {
+                    const img = Array.isArray(it.image) && it.image.length > 0 ? it.image[0] : (typeof it.image === 'string' ? it.image : null)
+                    let imgSrc = null
+                    if (img) {
+                      if (typeof img === 'object' && img.url) imgSrc = img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`
+                      else if (typeof img === 'string') imgSrc = img.startsWith('http') ? img : `${apiUrl}${img}`
+                    }
+                    return (
+                      <div key={idx} className='p-3 border rounded flex items-center justify-between'>
+                        <div className='flex items-center gap-3'>
+                          {imgSrc ? (
+                            <img src={imgSrc} alt={it.name || 'Product'} className='w-12 h-12 object-cover rounded border flex-shrink-0' />
+                          ) : (
+                            <div className='w-12 h-12 bg-gray-100 rounded border flex items-center justify-center text-gray-400 text-xs'>N/A</div>
+                          )}
+                          <div>
+                            <div className='font-medium'>{it.name || `Product ${it.productId}`}</div>
+                            <div className='text-xs text-gray-600'>Qty: {it.quantity}</div>
+                          </div>
+                        </div>
+                        <div className='text-sm font-medium'>{formatCurrency((it.price || 0) * (it.quantity || 1))}</div>
                       </div>
-                      <div className='text-sm'>₱{it.price}</div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
