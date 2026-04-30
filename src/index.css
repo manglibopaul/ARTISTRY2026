@@ -196,3 +196,20 @@ h2 {
 .hero-cta { background: linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 80%, #a04f04 20%)); color: white; padding: 0.65rem 1.1rem; border-radius: 9999px; }
 
 .visit-shop { background: var(--color-primary); color: white; border-radius: 9999px; padding: 0.35rem 0.9rem; }
+
+/* Product page helpers */
+.product-title { font-size: 1.5rem; line-height: 1.05; font-weight: 800; }
+@media (min-width: 640px) { .product-title { font-size: 1.875rem; } }
+@media (min-width: 1024px) { .product-title { font-size: 2.25rem; } }
+
+.product-price { font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
+@media (min-width: 640px) { .product-price { font-size: 1.875rem; } }
+@media (min-width: 1024px) { .product-price { font-size: 2.25rem; } }
+
+.product-seller-card { padding: 1rem; }
+.product-seller-card .shadow { box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+
+.product-image-frame { background: linear-gradient(180deg,#ffffff,#fbfbfb); }
+
+/* Slightly reduce the extra whitespace in product header sections */
+.product-header-tight { margin-top: 0.25rem; margin-bottom: 0.5rem; }

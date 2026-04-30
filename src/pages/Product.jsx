@@ -575,7 +575,7 @@ const Product = () => {
 
         {/* -------------------------product images----------------- */}
         <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-[18.7%] w-full gap-2 pb-2 sm:pb-0'>
+          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-1/4 w-full gap-3 pb-2 sm:pb-0'>
             {productData.image && productData.image.map((item,index)=>{
               const imgUrl = getImageUrl(item);
               const isActive = image === imgUrl;
@@ -593,8 +593,8 @@ const Product = () => {
               )
             })}
           </div>
-          <div className='w-full sm:w-[80%] relative'>
-              <div className='w-full h-[360px] sm:h-[420px] md:h-[520px] bg-white rounded overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300'>
+          <div className='w-full sm:w-3/4 relative'>
+              <div className='w-full h-[420px] sm:h-[520px] md:h-[640px] bg-white rounded overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 product-image-frame'>
                 <img className='max-w-full max-h-full w-auto h-full object-contain transition-transform duration-500 hover:scale-105' src={image} alt="" />
               </div>
               {productData.image && productData.image.length > 1 && (
@@ -627,9 +627,9 @@ const Product = () => {
 
         {/* ---------- Product info ---------- */}
         <div className='flex-1'>
-          <h1 className='font-medium text-xl sm:text-2xl mt-2'>{productData.name}</h1>
+          <h1 className='product-title mt-2'>{productData.name}</h1>
             <div className='mt-4 sm:mt-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6'>
-              <p className='text-2xl sm:text-3xl font-medium'>{currency}{productData.price}</p>
+              <p className='product-price'>{currency}{productData.price}</p>
               <div className='text-xs sm:text-sm text-gray-600'>
                 {avgRating ? (
                   <>
@@ -755,24 +755,24 @@ const Product = () => {
 
           {/* -------- Seller Info -------- */}
           {sellerData && (
-            <div className='mt-6 p-4 border border-gray-200 rounded-lg bg-white flex items-center gap-4'>
-              <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-700 overflow-hidden'>
+            <div className='mt-6 p-4 border border-gray-100 rounded-lg bg-gray-50 flex items-center gap-4 product-seller-card'>
+              <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-base font-semibold text-gray-700 overflow-hidden shadow'>
                 {sellerImageSrc ? (
                   <img src={sellerImageSrc} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' />
                 ) : (
-                  <span className='text-sm font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
+                  <span className='text-base font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
                 )}
               </div>
               <div className='flex-1'>
                 <button onClick={() => navigate(getArtisanPath(sellerData))} className='hover:text-black transition'>
-                  <h3 className='font-bold text-md text-left text-gray-900 hover:underline'>
+                  <h3 className='font-bold text-lg text-left text-gray-900 hover:underline'>
                     {sellerData.storeName}
                   </h3>
                 </button>
                 {sellerData.expertise && sellerData.expertise.length > 0 && (
                   <div className='mt-2 flex flex-wrap gap-2'>
                     {sellerData.expertise.slice(0, 3).map(tag => (
-                      <span key={tag} className='text-xs bg-gray-50 text-gray-600 px-2 py-0.5 rounded border border-gray-100'>
+                      <span key={tag} className='text-xs bg-white text-gray-600 px-2 py-0.5 rounded border border-gray-100 shadow-sm'>
                         {tag}
                       </span>
                     ))}
@@ -780,7 +780,7 @@ const Product = () => {
                 )}
               </div>
               <div>
-                <button onClick={() => navigate(getArtisanPath(sellerData))} className='text-sm font-medium text-black border border-gray-300 hover:bg-black hover:text-white px-3 py-2 rounded transition'>
+                <button onClick={() => navigate(getArtisanPath(sellerData))} className='text-sm font-medium text-black border border-gray-300 hover:bg-black hover:text-white px-3 py-2 rounded-full transition shadow-sm'>
                   View Shop →
                 </button>
               </div>
