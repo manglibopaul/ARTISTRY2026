@@ -273,25 +273,67 @@ const Product = () => {
       }
     }
 
-    setLoadingProduct(false)
-    // fetch reviews for this product
-    try {
-      if (resolvedProductId) {
-        const res = await fetch(`${apiUrl}/api/reviews/product/${resolvedProductId}`);
-        if (res.ok) {
-          const data = await res.json();
-          const list = data.reviews || data;
-          setReviews(list || []);
-          if (list && list.length) {
-            const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
-            setAvgRating(avg);
-          } else {
-            setAvgRating(null);
+    if (found) {
+      setProductData(found)
+      if (found.sellerId) fetchSellerData(found.sellerId)
+      setLoadingProduct(false)
+      // fetch reviews for this product
+      try {
+        const pId = found._id || found.id
+        if (pId) {
+          const res = await fetch(`${apiUrl}/api/reviews/product/${pId}`);
+          if (res.ok) {
+            const data = await res.json();
+            const list = data.reviews || data;
+            setReviews(list || []);
+            if (list && list.length) {
+              const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
+              setAvgRating(avg);
+            } else {
+              setAvgRating(null);
+            }
           }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
+    } else {
+      // Product not found in context, try API fallback
+      try {
+        let response
+        if (isNumericRef) {
+          response = await fetch(`${apiUrl}/api/products/${refId || ref}`)
+        } else {
+          response = await fetch(`${apiUrl}/api/products/slug/${slugRef}`)
+        }
+        if (response.ok) {
+          const product = await response.json()
+          setProductData(product)
+          if (product.sellerId) fetchSellerData(product.sellerId)
+          // fetch reviews for this product
+          const pId = product._id || product.id
+          if (pId) {
+            const res = await fetch(`${apiUrl}/api/reviews/product/${pId}`)
+            if (res.ok) {
+              const data = await res.json()
+              const list = data.reviews || data
+              setReviews(list || [])
+              if (list && list.length) {
+                const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
+                setAvgRating(avg)
+              } else {
+                setAvgRating(null)
+              }
+            }
+          }
+        } else {
+          setProductError('Product not found')
+        }
+      } catch (e) {
+        console.error('Failed to fetch single product fallback', e)
+        setProductError(e.message || 'Network error')
+      }
+      setLoadingProduct(false)
     }
 
     // fetch current user profile if logged in so we can show delete controls
