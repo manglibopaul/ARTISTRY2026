@@ -925,60 +925,62 @@ const Product = () => {
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
-                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{transition: 'opacity .22s ease'}}>
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{transition: 'opacity .18s ease'}}>
                         <defs>
-                          <marker id="triA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 z" fill="#2563eb" />
+                          <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.8" orient="auto">
+                            <path d="M0,0 L5,2.8 L0,5 z" fill="#374151" />
                           </marker>
-                          <marker id="triB" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
-                            <path d="M6,0 L0,3 L6,6 z" fill="#2563eb" />
+                          <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.8" orient="auto">
+                            <path d="M5,0 L0,2.8 L5,5 z" fill="#374151" />
                           </marker>
                         </defs>
 
-                        {/* Collapsed cluster (when showDimensions is false) - tiny grouped label bottom-center */}
+                        {/* Collapsed badge when hidden - small muted chip */}
                         {!showDimensions && (
                           <g>
-                            <rect x="40" y="78" width="20" height="6" rx="1" fill="#ffffff" stroke="#2563eb" strokeWidth="0.5" />
-                            <text x="50" y="81" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="2.5" fontWeight="600" className="select-none">
+                            <rect x="44" y="80" width="12" height="5" rx="1" fill="rgba(255,255,255,0.95)" stroke="rgba(0,0,0,0.06)" />
+                            <text x="50" y="82.5" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="2.3" fontWeight="600" className="select-none">
                               {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
                             </text>
                           </g>
                         )}
 
-                        {/* Expanded detailed arrows (when showDimensions is true) */}
+                        {/* Expanded realistic callouts */}
                         {showDimensions && (
                           <g>
-                            {/* Height (left) */}
+                            {/* Height: thin vertical with ticks and small centered label */}
                             {productData?.height && (
                               <>
-                                <line x1="14" y1="10" x2="14" y2="86" stroke="#2563eb" strokeWidth="0.8" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="10" y1="86" x2="18" y2="86" stroke="#2563eb" strokeWidth="0.8" />
-                                <line x1="10" y1="10" x2="18" y2="10" stroke="#2563eb" strokeWidth="0.8" />
-                                <text x="6" y="46" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="4" fontWeight="500" className="select-none">
-                                  Height: {productData.height} cm
+                                <line x1="14" y1="12" x2="14" y2="86" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="11" y1="86" x2="17" y2="86" stroke="#374151" strokeWidth="0.6" />
+                                <line x1="11" y1="12" x2="17" y2="12" stroke="#374151" strokeWidth="0.6" />
+                                <text x="8" y="46" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="3.6" fontWeight="500" className="select-none">
+                                  {productData.height} cm
                                 </text>
+                                <line x1="16" y1="40" x2="30" y2="40" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" />
                               </>
                             )}
 
-                            {/* Width (bottom) */}
+                            {/* Width: slender baseline with small ticks and label beneath */}
                             {productData?.width && (
                               <>
-                                <line x1="24" y1="88" x2="76" y2="88" stroke="#2563eb" strokeWidth="0.8" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="24" y1="88" x2="24" y2="84" stroke="#2563eb" strokeWidth="0.8" />
-                                <line x1="76" y1="88" x2="76" y2="84" stroke="#2563eb" strokeWidth="0.8" />
-                                <text x="50" y="94" textAnchor="middle" dominantBaseline="hanging" fill="#2563eb" fontSize="3.8" fontWeight="600" className="select-none">
-                                  Width: {productData.width} cm
+                                <line x1="26" y1="88" x2="74" y2="88" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="26" y1="88" x2="26" y2="84" stroke="#374151" strokeWidth="0.6" />
+                                <line x1="74" y1="88" x2="74" y2="84" stroke="#374151" strokeWidth="0.6" />
+                                <text x="50" y="94.5" textAnchor="middle" dominantBaseline="hanging" fill="#374151" fontSize="3.4" fontWeight="600" className="select-none">
+                                  {productData.width} cm
                                 </text>
+                                <line x1="50" y1="78" x2="50" y2="70" stroke="#94a3b8" strokeWidth="0.4" strokeDasharray="1 1.5" />
                               </>
                             )}
 
-                            {/* Depth (top-right) */}
+                            {/* Depth: subtle top-right */}
                             {productData?.depth && (
                               <>
-                                <line x1="72" y1="12" x2="92" y2="12" stroke="#2563eb" strokeWidth="0.8" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="82" y1="12" x2="82" y2="8" stroke="#2563eb" strokeWidth="0.8" />
-                                <text x="82" y="4" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
-                                  Depth: {productData.depth} cm
+                                <line x1="70" y1="12" x2="92" y2="12" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="81" y1="12" x2="81" y2="8" stroke="#374151" strokeWidth="0.6" />
+                                <text x="81" y="4" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="2.8" fontWeight="600" className="select-none">
+                                  {productData.depth} cm
                                 </text>
                               </>
                             )}
