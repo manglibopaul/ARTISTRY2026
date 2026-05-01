@@ -32,6 +32,7 @@ const Product = () => {
   const [, setIsMobileDevice] = useState(false);
   const [arError, setArError] = useState('');
   const [arInSession, setArInSession] = useState(false);
+  const [webxrAvailable, setWebxrAvailable] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
@@ -392,6 +393,18 @@ const Product = () => {
     fetchProductData();
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobileDevice(mobile);
+    // Detect if WebXR immersive-ar is available — used to avoid opening native viewers
+    try {
+      if (typeof navigator !== 'undefined' && navigator.xr && typeof navigator.xr.isSessionSupported === 'function') {
+        navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+          setWebxrAvailable(Boolean(supported));
+        }).catch(() => setWebxrAvailable(false));
+      } else {
+        setWebxrAvailable(false);
+      }
+    } catch (e) {
+      setWebxrAvailable(false);
+    }
   },[fetchProductData])
 
   useEffect(() => {
@@ -475,7 +488,9 @@ const Product = () => {
     const viewer = document.createElement('model-viewer');
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
-    viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
+    // Restrict AR to WebXR only to avoid falling back to native Scene Viewer / Quick Look
+    // Native viewers often allow pinch-to-scale which cannot be blocked from the page.
+    viewer.setAttribute('ar-modes', 'webxr');
     viewer.setAttribute('camera-controls', '');
     viewer.setAttribute('loading', 'eager');
     if (image) {
@@ -760,11 +775,15 @@ const Product = () => {
               {/* ⭐ View AR button */}
               <button 
                 onClick={()=>setShowAR(true)} 
-                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!productData.modelUrl}
+                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl && webxrAvailable ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
+                disabled={!productData.modelUrl || !webxrAvailable}
+                title={!webxrAvailable ? 'WebXR not available on this device — native AR viewers can still scale models.' : 'View in AR'}
               >
                 View AR
               </button>
+              {!webxrAvailable && productData?.modelUrl && (
+                <div className='text-xs text-gray-500 mt-1'>WebXR not supported — native AR viewers may allow pinch-to-scale.</div>
+              )}
 
               <div className='flex items-center gap-2 w-full sm:w-auto relative'>
                 <input
