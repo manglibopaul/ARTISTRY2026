@@ -24,6 +24,10 @@ const SellerProfile = () => {
     bio: '',
     expertise: [],
     pickupLocations: [],
+    website: '',
+    instagram: '',
+    facebook: '',
+    tiktok: '',
   })
   const [newPickupLocation, setNewPickupLocation] = useState('')
   const [pickupLocationPhotos, setPickupLocationPhotos] = useState({})
@@ -82,6 +86,10 @@ const SellerProfile = () => {
         bio: response.data?.bio || '',
         expertise: Array.isArray(response.data?.expertise) ? response.data.expertise : [],
         pickupLocations: Array.isArray(response.data?.pickupLocations) ? response.data.pickupLocations : [],
+        website: response.data?.shippingSettings?.socialLinks?.website || '',
+        instagram: response.data?.shippingSettings?.socialLinks?.instagram || '',
+        facebook: response.data?.shippingSettings?.socialLinks?.facebook || '',
+        tiktok: response.data?.shippingSettings?.socialLinks?.tiktok || '',
       })
       setAvatarPreview(normalizeAvatarUrl(response.data?.avatar))
     } catch (error) {
@@ -137,6 +145,10 @@ const SellerProfile = () => {
         bio: seller?.bio || '',
         expertise: Array.isArray(seller?.expertise) ? seller.expertise : [],
         pickupLocations: Array.isArray(seller?.pickupLocations) ? seller.pickupLocations : [],
+        website: seller?.shippingSettings?.socialLinks?.website || '',
+        instagram: seller?.shippingSettings?.socialLinks?.instagram || '',
+        facebook: seller?.shippingSettings?.socialLinks?.facebook || '',
+        tiktok: seller?.shippingSettings?.socialLinks?.tiktok || '',
       })
     }
     setIsEditing(!isEditing)
@@ -320,6 +332,15 @@ const SellerProfile = () => {
         bio: formData.bio.trim(),
         expertise: formData.expertise,
         pickupLocations: formData.pickupLocations,
+        shippingSettings: {
+          ...(seller?.shippingSettings || {}),
+          socialLinks: {
+            website: String(formData.website || '').trim(),
+            instagram: String(formData.instagram || '').trim(),
+            facebook: String(formData.facebook || '').trim(),
+            tiktok: String(formData.tiktok || '').trim(),
+          }
+        },
         pickupLocationPhotos: pickupLocationPhotos,
       }
       const res = await axios.put(`${apiUrl}/api/sellers/profile`, payload, {
@@ -627,6 +648,36 @@ const SellerProfile = () => {
               <p className='text-gray-700 mt-1 leading-relaxed'>
                 {seller?.bio || 'No bio yet'}
               </p>
+            )}
+          </div>
+
+          <div>
+            <label className='text-sm font-medium text-gray-600'>Social Links</label>
+            {isEditing ? (
+              <div className='mt-2 grid grid-cols-1 gap-3'>
+                <input name='website' value={safeFormData.website} onChange={handleInputChange} placeholder='Website (https://...)' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
+                <input name='instagram' value={safeFormData.instagram} onChange={handleInputChange} placeholder='Instagram handle or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
+                <input name='facebook' value={safeFormData.facebook} onChange={handleInputChange} placeholder='Facebook page or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
+                <input name='tiktok' value={safeFormData.tiktok} onChange={handleInputChange} placeholder='TikTok handle or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
+              </div>
+            ) : (
+              <div className='mt-2 flex flex-wrap gap-3'>
+                {seller?.shippingSettings?.socialLinks?.website && (
+                  <a href={seller.shippingSettings.socialLinks.website} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline mr-3'>Website</a>
+                )}
+                {seller?.shippingSettings?.socialLinks?.instagram && (
+                  <a href={seller.shippingSettings.socialLinks.instagram} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline mr-3'>Instagram</a>
+                )}
+                {seller?.shippingSettings?.socialLinks?.facebook && (
+                  <a href={seller.shippingSettings.socialLinks.facebook} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline mr-3'>Facebook</a>
+                )}
+                {seller?.shippingSettings?.socialLinks?.tiktok && (
+                  <a href={seller.shippingSettings.socialLinks.tiktok} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline mr-3'>TikTok</a>
+                )}
+                {!seller?.shippingSettings?.socialLinks && (
+                  <p className='text-sm text-gray-500'>No social links provided.</p>
+                )}
+              </div>
             )}
           </div>
 

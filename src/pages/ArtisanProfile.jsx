@@ -136,6 +136,34 @@ const ArtisanProfile = () => {
                     {seller.storeName?.charAt(0) || 'A'}
                   </div>
                 )}
+                {(seller.shippingSettings && seller.shippingSettings.socialLinks && (seller.shippingSettings.socialLinks.instagram || seller.shippingSettings.socialLinks.facebook || seller.shippingSettings.socialLinks.tiktok || seller.shippingSettings.socialLinks.website)) && (
+                  <div className='flex items-center gap-3'>
+                    {seller.shippingSettings.socialLinks.website && (
+                      <a href={seller.shippingSettings.socialLinks.website} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline'>Website</a>
+                    )}
+                    {seller.shippingSettings.socialLinks.instagram && (
+                      <a href={seller.shippingSettings.socialLinks.instagram} target='_blank' rel='noopener noreferrer' aria-label='Instagram' className='w-8 h-8 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
+                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
+                          <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z' />
+                        </svg>
+                      </a>
+                    )}
+                    {seller.shippingSettings.socialLinks.facebook && (
+                      <a href={seller.shippingSettings.socialLinks.facebook} target='_blank' rel='noopener noreferrer' aria-label='Facebook' className='w-8 h-8 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
+                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
+                          <path d='M22 12.07C22 6.44 17.52 2 12 2S2 6.44 2 12.07c0 4.78 3.44 8.74 7.93 9.67v-6.83H7.1v-2.84h2.83V9.41c0-2.8 1.66-4.34 4.2-4.34 1.22 0 2.5.22 2.5.22v2.75h-1.41c-1.39 0-1.82.86-1.82 1.74v2.09h3.1l-.5 2.84h-2.6v6.83C18.56 20.81 22 16.85 22 12.07z' />
+                        </svg>
+                      </a>
+                    )}
+                    {seller.shippingSettings.socialLinks.tiktok && (
+                      <a href={seller.shippingSettings.socialLinks.tiktok} target='_blank' rel='noopener noreferrer' aria-label='TikTok' className='w-8 h-8 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
+                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
+                          <path d='M9 8a3 3 0 003 3h1v5a3 3 0 11-3-3H9V8z' />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                )}
                 {seller.isVerified && (
                   <span className='absolute bottom-0 right-0 -mb-1 -mr-1 bg-white rounded-full p-0.5 shadow'>
                     <svg className='w-5 h-5 text-green-600' fill='currentColor' viewBox='0 0 20 20'>
