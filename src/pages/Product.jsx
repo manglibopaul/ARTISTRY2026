@@ -932,14 +932,11 @@ const Product = () => {
                         style={{ transition: 'opacity .18s ease' }}
                       >
                         <defs>
-                          <filter id="lblShadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.12" />
-                          </filter>
-                          <marker id="triA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 z" fill="#6b7280" />
+                          <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                            <path d="M0,0 L5,2.5 L0,5 z" fill="#6b7280" />
                           </marker>
-                          <marker id="triB" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
-                            <path d="M6,0 L0,3 L6,6 z" fill="#6b7280" />
+                          <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto">
+                            <path d="M5,0 L0,2.5 L5,5 z" fill="#6b7280" />
                           </marker>
                         </defs>
 
@@ -954,52 +951,46 @@ const Product = () => {
                         )}
 
                         {showDimensions && (
-                          <g style={{ opacity: 1 }}>
-                            {/* HEIGHT - left side with pill label */}
+                          <g>
+                            {/* HEIGHT - left side with small pill label */}
                             {productData?.height && (
                               <>
-                                <line x1="16" y1="12" x2="16" y2="86" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="12" y1="86" x2="20" y2="86" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.12" />
-                                <line x1="12" y1="12" x2="20" y2="12" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.12" />
-                                <g filter="url(#lblShadow)">
-                                  <rect x="10" y="44" width="12" height="6" rx="3" fill="#ffffff" stroke="rgba(0,0,0,0.06)" />
-                                </g>
-                                <text x="16" y="47" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.6" fontWeight="700">
+                                <line x1="16" y1="14" x2="16" y2="86" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="12" y1="86" x2="20" y2="86" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <line x1="12" y1="14" x2="20" y2="14" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <rect x="12" y="45" width="8" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="16" y="47" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.4" fontWeight="700">
                                   {productData.height} cm
                                 </text>
-                                <line x1="32" y1="40" x2="16" y2="40" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.28" strokeLinecap="round" />
+                                <line x1="32" y1="40" x2="16" y2="40" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
 
-                            {/* WIDTH - bottom baseline with centered pill */}
+                            {/* WIDTH - bottom baseline with compact pill */}
                             {productData?.width && (
                               <>
-                                <line x1="22" y1="94" x2="78" y2="94" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="22" y1="94" x2="22" y2="90" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.12" />
-                                <line x1="78" y1="94" x2="78" y2="90" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.12" />
-                                <g filter="url(#lblShadow)">
-                                  <rect x="42" y="96" width="16" height="6" rx="3" fill="#ffffff" stroke="rgba(0,0,0,0.06)" />
-                                </g>
-                                <text x="50" y="99" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.6" fontWeight="700">
+                                <line x1="22" y1="94" x2="78" y2="94" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="22" y1="94" x2="22" y2="90" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <line x1="78" y1="94" x2="78" y2="90" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <rect x="44" y="96" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="50" y="98" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.4" fontWeight="700">
                                   {productData.width} cm
                                 </text>
-                                <line x1="34" y1="92" x2="22" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.28" strokeLinecap="round" />
-                                <line x1="78" y1="92" x2="66" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.28" strokeLinecap="round" />
+                                <line x1="34" y1="92" x2="22" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
+                                <line x1="78" y1="92" x2="66" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
 
-                            {/* DEPTH - top-right with small pill */}
+                            {/* DEPTH - top-right compact pill */}
                             {productData?.depth && (
                               <>
-                                <line x1="68" y1="18" x2="92" y2="18" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="80" y1="18" x2="80" y2="14" stroke="#6b7280" strokeWidth="1.1" strokeLinecap="round" strokeOpacity="0.12" />
-                                <g filter="url(#lblShadow)">
-                                  <rect x="74" y="12" width="14" height="6" rx="3" fill="#ffffff" stroke="rgba(0,0,0,0.06)" />
-                                </g>
-                                <text x="81" y="15" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3" fontWeight="700">
+                                <line x1="68" y1="18" x2="92" y2="18" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="80" y1="18" x2="80" y2="14" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <rect x="74" y="13" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="80" y="15.5" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3" fontWeight="700">
                                   {productData.depth} cm
                                 </text>
-                                <line x1="72" y1="22" x2="72" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="2 2" strokeOpacity="0.28" strokeLinecap="round" />
+                                <line x1="72" y1="22" x2="72" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
                           </g>
