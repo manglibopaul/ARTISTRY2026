@@ -912,14 +912,14 @@ const Product = () => {
                 <div className="relative overflow-hidden">
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
-                  {/* Dimension toggle - small button to reveal callouts */}
+                  {/* Dimension toggle - small top-right toggle to avoid overlap */}
                   <button
                     onClick={() => setShowDimensions(v => !v)}
                     aria-pressed={showDimensions}
-                    className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-4 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs shadow-sm"
-                    title="Show dimensions"
+                    className="absolute z-30 right-3 top-3 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs shadow-sm"
+                    title="Toggle dimensions"
                   >
-                    {showDimensions ? 'Hide dimensions' : 'Show dimensions'}
+                    {showDimensions ? 'Hide' : 'Show'}
                   </button>
                   
                   {/* Dimension overlays on model */}
@@ -927,11 +927,11 @@ const Product = () => {
                     <div className="absolute inset-0 pointer-events-none">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{transition: 'opacity .18s ease'}}>
                         <defs>
-                          <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.8" orient="auto">
-                            <path d="M0,0 L5,2.8 L0,5 z" fill="#374151" />
+                          <marker id="triA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 z" fill="#6b7280" />
                           </marker>
-                          <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.8" orient="auto">
-                            <path d="M5,0 L0,2.8 L5,5 z" fill="#374151" />
+                          <marker id="triB" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
+                            <path d="M6,0 L0,3 L6,6 z" fill="#6b7280" />
                           </marker>
                         </defs>
 
@@ -947,41 +947,45 @@ const Product = () => {
 
                         {/* Expanded realistic callouts */}
                         {showDimensions && (
-                          <g>
-                            {/* Height: thin vertical with ticks and small centered label */}
+                          <g style={{opacity: 0.95}}>
+                            {/* Height: vertical with ticks and centered label near the line */}
                             {productData?.height && (
                               <>
-                                <line x1="14" y1="12" x2="14" y2="86" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="11" y1="86" x2="17" y2="86" stroke="#374151" strokeWidth="0.6" />
-                                <line x1="11" y1="12" x2="17" y2="12" stroke="#374151" strokeWidth="0.6" />
-                                <text x="8" y="46" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="3.6" fontWeight="500" className="select-none">
+                                <line x1="18" y1="12" x2="18" y2="86" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="14" y1="86" x2="22" y2="86" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                                <line x1="14" y1="12" x2="22" y2="12" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                                <text x="22" y="48" textAnchor="start" dominantBaseline="middle" fill="#374151" fontSize="4" fontWeight="500" className="select-none">
                                   {productData.height} cm
                                 </text>
-                                <line x1="16" y1="40" x2="30" y2="40" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" />
+                                {/* dashed guide from object edge to dimension line */}
+                                <line x1="34" y1="40" x2="18" y2="40" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1.5" strokeOpacity="0.45" strokeLinecap="round" />
                               </>
                             )}
 
-                            {/* Width: slender baseline with small ticks and label beneath */}
+                            {/* Width: baseline moved slightly lower; label visible; projection lines to object edges */}
                             {productData?.width && (
                               <>
-                                <line x1="26" y1="88" x2="74" y2="88" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="26" y1="88" x2="26" y2="84" stroke="#374151" strokeWidth="0.6" />
-                                <line x1="74" y1="88" x2="74" y2="84" stroke="#374151" strokeWidth="0.6" />
-                                <text x="50" y="94.5" textAnchor="middle" dominantBaseline="hanging" fill="#374151" fontSize="3.4" fontWeight="600" className="select-none">
+                                <line x1="24" y1="90" x2="76" y2="90" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="24" y1="90" x2="24" y2="86" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                                <line x1="76" y1="90" x2="76" y2="86" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                                <text x="50" y="95" textAnchor="middle" dominantBaseline="hanging" fill="#374151" fontSize="3.6" fontWeight="600" className="select-none">
                                   {productData.width} cm
                                 </text>
-                                <line x1="50" y1="78" x2="50" y2="70" stroke="#94a3b8" strokeWidth="0.4" strokeDasharray="1 1.5" />
+                                {/* short dashed projections from object edges */}
+                                <line x1="34" y1="88" x2="24" y2="88" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1 1.5" strokeOpacity="0.45" strokeLinecap="round" />
+                                <line x1="76" y1="88" x2="66" y2="88" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1 1.5" strokeOpacity="0.45" strokeLinecap="round" />
                               </>
                             )}
 
-                            {/* Depth: subtle top-right */}
+                            {/* Depth: move slightly closer to object and soften */}
                             {productData?.depth && (
                               <>
-                                <line x1="70" y1="12" x2="92" y2="12" stroke="#374151" strokeWidth="0.6" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="81" y1="12" x2="81" y2="8" stroke="#374151" strokeWidth="0.6" />
-                                <text x="81" y="4" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="2.8" fontWeight="600" className="select-none">
+                                <line x1="70" y1="14" x2="90" y2="14" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                                <line x1="80" y1="14" x2="80" y2="10" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                                <text x="80" y="7" textAnchor="middle" dominantBaseline="middle" fill="#374151" fontSize="3" fontWeight="600" className="select-none">
                                   {productData.depth} cm
                                 </text>
+                                <line x1="72" y1="18" x2="72" y2="26" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1 1.5" strokeOpacity="0.45" strokeLinecap="round" />
                               </>
                             )}
                           </g>
