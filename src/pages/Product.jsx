@@ -931,7 +931,7 @@ const Product = () => {
                             <line x1="15" y1="88" x2="85" y2="88" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="15" y1="85" x2="15" y2="91" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="85" y1="85" x2="85" y2="91" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="50" y="98" textAnchor="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                            <text x="50" y="98" textAnchor="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
                               {productData.width}cm
                             </text>
                           </>
@@ -943,7 +943,7 @@ const Product = () => {
                             <line x1="5" y1="15" x2="5" y2="85" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="2" y1="15" x2="8" y2="15" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="2" y1="85" x2="8" y2="85" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="2" y="52" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                            <text x="2" y="52" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
                               {productData.height}cm
                             </text>
                           </>
@@ -955,7 +955,7 @@ const Product = () => {
                             <line x1="78" y1="15" x2="95" y2="15" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="78" y1="12" x2="78" y2="18" stroke="#f59e0b" strokeWidth="2" />
                             <line x1="95" y1="12" x2="95" y2="18" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="86" y="10" textAnchor="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                            <text x="86" y="10" textAnchor="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
                               {productData.depth}cm
                             </text>
                           </>
