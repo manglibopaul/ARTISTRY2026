@@ -929,7 +929,7 @@ const Product = () => {
                         {productData?.height && (
                           <>
                             <line x1="5" y1="10" x2="5" y2="85" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="-2" y="50" textAnchor="end" dominantBaseline="middle" fill="#3b82f6" fontSize="4" fontWeight="500" className="select-none pointer-events-none">
+                            <text x="-2" y="50" textAnchor="end" dominantBaseline="middle" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
                               Height: {productData.height} cm
                             </text>
                           </>
@@ -939,7 +939,7 @@ const Product = () => {
                         {productData?.width && (
                           <>
                             <line x1="15" y1="92" x2="85" y2="92" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="50" y="98" textAnchor="middle" dominantBaseline="hanging" fill="#3b82f6" fontSize="4" fontWeight="500" className="select-none pointer-events-none">
+                            <text x="50" y="98" textAnchor="middle" dominantBaseline="hanging" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
                               Width: {productData.width} cm
                             </text>
                           </>
@@ -949,7 +949,7 @@ const Product = () => {
                         {productData?.depth && (
                           <>
                             <line x1="75" y1="10" x2="95" y2="10" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="85" y="5" textAnchor="middle" dominantBaseline="auto" fill="#3b82f6" fontSize="4" fontWeight="500" className="select-none pointer-events-none">
+                            <text x="85" y="5" textAnchor="middle" dominantBaseline="auto" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
                               Depth: {productData.depth} cm
                             </text>
                           </>
