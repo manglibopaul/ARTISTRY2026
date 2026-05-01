@@ -67,6 +67,9 @@ const SellerDashboard = () => {
     colorChangeable: false,
     colorPartNames: '',
     stock: '',
+    width: '',
+    height: '',
+    depth: '',
     image: [],
     model: null,
     iosModel: null,
@@ -693,6 +696,11 @@ const SellerDashboard = () => {
       }
       uploadData.append('stock', formData.stock)
 
+      // Add dimensions if provided
+      if (formData.width) uploadData.append('width', formData.width)
+      if (formData.height) uploadData.append('height', formData.height)
+      if (formData.depth) uploadData.append('depth', formData.depth)
+
       // Always send existing images when editing, including [] when user removed all old photos.
       if (editingProduct) {
         uploadData.append('existingImages', JSON.stringify(existingImages))
@@ -816,6 +824,9 @@ const SellerDashboard = () => {
       colorChangeable: !!product.colorChangeable,
       colorPartNames: product.colorPartNames && typeof product.colorPartNames === 'object' ? JSON.stringify(product.colorPartNames) : (product.colorPartNames || ''),
       stock: product.stock,
+      width: product.width || '',
+      height: product.height || '',
+      depth: product.depth || '',
       image: product.image || [],
       model: null,
       iosModel: null,
@@ -858,6 +869,9 @@ const SellerDashboard = () => {
         sizes: '',
       colorChangeable: false,
       stock: '',
+      width: '',
+      height: '',
+      depth: '',
       image: [],
       model: null,
       iosModel: null,
@@ -1068,6 +1082,39 @@ const SellerDashboard = () => {
                 disabled={isSubmitting}
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
                 required
+              />
+
+              <input
+                type='number'
+                name='width'
+                placeholder='Width (cm)'
+                value={formData.width}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                step='0.1'
+              />
+
+              <input
+                type='number'
+                name='height'
+                placeholder='Height (cm)'
+                value={formData.height}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                step='0.1'
+              />
+
+              <input
+                type='number'
+                name='depth'
+                placeholder='Depth (cm)'
+                value={formData.depth}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                step='0.1'
               />
 
               <textarea
