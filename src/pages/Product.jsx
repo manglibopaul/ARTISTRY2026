@@ -507,14 +507,15 @@ const Product = () => {
       } catch (e) {
         // ignore detection errors
       }
-      // Lock camera zoom by setting min/max camera-orbit radius to current radius
+      // Lock camera zoom by fixing the radius but allow full rotation by widening angle bounds
       try {
         if (typeof viewer.getCameraOrbit === 'function') {
           const orbit = viewer.getCameraOrbit();
           const radius = orbit.radius || 1;
-          const locked = `0deg 0deg ${radius.toFixed(4)}m`;
-          viewer.setAttribute('min-camera-orbit', locked);
-          viewer.setAttribute('max-camera-orbit', locked);
+          const minOrbit = `-180deg -90deg ${radius.toFixed(4)}m`;
+          const maxOrbit = `180deg 90deg ${radius.toFixed(4)}m`;
+          viewer.setAttribute('min-camera-orbit', minOrbit);
+          viewer.setAttribute('max-camera-orbit', maxOrbit);
         }
       } catch (e) {}
     };
