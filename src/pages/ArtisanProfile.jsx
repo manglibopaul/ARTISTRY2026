@@ -122,70 +122,115 @@ const ArtisanProfile = () => {
       <div className='bg-white border-b border-gray-200 py-8 sm:py-16'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex flex-col sm:flex-row gap-6 sm:gap-12 items-center sm:items-start'>
-            {/* Avatar & Chat */}
+            {/* Avatar & CTAs */}
             <div className='flex-shrink-0 flex flex-col items-center sm:items-start'>
-              <div>
+              <div className='relative'>
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={seller.storeName}
-                    className='w-28 h-28 sm:w-40 sm:h-40 rounded-lg object-cover border-2 border-gray-200 shadow-md'
+                    className='w-28 h-28 sm:w-40 sm:h-40 rounded-full object-cover border border-gray-200 shadow-md'
                   />
                 ) : (
-                  <div className='w-28 h-28 sm:w-40 sm:h-40 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-4xl sm:text-5xl border-2 border-gray-200 shadow-md'>
+                  <div className='w-28 h-28 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-4xl sm:text-5xl border border-gray-200 shadow-md'>
                     {seller.storeName?.charAt(0) || 'A'}
                   </div>
                 )}
+                {seller.isVerified && (
+                  <span className='absolute bottom-0 right-0 -mb-1 -mr-1 bg-white rounded-full p-0.5 shadow'>
+                    <svg className='w-5 h-5 text-green-600' fill='currentColor' viewBox='0 0 20 20'>
+                      <path d='M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z' />
+                    </svg>
+                  </span>
+                )}
               </div>
+
+              <div className='w-full mt-4 flex flex-col gap-2'>
                 <button
-                onClick={() => {
-                  const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
-                  if (sellerSlug) {
-                    navigate(`/chat/${encodeURIComponent(sellerSlug)}`)
-                  } else {
-                    navigate('/chat')
-                  }
-                }}
-                className='w-full bg-black text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition text-sm mt-4'
-              >
-                Chat with Artist
-              </button>
+                  onClick={() => {
+                    const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
+                    if (sellerSlug) {
+                      navigate(`/chat/${encodeURIComponent(sellerSlug)}`)
+                    } else {
+                      navigate('/chat')
+                    }
+                  }}
+                  className='w-full bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition transform hover:-translate-y-0.5 text-sm'
+                >
+                  Chat with Artist
+                </button>
+                <button
+                  onClick={() => document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                  className='w-full bg-white border border-gray-300 text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:shadow-sm transition text-sm'
+                >
+                  View Shop
+                </button>
+              </div>
             </div>
 
             {/* Info Card */}
-            <div className='w-full sm:flex-1 bg-gray-50 border border-gray-200 rounded-lg p-5 sm:p-8 text-left'>
-              <h1 className='text-xl sm:text-4xl font-bold text-gray-900 mb-1'>{seller.storeName}</h1>
-              <p className='text-gray-600 mb-4'>by {seller.name}</p>
+            <div className='w-full sm:flex-1 bg-gradient-to-b from-white to-gray-50 border border-gray-100 rounded-lg p-5 sm:p-8 text-left shadow-sm'>
+              <div className='flex items-start justify-between gap-4'>
+                <div className='flex-1'>
+                  <h1 className='text-xl sm:text-4xl font-extrabold text-gray-900 mb-1 leading-tight'>{seller.storeName}</h1>
+                  <p className='text-gray-600 mb-2'>by {seller.name}</p>
 
-              {seller.artisanType && (
-                <div className='mb-4 flex'>
-                  <span className='inline-block bg-black text-white px-4 py-1 rounded-full font-semibold text-xs'>
-                    {seller.artisanType}
-                  </span>
+                  {seller.artisanType && (
+                    <div className='mb-4'>
+                      <span className='inline-block bg-black text-white px-4 py-1 rounded-full font-semibold text-xs'>
+                        {seller.artisanType}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className='flex flex-wrap gap-4 text-sm text-gray-600'>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-bold text-gray-900'>{sellerProducts.length}</span>
+                      <span>Products</span>
+                    </div>
+                    {seller.address && (
+                      <div className='flex items-center gap-2'>
+                        <span>📍</span>
+                        <span>{seller.address}</span>
+                      </div>
+                    )}
+                    {seller.phone && (
+                      <div className='flex items-center gap-2'>
+                        <span>📞</span>
+                        <span>{seller.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className='hidden sm:flex flex-col items-end text-sm text-gray-500'>
+                  {seller.reviewsAverage || seller.reviewsCount ? (
+                    <div className='text-right'>
+                      <div className='flex items-center gap-2 justify-end'>
+                        <span className='text-lg font-semibold text-gray-900'>{(seller.reviewsAverage || 0).toFixed(1)}</span>
+                        <span className='text-xs text-gray-500'>/5</span>
+                      </div>
+                      <div className='text-xs mt-1'>{seller.reviewsCount || 0} reviews</div>
+                    </div>
+                  ) : (
+                    <div className='text-xs text-gray-400'>No reviews yet</div>
+                  )}
+                </div>
+              </div>
+
+              {pickupLocations.length > 0 && (
+                <div className='mt-4 pt-4 border-t border-gray-100'>
+                  <p className='font-bold text-gray-900 text-xs uppercase tracking-wide mb-1'>Pickup Locations</p>
+                  <ul className='space-y-1 text-gray-700'>
+                    {pickupLocations.map((loc, idx) => (
+                      <li key={idx} className='flex items-center gap-2'>
+                        <span>📍</span>
+                        <span>{loc}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
-
-              <div className='space-y-2 text-sm'>
-                <p className='text-gray-600'>
-                  <span className='font-bold text-gray-900'>{sellerProducts.length}</span> Products Available
-                </p>
-                {seller.address && (
-                  <p className='text-gray-700'>📍 {seller.address}</p>
-                )}
-                {seller.phone && (
-                  <p className='text-gray-700'>📞 {seller.phone}</p>
-                )}
-                {pickupLocations.length > 0 && (
-                  <div className='mt-3 pt-3 border-t border-gray-200'>
-                    <p className='font-bold text-gray-900 text-xs uppercase tracking-wide mb-1'>Pickup Locations</p>
-                    <ul className='space-y-1'>
-                      {pickupLocations.map((loc, idx) => (
-                        <li key={idx} className='text-gray-700'>📍 {loc}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -254,7 +299,7 @@ const ArtisanProfile = () => {
               <p className='text-gray-400 text-sm'>Try a different category filter.</p>
             </div>
           ) : (
-            <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-8'>
+            <div id='products-grid' className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-8'>
               {filteredProducts.map(product => (
                 <div key={product._id || product.id} className='group'>
                   <span className='inline-block mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600'>
