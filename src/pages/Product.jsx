@@ -902,66 +902,6 @@ const Product = () => {
 
             <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">View in Augmented Reality</h2>
 
-            {/* Display product dimensions */}
-            {(productData?.width || productData?.height || productData?.depth) && (
-              <div className="mb-4 p-4 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
-                <div className="text-sm font-semibold text-orange-900 mb-3">Product Dimensions</div>
-                <div className="flex items-center justify-center relative" style={{ height: '120px' }}>
-                  {/* 3D Box visualization */}
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    {/* Simplified box shape */}
-                    <div className="relative" style={{ 
-                      width: '80px', 
-                      height: '80px',
-                      perspective: '1000px'
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                        border: '2px solid #d97706',
-                        borderRadius: '4px',
-                        transform: 'rotateX(20deg) rotateZ(25deg)',
-                      }}></div>
-                    </div>
-                    
-                    {/* Dimension labels with arrows */}
-                    {productData?.width && (
-                      <div className="absolute bottom-2 left-4 text-xs font-bold text-orange-900 flex items-center gap-1">
-                        <span className="text-orange-700">↔</span>
-                        <span>W: {productData.width} cm</span>
-                      </div>
-                    )}
-                    {productData?.height && (
-                      <div className="absolute top-0 left-0 text-xs font-bold text-orange-900 flex flex-col items-center gap-1">
-                        <span className="text-orange-700">↕</span>
-                        <span>H: {productData.height} cm</span>
-                      </div>
-                    )}
-                    {productData?.depth && (
-                      <div className="absolute top-0 right-2 text-xs font-bold text-orange-900 flex items-center gap-1">
-                        <span>D: {productData.depth} cm</span>
-                        <span className="text-orange-700">⟂</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Dimension summary text */}
-                <div className="mt-3 pt-3 border-t border-orange-200 text-center text-xs text-orange-800">
-                  {productData?.width && productData?.height && productData?.depth ? (
-                    <span className="font-medium">
-                      {productData.width} × {productData.height} × {productData.depth} cm
-                    </span>
-                  ) : (
-                    <span className="text-orange-600">
-                      {[productData?.width && `W: ${productData.width}`, productData?.height && `H: ${productData.height}`, productData?.depth && `D: ${productData.depth}`].filter(Boolean).join(' × ')} cm
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
             {!productData.modelUrl ? (
               <div className="p-8 text-center">
                 <p className="text-gray-600 text-base">📦 No 3D model available for this product</p>
@@ -971,6 +911,50 @@ const Product = () => {
                 <div className="relative overflow-hidden">
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
+                  
+                  {/* Dimension overlays on model */}
+                  {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      <svg className="w-full h-full absolute top-0 left-0" style={{ mixBlendMode: 'multiply' }}>
+                        {/* Width dimension - bottom */}
+                        {productData?.width && (
+                          <>
+                            <line x1="10%" y1="85%" x2="90%" y2="85%" stroke="#f59e0b" strokeWidth="2" />
+                            <circle cx="10%" cy="85%" r="4" fill="#f59e0b" />
+                            <circle cx="90%" cy="85%" r="4" fill="#f59e0b" />
+                            <text x="50%" y="95%" textAnchor="middle" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none">
+                              W: {productData.width} cm
+                            </text>
+                          </>
+                        )}
+                        
+                        {/* Height dimension - left */}
+                        {productData?.height && (
+                          <>
+                            <line x1="8%" y1="10%" x2="8%" y2="80%" stroke="#f59e0b" strokeWidth="2" />
+                            <circle cx="8%" cy="10%" r="4" fill="#f59e0b" />
+                            <circle cx="8%" cy="80%" r="4" fill="#f59e0b" />
+                            <text x="2%" y="50%" textAnchor="end" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none" transform="rotate(-90 2 50)">
+                              H: {productData.height} cm
+                            </text>
+                          </>
+                        )}
+                        
+                        {/* Depth dimension - top right */}
+                        {productData?.depth && (
+                          <>
+                            <line x1="80%" y1="15%" x2="95%" y2="15%" stroke="#f59e0b" strokeWidth="2" />
+                            <circle cx="80%" cy="15%" r="4" fill="#f59e0b" />
+                            <circle cx="95%" cy="15%" r="4" fill="#f59e0b" />
+                            <text x="87.5%" y="8%" textAnchor="middle" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none">
+                              D: {productData.depth} cm
+                            </text>
+                          </>
+                        )}
+                      </svg>
+                    </div>
+                  )}
+                  
                   {/* Color picker controls - only show when product supports color change */}
                   {(productData?.colorChangeable || availableColors.length > 0) && (
                     <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
