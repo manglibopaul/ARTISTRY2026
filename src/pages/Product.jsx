@@ -488,9 +488,9 @@ const Product = () => {
     const viewer = document.createElement('model-viewer');
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
-    // Restrict AR to WebXR only to avoid falling back to native Scene Viewer / Quick Look
-    // Native viewers often allow pinch-to-scale which cannot be blocked from the page.
-    viewer.setAttribute('ar-modes', 'webxr');
+    // Allow Scene Viewer / Quick Look / WebXR so AR opens on all devices.
+    // Set an explicit `scale` so the model appears at the product's real-world size initially.
+    viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     viewer.setAttribute('camera-controls', '');
     viewer.setAttribute('loading', 'eager');
     if (image) {
@@ -502,7 +502,10 @@ const Product = () => {
     viewer.setAttribute('exposure', '1');
     viewer.setAttribute('shadow-intensity', '1');
     viewer.setAttribute('environment-image', 'neutral');
-    viewer.setAttribute('scale-to-fit', 'true');
+    // Don't auto scale to fit; prefer explicit real-world scale from product metadata.
+    try { viewer.removeAttribute('scale-to-fit'); } catch (e) {}
+    const initialModelScale = (productData && (productData.modelScale || productData.scale)) ? String(productData.modelScale || productData.scale) : '1';
+    try { viewer.setAttribute('scale', initialModelScale); } catch (e) {}
     // Disable zoom gestures by default and allow locking camera radius after model loads
     try { viewer.setAttribute('disable-zoom', ''); } catch (e) {}
     viewer.style.width = '100%';
@@ -775,15 +778,11 @@ const Product = () => {
               {/* ⭐ View AR button */}
               <button 
                 onClick={()=>setShowAR(true)} 
-                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl && webxrAvailable ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!productData.modelUrl || !webxrAvailable}
-                title={!webxrAvailable ? 'WebXR not available on this device — native AR viewers can still scale models.' : 'View in AR'}
+                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
+                disabled={!productData.modelUrl}
               >
                 View AR
               </button>
-              {!webxrAvailable && productData?.modelUrl && (
-                <div className='text-xs text-gray-500 mt-1'>WebXR not supported — native AR viewers may allow pinch-to-scale.</div>
-              )}
 
               <div className='flex items-center gap-2 w-full sm:w-auto relative'>
                 <input
