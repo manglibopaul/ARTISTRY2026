@@ -266,73 +266,6 @@ const Product = () => {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
-                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{ transition: 'opacity .18s ease' }}>
-                        <defs>
-                          <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                            <path d="M0,0 L5,2.5 L0,5 z" fill="#475569" />
-                          </marker>
-                          <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto">
-                            <path d="M5,0 L0,2.5 L5,5 z" fill="#475569" />
-                          </marker>
-                        </defs>
-
-                        {/* Collapsed compact chip */}
-                        {!showDimensions && (
-                          <g>
-                            <rect x="44" y="82" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.4" fontWeight="600">
-                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
-                            </text>
-                          </g>
-                        )}
-
-                        {/* New blueprint-style dimensions */}
-                        {showDimensions && (
-                          <g>
-                            {/* Left: Height */}
-                            {productData?.height && (
-                              <>
-                                <circle cx="16" cy="14" r="1.2" fill="#475569" opacity="0.9" />
-                                <circle cx="16" cy="86" r="1.2" fill="#475569" opacity="0.9" />
-                                <line x1="16" y1="14" x2="16" y2="86" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
-                                <line x1="16" y1="30" x2="28" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
-                                <rect x="10" y="43" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="16" y="46" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
-                                  {productData.height} cm
-                                </text>
-                              </>
-                            )}
-
-                            {/* Bottom: Width */}
-                            {productData?.width && (
-                              <>
-                                <circle cx="24" cy="94" r="1.2" fill="#475569" opacity="0.9" />
-                                <circle cx="76" cy="94" r="1.2" fill="#475569" opacity="0.9" />
-                                <line x1="24" y1="94" x2="76" y2="94" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
-                                <line x1="40" y1="84" x2="40" y2="76" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
-                                <rect x="44" y="96" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="50" y="98" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
-                                  {productData.width} cm
-                                </text>
-                              </>
-                            )}
-
-                            {/* Top-right: Depth */}
-                            {productData?.depth && (
-                              <>
-                                <circle cx="70" cy="18" r="1.2" fill="#475569" opacity="0.9" />
-                                <circle cx="90" cy="18" r="1.2" fill="#475569" opacity="0.9" />
-                                <line x1="70" y1="18" x2="90" y2="18" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
-                                <rect x="74" y="12" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="80" y="14.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
-                                  {productData.depth} cm
-                                </text>
-                              </>
-                            )}
-                          </g>
-                        )}
-                      </svg>
-      }
     } catch (e) {
       console.error('Failed to fetch single product fallback', e)
       setProductError(e.message || 'Network error')
@@ -912,72 +845,58 @@ const Product = () => {
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
-                      <svg
-                        className="w-full h-full absolute top-0 left-0"
-                        preserveAspectRatio="none"
-                        viewBox="0 0 100 100"
-                        style={{ transition: 'opacity .18s ease' }}
-                      >
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{ transition: 'opacity .18s ease' }}>
                         <defs>
                           <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-                            <path d="M0,0 L5,2.5 L0,5 z" fill="#6b7280" />
+                            <path d="M0,0 L5,2.5 L0,5 z" fill="#475569" />
                           </marker>
                           <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto">
-                            <path d="M5,0 L0,2.5 L5,5 z" fill="#6b7280" />
+                            <path d="M5,0 L0,2.5 L5,5 z" fill="#475569" />
                           </marker>
                         </defs>
-
-                        {/* Collapsed badge */}
                         {!showDimensions && (
                           <g>
-                            <rect x="42" y="82" width="16" height="6" rx="3" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                            <text x="50" y="85" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="2.5" fontWeight="700">
+                            <rect x="44" y="82" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.4" fontWeight="600">
                               {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
                             </text>
                           </g>
                         )}
-
                         {showDimensions && (
                           <g>
-                            {/* HEIGHT - left side with small pill label */}
                             {productData?.height && (
                               <>
-                                <line x1="16" y1="14" x2="16" y2="86" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="12" y1="86" x2="20" y2="86" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
-                                <line x1="12" y1="14" x2="20" y2="14" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
-                                <rect x="12" y="45" width="8" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="16" y="47" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.4" fontWeight="700">
+                                <circle cx="16" cy="14" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="16" cy="86" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="16" y1="14" x2="16" y2="86" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <line x1="16" y1="30" x2="28" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
+                                <rect x="10" y="43" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="16" y="46" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600">
                                   {productData.height} cm
                                 </text>
-                                <line x1="32" y1="40" x2="16" y2="40" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
-
-                            {/* WIDTH - bottom baseline with compact pill */}
                             {productData?.width && (
                               <>
-                                <line x1="22" y1="94" x2="78" y2="94" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="22" y1="94" x2="22" y2="90" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
-                                <line x1="78" y1="94" x2="78" y2="90" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
+                                <circle cx="24" cy="94" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="76" cy="94" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="24" y1="94" x2="76" y2="94" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <line x1="40" y1="84" x2="40" y2="76" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
                                 <rect x="44" y="96" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="50" y="98" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3.4" fontWeight="700">
+                                <text x="50" y="98" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600">
                                   {productData.width} cm
                                 </text>
-                                <line x1="34" y1="92" x2="22" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
-                                <line x1="78" y1="92" x2="66" y2="92" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
-
-                            {/* DEPTH - top-right compact pill */}
                             {productData?.depth && (
                               <>
-                                <line x1="68" y1="18" x2="92" y2="18" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.85" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="80" y1="18" x2="80" y2="14" stroke="#6b7280" strokeWidth="0.9" strokeLinecap="round" strokeOpacity="0.12" />
-                                <rect x="74" y="13" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                                <text x="80" y="15.5" textAnchor="middle" dominantBaseline="middle" fill="#111827" fontSize="3" fontWeight="700">
+                                <circle cx="70" cy="18" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="90" cy="18" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="70" y1="18" x2="90" y2="18" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <rect x="74" y="12" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="80" y="14.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3" fontWeight="600">
                                   {productData.depth} cm
                                 </text>
-                                <line x1="72" y1="22" x2="72" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="2 2" strokeOpacity="0.25" strokeLinecap="round" />
                               </>
                             )}
                           </g>
