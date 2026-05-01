@@ -81,7 +81,7 @@ const normalizePaymentSettings = (raw) => {
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
-    const { name, email, password, storeName, artisanType, phone, address } = req.body;
+    const { name, email, password, storeName, artisanType, phone, address, socialLinks } = req.body;
     const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
 
     let proofOfArtisan = null;
@@ -122,6 +122,7 @@ export const registerSeller = async (req, res) => {
           proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
           portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
           isVerified: false,
+          socialLinks: socialLinks ? (typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks) : (existingSeller.socialLinks || {}),
         });
         seller = existingSeller;
         responseMessage = 'Deleted seller account restored and updated successfully';
@@ -140,6 +141,7 @@ export const registerSeller = async (req, res) => {
         pickupLocations,
         proofOfArtisan,
         portfolioImages,
+        socialLinks: socialLinks ? (typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks) : {},
       });
     }
 
@@ -256,7 +258,7 @@ export const findSellerByName = async (req, res) => {
 // Update seller profile
 export const updateSellerProfile = async (req, res) => {
   try {
-    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations } = req.body;
+    const { name, storeName, description, phone, address, artisanType, expertise, bio, certifications, pickupLocations, socialLinks } = req.body;
 
     const seller = await Seller.findByPk(req.seller.id);
     if (!seller) {
@@ -266,7 +268,7 @@ export const updateSellerProfile = async (req, res) => {
     const hasPickupLocationsField = Object.prototype.hasOwnProperty.call(req.body, 'pickupLocations');
     const normalizedPickupLocations = normalizePickupLocations(pickupLocations);
 
-    await seller.update({
+    const nextUpdate = {
       name: name || seller.name,
       storeName: storeName || seller.storeName,
       description: description || seller.description,
@@ -277,7 +279,19 @@ export const updateSellerProfile = async (req, res) => {
       bio: bio || seller.bio,
       certifications: Array.isArray(certifications) ? certifications : (seller.certifications || []),
       pickupLocations: hasPickupLocationsField ? normalizedPickupLocations : normalizePickupLocations(seller.pickupLocations),
-    });
+    };
+
+    // If socialLinks provided (JSON or object), parse/attach
+    if (socialLinks) {
+      try {
+        nextUpdate.socialLinks = typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks;
+      } catch (err) {
+        nextUpdate.socialLinks = seller.socialLinks || {};
+      }
+    }
+
+    await seller.update(nextUpdate);
+    
 
     // If client sent pickupLocationPhotos, merge them into shippingSettings.pickupLocationPhotos
     if (req.body && req.body.pickupLocationPhotos) {
