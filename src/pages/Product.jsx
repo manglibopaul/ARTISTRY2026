@@ -488,6 +488,8 @@ const Product = () => {
     viewer.setAttribute('shadow-intensity', '1');
     viewer.setAttribute('environment-image', 'neutral');
     viewer.setAttribute('scale-to-fit', 'true');
+    // Disable zoom gestures by default and allow locking camera radius after model loads
+    try { viewer.setAttribute('disable-zoom', ''); } catch (e) {}
     viewer.style.width = '100%';
     viewer.style.height = '100%';
 
@@ -505,6 +507,16 @@ const Product = () => {
       } catch (e) {
         // ignore detection errors
       }
+      // Lock camera zoom by setting min/max camera-orbit radius to current radius
+      try {
+        if (typeof viewer.getCameraOrbit === 'function') {
+          const orbit = viewer.getCameraOrbit();
+          const radius = orbit.radius || 1;
+          const locked = `0deg 0deg ${radius.toFixed(4)}m`;
+          viewer.setAttribute('min-camera-orbit', locked);
+          viewer.setAttribute('max-camera-orbit', locked);
+        }
+      } catch (e) {}
     };
     const handleError = () => {
       setArLoading(false);
