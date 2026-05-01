@@ -915,14 +915,14 @@ const Product = () => {
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
-                      <svg className="w-full h-full absolute top-0 left-0" style={{ mixBlendMode: 'multiply' }}>
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none">
                         {/* Width dimension - bottom */}
                         {productData?.width && (
                           <>
-                            <line x1="10%" y1="85%" x2="90%" y2="85%" stroke="#f59e0b" strokeWidth="2" />
-                            <circle cx="10%" cy="85%" r="4" fill="#f59e0b" />
-                            <circle cx="90%" cy="85%" r="4" fill="#f59e0b" />
-                            <text x="50%" y="95%" textAnchor="middle" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none">
+                            <line x1="10%" y1="85%" x2="90%" y2="85%" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+                            <circle cx="10%" cy="85%" r="5" fill="#f59e0b" />
+                            <circle cx="90%" cy="85%" r="5" fill="#f59e0b" />
+                            <text x="50%" y="100%" textAnchor="middle" dominantBaseline="middle" fill="#d97706" fontSize="16" fontWeight="bold" className="select-none">
                               W: {productData.width} cm
                             </text>
                           </>
@@ -931,10 +931,10 @@ const Product = () => {
                         {/* Height dimension - left */}
                         {productData?.height && (
                           <>
-                            <line x1="8%" y1="10%" x2="8%" y2="80%" stroke="#f59e0b" strokeWidth="2" />
-                            <circle cx="8%" cy="10%" r="4" fill="#f59e0b" />
-                            <circle cx="8%" cy="80%" r="4" fill="#f59e0b" />
-                            <text x="2%" y="50%" textAnchor="end" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none" transform="rotate(-90 2 50)">
+                            <line x1="8%" y1="10%" x2="8%" y2="80%" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+                            <circle cx="8%" cy="10%" r="5" fill="#f59e0b" />
+                            <circle cx="8%" cy="80%" r="5" fill="#f59e0b" />
+                            <text x="1%" y="45%" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="16" fontWeight="bold" className="select-none">
                               H: {productData.height} cm
                             </text>
                           </>
@@ -943,10 +943,10 @@ const Product = () => {
                         {/* Depth dimension - top right */}
                         {productData?.depth && (
                           <>
-                            <line x1="80%" y1="15%" x2="95%" y2="15%" stroke="#f59e0b" strokeWidth="2" />
-                            <circle cx="80%" cy="15%" r="4" fill="#f59e0b" />
-                            <circle cx="95%" cy="15%" r="4" fill="#f59e0b" />
-                            <text x="87.5%" y="8%" textAnchor="middle" fill="#d97706" fontSize="14" fontWeight="bold" className="select-none">
+                            <line x1="80%" y1="5%" x2="95%" y2="5%" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+                            <circle cx="80%" cy="5%" r="5" fill="#f59e0b" />
+                            <circle cx="95%" cy="5%" r="5" fill="#f59e0b" />
+                            <text x="87.5%" y="0%" textAnchor="middle" dominantBaseline="baseline" fill="#d97706" fontSize="16" fontWeight="bold" className="select-none">
                               D: {productData.depth} cm
                             </text>
                           </>
