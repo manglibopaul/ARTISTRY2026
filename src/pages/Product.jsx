@@ -904,12 +904,60 @@ const Product = () => {
 
             {/* Display product dimensions */}
             {(productData?.width || productData?.height || productData?.depth) && (
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                <div className="text-xs font-semibold text-gray-700 mb-2">Product Dimensions</div>
-                <div className="flex flex-wrap gap-3 justify-center text-sm">
-                  {productData?.width && <div className="flex items-center gap-1"><span className="text-gray-600">W:</span><span className="font-medium">{productData.width} cm</span></div>}
-                  {productData?.height && <div className="flex items-center gap-1"><span className="text-gray-600">H:</span><span className="font-medium">{productData.height} cm</span></div>}
-                  {productData?.depth && <div className="flex items-center gap-1"><span className="text-gray-600">D:</span><span className="font-medium">{productData.depth} cm</span></div>}
+              <div className="mb-4 p-4 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+                <div className="text-sm font-semibold text-orange-900 mb-3">Product Dimensions</div>
+                <div className="flex items-center justify-center relative" style={{ height: '120px' }}>
+                  {/* 3D Box visualization */}
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Simplified box shape */}
+                    <div className="relative" style={{ 
+                      width: '80px', 
+                      height: '80px',
+                      perspective: '1000px'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                        border: '2px solid #d97706',
+                        borderRadius: '4px',
+                        transform: 'rotateX(20deg) rotateZ(25deg)',
+                      }}></div>
+                    </div>
+                    
+                    {/* Dimension labels with arrows */}
+                    {productData?.width && (
+                      <div className="absolute bottom-2 left-4 text-xs font-bold text-orange-900 flex items-center gap-1">
+                        <span className="text-orange-700">↔</span>
+                        <span>W: {productData.width} cm</span>
+                      </div>
+                    )}
+                    {productData?.height && (
+                      <div className="absolute top-0 left-0 text-xs font-bold text-orange-900 flex flex-col items-center gap-1">
+                        <span className="text-orange-700">↕</span>
+                        <span>H: {productData.height} cm</span>
+                      </div>
+                    )}
+                    {productData?.depth && (
+                      <div className="absolute top-0 right-2 text-xs font-bold text-orange-900 flex items-center gap-1">
+                        <span>D: {productData.depth} cm</span>
+                        <span className="text-orange-700">⟂</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Dimension summary text */}
+                <div className="mt-3 pt-3 border-t border-orange-200 text-center text-xs text-orange-800">
+                  {productData?.width && productData?.height && productData?.depth ? (
+                    <span className="font-medium">
+                      {productData.width} × {productData.height} × {productData.depth} cm
+                    </span>
+                  ) : (
+                    <span className="text-orange-600">
+                      {[productData?.width && `W: ${productData.width}`, productData?.height && `H: ${productData.height}`, productData?.depth && `D: ${productData.depth}`].filter(Boolean).join(' × ')} cm
+                    </span>
+                  )}
                 </div>
               </div>
             )}
