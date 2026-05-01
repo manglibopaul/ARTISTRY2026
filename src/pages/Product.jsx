@@ -41,6 +41,7 @@ const Product = () => {
   const [detectedParts, setDetectedParts] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
   const [showPartsList, setShowPartsList] = useState(false);
+  const [showDimensions, setShowDimensions] = useState(false);
   const reviewsRef = useRef(null);
   const [reviewsInView, setReviewsInView] = useState(true);
 
@@ -911,11 +912,20 @@ const Product = () => {
                 <div className="relative overflow-hidden">
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
+                  {/* Dimension toggle - small button to reveal callouts */}
+                  <button
+                    onClick={() => setShowDimensions(v => !v)}
+                    aria-pressed={showDimensions}
+                    className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-4 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs shadow-sm"
+                    title="Show dimensions"
+                  >
+                    {showDimensions ? 'Hide dimensions' : 'Show dimensions'}
+                  </button>
                   
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
-                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100">
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{opacity: showDimensions ? 1 : 0.22, transition: 'opacity .28s ease'}}>
                         <defs>
                           <marker id="mA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
                             <path d="M0,0 L6,3 L0,6 z" fill="#2563eb" />
@@ -930,8 +940,8 @@ const Product = () => {
                           <>
                             <line x1="6" y1="10" x2="6" y2="84" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
                             <line x1="6" y1="50" x2="14" y2="50" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="-11" y="46" width="14" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
-                            <text x="-4" y="50" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                            <rect x="-11" y="46" width="14" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
+                            <text x="-4" y="50" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
                               {productData.height} cm
                             </text>
                           </>
@@ -942,8 +952,8 @@ const Product = () => {
                           <>
                             <line x1="18" y1="90" x2="82" y2="90" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
                             <line x1="50" y1="90" x2="50" y2="82" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="42" y="76" width="16" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
-                            <text x="50" y="80" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                            <rect x="42" y="76" width="16" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
+                            <text x="50" y="80" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
                               {productData.width} cm
                             </text>
                           </>
@@ -954,8 +964,8 @@ const Product = () => {
                           <>
                             <line x1="76" y1="12" x2="92" y2="12" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
                             <line x1="84" y1="12" x2="84" y2="6" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="74" y="0.8" width="18" height="6" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
-                            <text x="83" y="4" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                            <rect x="74" y="0.8" width="18" height="6" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
+                            <text x="83" y="4" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
                               {productData.depth} cm
                             </text>
                           </>
