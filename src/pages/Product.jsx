@@ -925,48 +925,47 @@ const Product = () => {
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
-                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{opacity: showDimensions ? 1 : 0.22, transition: 'opacity .28s ease'}}>
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{opacity: showDimensions ? 1 : 0.18, transition: 'opacity .28s ease'}}>
                         <defs>
-                          <marker id="mA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 z" fill="#2563eb" />
+                          <marker id="triA" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                            <path d="M0,0 L8,4 L0,8 z" fill="#2563eb" />
                           </marker>
-                          <marker id="mB" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
-                            <path d="M6,0 L0,3 L6,6 z" fill="#2563eb" />
+                          <marker id="triB" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto">
+                            <path d="M8,0 L0,4 L8,8 z" fill="#2563eb" />
                           </marker>
                         </defs>
 
-                        {/* Height (left) - thin line with small arrowheads and compact label */}
+                        {/* Height (left) - vertical line with ticks and mid label */}
                         {productData?.height && (
                           <>
-                            <line x1="6" y1="10" x2="6" y2="84" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
-                            <line x1="6" y1="50" x2="14" y2="50" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="-11" y="46" width="14" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
-                            <text x="-4" y="50" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
-                              {productData.height} cm
+                            <line x1="16" y1="10" x2="16" y2="86" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                            <line x1="12" y1="86" x2="20" y2="86" stroke="#2563eb" strokeWidth="0.9" />
+                            <line x1="12" y1="10" x2="20" y2="10" stroke="#2563eb" strokeWidth="0.9" />
+                            <text x="8" y="46" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="5" fontWeight="500" className="select-none">
+                              Height: {productData.height} cm
                             </text>
                           </>
                         )}
 
-                        {/* Width (bottom) - centered compact label */}
+                        {/* Width (bottom) - centered line with ticks and label */}
                         {productData?.width && (
                           <>
-                            <line x1="18" y1="90" x2="82" y2="90" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
-                            <line x1="50" y1="90" x2="50" y2="82" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="42" y="76" width="16" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
-                            <text x="50" y="80" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
-                              {productData.width} cm
+                            <line x1="22" y1="88" x2="78" y2="88" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                            <line x1="22" y1="88" x2="22" y2="84" stroke="#2563eb" strokeWidth="0.9" />
+                            <line x1="78" y1="88" x2="78" y2="84" stroke="#2563eb" strokeWidth="0.9" />
+                            <text x="50" y="94" textAnchor="middle" dominantBaseline="hanging" fill="#2563eb" fontSize="4.5" fontWeight="600" className="select-none">
+                              Width: {productData.width} cm
                             </text>
                           </>
                         )}
 
-                        {/* Depth (top-right) - small horizontal arrow with label above */}
+                        {/* Depth (top-right) - small arrow with label */}
                         {productData?.depth && (
                           <>
-                            <line x1="76" y1="12" x2="92" y2="12" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
-                            <line x1="84" y1="12" x2="84" y2="6" stroke="#2563eb" strokeWidth="0.9" />
-                            <rect x="74" y="0.8" width="18" height="6" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" style={{filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.04))'}} />
-                            <text x="83" y="4" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none" style={{transformOrigin: 'center', transform: showDimensions ? 'translateY(0)' : 'translateY(3px)', transition: 'transform .28s ease'}}>
-                              {productData.depth} cm
+                            <line x1="74" y1="12" x2="92" y2="12" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#triB)" markerEnd="url(#triA)" />
+                            <line x1="83" y1="12" x2="83" y2="8" stroke="#2563eb" strokeWidth="0.9" />
+                            <text x="83" y="3.5" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3.5" fontWeight="600" className="select-none">
+                              Depth: {productData.depth} cm
                             </text>
                           </>
                         )}
