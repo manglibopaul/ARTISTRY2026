@@ -580,14 +580,27 @@ export const getSeller = async (req, res) => {
 // Public: get all sellers (public directory)
 export const getAllSellersPublic = async (req, res) => {
   try {
-    const sellers = await Seller.findAll({
+    // Support pagination for large directories: ?page=1&limit=24
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 24);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Seller.findAndCountAll({
       where: {
         email: { [Op.ne]: SUPPORT_SELLER_EMAIL },
       },
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
     });
-    res.json(sellers.map(normalizeSellerPayload));
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      data: rows.map(normalizeSellerPayload),
+    });
   } catch (error) {
     console.error('getAllSellersPublic', error);
     res.status(500).json({ message: 'Failed to load sellers' });

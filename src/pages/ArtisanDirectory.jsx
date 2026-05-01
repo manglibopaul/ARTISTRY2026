@@ -10,6 +10,8 @@ const ArtisanDirectory = () => {
   const { products } = useContext(ShopContext)
   const [sellers, setSellers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalSellers, setTotalSellers] = useState(null)
   const [selectedType, setSelectedType] = useState(null)
   const [artisanTypes, setArtisanTypes] = useState([])
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
@@ -32,9 +34,11 @@ const ArtisanDirectory = () => {
   const fetchSellers = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await axios.get(`${apiUrl}/api/sellers/all`)
-      const sellersData = res.data || []
-      setSellers(sellersData)
+      const res = await axios.get(`${apiUrl}/api/sellers/all`, { params: { page, limit: 24 } })
+      const body = res.data || {}
+      const sellersData = body.data || []
+      setSellers((prev) => (page === 1 ? sellersData : [...prev, ...sellersData]))
+      setTotalSellers(typeof body.total === 'number' ? body.total : (sellers.length + sellersData.length))
 
       // Include artisan types typed by sellers so they appear in customer filters.
       const dynamicTypes = Array.from(
@@ -59,12 +63,19 @@ const ArtisanDirectory = () => {
     } finally {
       setLoading(false)
     }
-  }, [apiUrl])
+  }, [apiUrl, page, sellers.length])
 
   useEffect(() => {
     fetchArtisanTypes()
     fetchSellers()
   }, [fetchArtisanTypes, fetchSellers])
+
+  const loadMore = () => setPage((p) => p + 1)
+
+  useEffect(() => {
+    if (page === 1) return
+    fetchSellers()
+  }, [page])
 
   // reveal animation for artist cards using IntersectionObserver
   const cardsObservedRef = useRef(false)
@@ -279,6 +290,11 @@ const ArtisanDirectory = () => {
                 </div>
               ))}
             </div>
+            {totalSellers !== null && sellers.length < totalSellers && (
+              <div className='flex justify-center mt-6'>
+                <button onClick={loadMore} className='px-4 py-2 bg-black text-white rounded-md'>Load more</button>
+              </div>
+            )}
           </>
         )}
       </div>

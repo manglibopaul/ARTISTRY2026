@@ -13,6 +13,8 @@ const ArtisanProfile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [productPage, setProductPage] = useState(1)
+  const PRODUCTS_PER_PAGE = 9
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
   const fetchSellerProfile = useCallback(async () => {
@@ -327,22 +329,29 @@ const ArtisanProfile = () => {
               <p className='text-gray-400 text-sm'>Try a different category filter.</p>
             </div>
           ) : (
-            <div id='products-grid' className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-8'>
-              {filteredProducts.map(product => (
-                <div key={product._id || product.id} className='group'>
-                  <span className='inline-block mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600'>
-                    {getProductCategory(product)}
-                  </span>
-                  <ProductItem
-                    id={product._id || product.id}
-                    image={product.image}
-                    name={product.name}
-                    price={product.price}
-                    sellerId={product.sellerId}
-                  />
+            <>
+              <div id='products-grid' className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-4'>
+                {filteredProducts.slice(0, productPage * PRODUCTS_PER_PAGE).map(product => (
+                  <div key={product._id || product.id} className='group'>
+                    <span className='inline-block mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600'>
+                      {getProductCategory(product)}
+                    </span>
+                    <ProductItem
+                      id={product._id || product.id}
+                      image={product.image}
+                      name={product.name}
+                      price={product.price}
+                      sellerId={product.sellerId}
+                    />
+                  </div>
+                ))}
+              </div>
+              {filteredProducts.length > productPage * PRODUCTS_PER_PAGE && (
+                <div className='flex justify-center mb-8'>
+                  <button onClick={() => setProductPage(p => p + 1)} className='px-4 py-2 bg-black text-white rounded-md'>Load more products</button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
           {/* Sidebar - Below Products on Smaller Screens */}

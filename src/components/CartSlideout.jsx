@@ -23,28 +23,38 @@ const CartSlideout = ({ isOpen, onClose }) => {
     setCartData(tempData)
   }, [cartsItems])
 
-  // Fetch all sellers once
+  // Fetch only sellers relevant to items in cart to reduce payload
   useEffect(() => {
-    const fetchSellers = async () => {
+    const fetchSellersForCart = async () => {
       try {
-        const res = await fetch(`${apiUrl}/api/sellers/all`)
-        if (res.ok) {
-          const sellerList = await res.json()
-          const sellerMap = {}
-          sellerList.forEach(seller => {
-            sellerMap[seller.id] = seller
-          })
-          setSellers(sellerMap)
-        }
+        const sellerIds = Array.from(new Set(cartData.map(item => {
+          const parts = item._id.split(':')
+          return parts.length > 1 ? parts[1] : null
+        }).filter(Boolean)))
+
+        const sellerMap = {}
+        await Promise.all(sellerIds.map(async (id) => {
+          try {
+            const res = await fetch(`${apiUrl}/api/sellers/${id}`)
+            if (res.ok) {
+              const s = await res.json()
+              sellerMap[s.id] = s
+            }
+          } catch (err) {
+            // ignore single fetch failures
+          }
+        }))
+
+        setSellers(sellerMap)
       } catch (e) {
-        console.error('Failed to fetch sellers:', e)
+        console.error('Failed to fetch sellers for cart:', e)
       }
     }
-    
-    if (isOpen) {
-      fetchSellers()
+
+    if (isOpen && cartData.length > 0) {
+      fetchSellersForCart()
     }
-  }, [isOpen, apiUrl])
+  }, [isOpen, apiUrl, cartData])
 
   const handleCheckout = () => {
     onClose()
