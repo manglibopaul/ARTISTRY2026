@@ -32,7 +32,6 @@ const Product = () => {
   const [, setIsMobileDevice] = useState(false);
   const [arError, setArError] = useState('');
   const [arInSession, setArInSession] = useState(false);
-  const [webxrAvailable, setWebxrAvailable] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
@@ -393,18 +392,6 @@ const Product = () => {
     fetchProductData();
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobileDevice(mobile);
-    // Detect if WebXR immersive-ar is available — used to avoid opening native viewers
-    try {
-      if (typeof navigator !== 'undefined' && navigator.xr && typeof navigator.xr.isSessionSupported === 'function') {
-        navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-          setWebxrAvailable(Boolean(supported));
-        }).catch(() => setWebxrAvailable(false));
-      } else {
-        setWebxrAvailable(false);
-      }
-    } catch (e) {
-      setWebxrAvailable(false);
-    }
   },[fetchProductData])
 
   useEffect(() => {
@@ -488,8 +475,6 @@ const Product = () => {
     const viewer = document.createElement('model-viewer');
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
-    // Allow Scene Viewer / Quick Look / WebXR so AR opens on all devices.
-    // Set an explicit `scale` so the model appears at the product's real-world size initially.
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     viewer.setAttribute('camera-controls', '');
     viewer.setAttribute('loading', 'eager');
@@ -502,12 +487,7 @@ const Product = () => {
     viewer.setAttribute('exposure', '1');
     viewer.setAttribute('shadow-intensity', '1');
     viewer.setAttribute('environment-image', 'neutral');
-    // Don't auto scale to fit; prefer explicit real-world scale from product metadata.
-    try { viewer.removeAttribute('scale-to-fit'); } catch (e) {}
-    const initialModelScale = (productData && (productData.modelScale || productData.scale)) ? String(productData.modelScale || productData.scale) : '1';
-    try { viewer.setAttribute('scale', initialModelScale); } catch (e) {}
-    // Disable zoom gestures by default and allow locking camera radius after model loads
-    try { viewer.setAttribute('disable-zoom', ''); } catch (e) {}
+    viewer.setAttribute('scale-to-fit', 'true');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
 
@@ -525,41 +505,21 @@ const Product = () => {
       } catch (e) {
         // ignore detection errors
       }
-      // Lock camera zoom by fixing the radius but allow full rotation by widening angle bounds
-      try {
-        if (typeof viewer.getCameraOrbit === 'function') {
-          const orbit = viewer.getCameraOrbit();
-          const radius = orbit.radius || 1;
-          const minOrbit = `-180deg -90deg ${radius.toFixed(4)}m`;
-          const maxOrbit = `180deg 90deg ${radius.toFixed(4)}m`;
-          viewer.setAttribute('min-camera-orbit', minOrbit);
-          viewer.setAttribute('max-camera-orbit', maxOrbit);
-        }
-      } catch (e) {}
     };
     const handleError = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
-    // When entering AR/VR (WebXR) enforce true scale and disable camera controls to prevent pinch-zoom
+    // When entering AR/VR (WebXR) disable camera controls to prevent pinch-zoom in real world
     const handleEnterXR = () => {
       try {
-        // Disable camera controls so user cannot zoom/rotate via gestures in AR
         viewer.removeAttribute('camera-controls');
-        // Remove scale-to-fit and apply the product's real-world scale if provided
-        try { viewer.removeAttribute('scale-to-fit'); } catch (e) {}
-        const modelScale = (productData && (productData.modelScale || productData.scale)) ? String(productData.modelScale || productData.scale) : '1';
-        viewer.setAttribute('scale', modelScale);
         setArInSession(true);
       } catch (e) {}
     };
     const handleExitXR = () => {
       try {
-        // Restore camera controls for the on-screen preview
         viewer.setAttribute('camera-controls', '');
-        // Remove explicit scale so preview will scale-to-fit again
-        try { viewer.removeAttribute('scale'); } catch (e) {}
-        try { viewer.setAttribute('scale-to-fit', 'true'); } catch (e) {}
         setArInSession(false);
       } catch (e) {}
     };
@@ -569,34 +529,12 @@ const Product = () => {
     viewer.addEventListener('exit-vr', handleExitXR);
 
     modelViewerRef.current.appendChild(viewer);
-    // Prevent pinch-zoom gestures (two-finger) on mobile while allowing single-finger rotation
-    const preventPinch = (e) => {
-      try {
-        if (e.touches && e.touches.length > 1) {
-          e.preventDefault();
-        }
-      } catch (err) {}
-    };
-    const preventGesture = (e) => {
-      try {
-        e.preventDefault();
-      } catch (err) {}
-    };
-    viewer.addEventListener('touchstart', preventPinch, { passive: false });
-    viewer.addEventListener('touchmove', preventPinch, { passive: false });
-    // iOS Safari emits gesturestart/gesturechange for pinch; block those too
-    viewer.addEventListener('gesturestart', preventGesture);
-    viewer.addEventListener('gesturechange', preventGesture);
     
     return () => {
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
-      try { viewer.removeEventListener('touchstart', preventPinch); } catch (e) {}
-      try { viewer.removeEventListener('touchmove', preventPinch); } catch (e) {}
-      try { viewer.removeEventListener('gesturestart', preventGesture); } catch (e) {}
-      try { viewer.removeEventListener('gesturechange', preventGesture); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
