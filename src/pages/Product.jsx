@@ -304,7 +304,7 @@ const Product = () => {
         if (isNumericRef) {
           response = await fetch(`${apiUrl}/api/products/${refId || ref}`)
         } else {
-          response = await fetch(`${apiUrl}/api/products/slug/${slugRef}`)
+          response = await fetch(`${apiUrl}/api/products/by-name/${ref}`)
         }
         if (response.ok) {
           const product = await response.json()
