@@ -266,85 +266,72 @@ const Product = () => {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
-        if (localSlug === slugRef) {
-          found = item
-          break
-        }
-      }
-    }
+                      <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{ transition: 'opacity .18s ease' }}>
+                        <defs>
+                          <marker id="triA" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                            <path d="M0,0 L5,2.5 L0,5 z" fill="#475569" />
+                          </marker>
+                          <marker id="triB" markerWidth="5" markerHeight="5" refX="1" refY="2.5" orient="auto">
+                            <path d="M5,0 L0,2.5 L5,5 z" fill="#475569" />
+                          </marker>
+                        </defs>
 
-    if (found) {
-      console.log('Product found in context', found)
-      if (refId == null && !/^\d+$/.test(ref)) {
-        const canonicalPath = getProductPath(found)
-        if (canonicalPath && canonicalPath !== `/product/${encodeURIComponent(ref)}`) {
-          navigate(canonicalPath, { replace: true })
-        }
-      }
-      setProductData(found)
-      if (Array.isArray(found.image) && found.image.length > 0) {
-        const imageUrl = getImageUrl(found.image[0])
-        setImage(imageUrl)
-      } else {
-        setImage('/path/to/placeholder.jpg')
-      }
-      // Fetch seller data if available
-      if (found.sellerId) {
-        fetchSellerData(found.sellerId)
-      }
-      setLoadingProduct(false)
-      // fetch reviews for this product
-      try {
-        const foundId = found._id || found.id;
-        if (foundId) {
-          const res = await fetch(`${apiUrl}/api/reviews/product/${foundId}`);
-          if (res.ok) {
-              const data = await res.json();
-              const list = data.reviews || data;
-              setReviews(list || []);
-              if (list && list.length) {
-                const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
-                setAvgRating(avg);
-              } else {
-                setAvgRating(null);
-              }
-          }
-        }
-      } catch {
-        // ignore
-      }
-      return
-    }
+                        {/* Collapsed compact chip */}
+                        {!showDimensions && (
+                          <g>
+                            <rect x="44" y="82" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.4" fontWeight="600">
+                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
+                            </text>
+                          </g>
+                        )}
 
-    // Fallback: fetch single product from backend if not present in context
-    let resolvedProductId = null
-    try {
-      const endpoint = isNumericRef
-        ? `${apiUrl}/api/products/${refId || ref}`
-        : `${apiUrl}/api/products/by-name/${encodeURIComponent(slugRef)}`
-      const res = await fetch(endpoint)
-      console.log('Fallback product fetch', res.status, res.statusText)
-      if (res.ok) {
-        const data = await res.json()
-        console.log('Fetched single product', data)
-        if (refId == null && !/^\d+$/.test(ref)) {
-          const canonicalPath = getProductPath(data)
-          if (canonicalPath && canonicalPath !== `/product/${encodeURIComponent(ref)}`) {
-            navigate(canonicalPath, { replace: true })
-          }
-        }
-        setProductData(data)
-        resolvedProductId = data?.id || data?._id || null
-        if (Array.isArray(data.image) && data.image.length > 0) setImage(getImageUrl(data.image[0]))
-        else setImage('/path/to/placeholder.jpg')
-        // Fetch seller data if available
-        if (data.sellerId) {
-          fetchSellerData(data.sellerId)
-        }
-      } else if (res.status === 404) {
-        setProductError('Product not found (404)')
-      } else {
-        setProductError(`Failed to load product: ${res.status} ${res.statusText}`)
+                        {/* New blueprint-style dimensions */}
+                        {showDimensions && (
+                          <g>
+                            {/* Left: Height */}
+                            {productData?.height && (
+                              <>
+                                <circle cx="16" cy="14" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="16" cy="86" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="16" y1="14" x2="16" y2="86" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <line x1="16" y1="30" x2="28" y2="30" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
+                                <rect x="10" y="43" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="16" y="46" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
+                                  {productData.height} cm
+                                </text>
+                              </>
+                            )}
+
+                            {/* Bottom: Width */}
+                            {productData?.width && (
+                              <>
+                                <circle cx="24" cy="94" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="76" cy="94" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="24" y1="94" x2="76" y2="94" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <line x1="40" y1="84" x2="40" y2="76" stroke="#94a3b8" strokeWidth="0.5" strokeDasharray="1.5" strokeOpacity="0.25" />
+                                <rect x="44" y="96" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="50" y="98" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.4" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
+                                  {productData.width} cm
+                                </text>
+                              </>
+                            )}
+
+                            {/* Top-right: Depth */}
+                            {productData?.depth && (
+                              <>
+                                <circle cx="70" cy="18" r="1.2" fill="#475569" opacity="0.9" />
+                                <circle cx="90" cy="18" r="1.2" fill="#475569" opacity="0.9" />
+                                <line x1="70" y1="18" x2="90" y2="18" stroke="#475569" strokeWidth="0.9" strokeLinecap="butt" strokeOpacity="0.9" />
+                                <rect x="74" y="12" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                                <text x="80" y="14.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3" fontWeight="600" style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace' }}>
+                                  {productData.depth} cm
+                                </text>
+                              </>
+                            )}
+                          </g>
+                        )}
+                      </svg>
       }
     } catch (e) {
       console.error('Failed to fetch single product fallback', e)
