@@ -300,12 +300,7 @@ const Product = () => {
     } else {
       // Product not found in context, try API fallback
       try {
-        let response
-        if (isNumericRef) {
-          response = await fetch(`${apiUrl}/api/products/${refId || ref}`)
-        } else {
-          response = await fetch(`${apiUrl}/api/products/by-name/${ref}`)
-        }
+        const response = await fetch(`${apiUrl}/api/products/by-name/${encodeURIComponent(ref)}`)
         if (response.ok) {
           const product = await response.json()
           setProductData(product)
