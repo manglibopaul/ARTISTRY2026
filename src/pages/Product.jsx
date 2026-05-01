@@ -510,16 +510,25 @@ const Product = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
-    // When entering AR/VR (WebXR) disable camera controls to prevent pinch-zoom in real world
+    // When entering AR/VR (WebXR) enforce true scale and disable camera controls to prevent pinch-zoom
     const handleEnterXR = () => {
       try {
+        // Disable camera controls so user cannot zoom/rotate via gestures in AR
         viewer.removeAttribute('camera-controls');
+        // Remove scale-to-fit and apply the product's real-world scale if provided
+        try { viewer.removeAttribute('scale-to-fit'); } catch (e) {}
+        const modelScale = (productData && (productData.modelScale || productData.scale)) ? String(productData.modelScale || productData.scale) : '1';
+        viewer.setAttribute('scale', modelScale);
         setArInSession(true);
       } catch (e) {}
     };
     const handleExitXR = () => {
       try {
+        // Restore camera controls for the on-screen preview
         viewer.setAttribute('camera-controls', '');
+        // Remove explicit scale so preview will scale-to-fit again
+        try { viewer.removeAttribute('scale'); } catch (e) {}
+        try { viewer.setAttribute('scale-to-fit', 'true'); } catch (e) {}
         setArInSession(false);
       } catch (e) {}
     };
