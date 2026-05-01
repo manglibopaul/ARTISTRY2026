@@ -917,40 +917,46 @@ const Product = () => {
                     <div className="absolute inset-0 pointer-events-none">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100">
                         <defs>
-                          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#3b82f6" />
+                          <marker id="mA" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <path d="M0,0 L6,3 L0,6 z" fill="#2563eb" />
                           </marker>
-                          <marker id="arrowhead-rev" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
-                            <polygon points="10 0, 0 3, 10 6" fill="#3b82f6" />
+                          <marker id="mB" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
+                            <path d="M6,0 L0,3 L6,6 z" fill="#2563eb" />
                           </marker>
                         </defs>
-                        
-                        {/* Height dimension - left */}
+
+                        {/* Height (left) - thin line with small arrowheads and compact label */}
                         {productData?.height && (
                           <>
-                            <line x1="5" y1="10" x2="5" y2="85" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="-2" y="50" textAnchor="end" dominantBaseline="middle" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
-                              Height: {productData.height} cm
+                            <line x1="6" y1="10" x2="6" y2="84" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
+                            <line x1="6" y1="50" x2="14" y2="50" stroke="#2563eb" strokeWidth="0.9" />
+                            <rect x="-11" y="46" width="14" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
+                            <text x="-4" y="50" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                              {productData.height} cm
                             </text>
                           </>
                         )}
-                        
-                        {/* Width dimension - bottom */}
+
+                        {/* Width (bottom) - centered compact label */}
                         {productData?.width && (
                           <>
-                            <line x1="15" y1="92" x2="85" y2="92" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="50" y="98" textAnchor="middle" dominantBaseline="hanging" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
-                              Width: {productData.width} cm
+                            <line x1="18" y1="90" x2="82" y2="90" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
+                            <line x1="50" y1="90" x2="50" y2="82" stroke="#2563eb" strokeWidth="0.9" />
+                            <rect x="42" y="76" width="16" height="8" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
+                            <text x="50" y="80" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                              {productData.width} cm
                             </text>
                           </>
                         )}
-                        
-                        {/* Depth dimension - top right */}
+
+                        {/* Depth (top-right) - small horizontal arrow with label above */}
                         {productData?.depth && (
                           <>
-                            <line x1="75" y1="10" x2="95" y2="10" stroke="#3b82f6" strokeWidth="1.5" markerStart="url(#arrowhead-rev)" markerEnd="url(#arrowhead)" />
-                            <text x="85" y="5" textAnchor="middle" dominantBaseline="auto" fill="#3b82f6" fontSize="2.5" fontWeight="500" className="select-none pointer-events-none">
-                              Depth: {productData.depth} cm
+                            <line x1="76" y1="12" x2="92" y2="12" stroke="#2563eb" strokeWidth="0.9" markerStart="url(#mB)" markerEnd="url(#mA)" />
+                            <line x1="84" y1="12" x2="84" y2="6" stroke="#2563eb" strokeWidth="0.9" />
+                            <rect x="74" y="0.8" width="18" height="6" rx="1.2" fill="#ffffff" stroke="#2563eb" strokeWidth="0.6" />
+                            <text x="83" y="4" textAnchor="middle" dominantBaseline="middle" fill="#2563eb" fontSize="3" fontWeight="600" className="select-none">
+                              {productData.depth} cm
                             </text>
                           </>
                         )}
