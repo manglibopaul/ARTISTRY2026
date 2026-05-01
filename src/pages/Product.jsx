@@ -266,9 +266,11 @@ const Product = () => {
           .replace(/\s+/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, '')
-    } catch (e) {
-      console.error('Failed to fetch single product fallback', e)
-      setProductError(e.message || 'Network error')
+        if (localSlug === slugRef) {
+          found = item
+          break
+        }
+      }
     }
 
     setLoadingProduct(false)
