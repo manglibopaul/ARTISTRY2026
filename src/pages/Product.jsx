@@ -916,22 +916,14 @@ const Product = () => {
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100">
-                        <defs>
-                          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#f59e0b" />
-                          </marker>
-                          <marker id="arrowhead-left" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
-                            <polygon points="10 0, 0 3, 10 6" fill="#f59e0b" />
-                          </marker>
-                        </defs>
-                        
                         {/* Width dimension - bottom */}
                         {productData?.width && (
                           <>
-                            <line x1="15" y1="88" x2="85" y2="88" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="15" y1="85" x2="15" y2="91" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="85" y1="85" x2="85" y2="91" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="50" y="98" textAnchor="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
+                            <line x1="20" y1="92" x2="80" y2="92" stroke="#3b82f6" strokeWidth="1.5" />
+                            <circle cx="20" cy="92" r="1.5" fill="#3b82f6" />
+                            <circle cx="80" cy="92" r="1.5" fill="#3b82f6" />
+                            <rect x="40" y="82" width="20" height="8" fill="white" stroke="#3b82f6" strokeWidth="1" rx="2" />
+                            <text x="50" y="87" textAnchor="middle" dominantBaseline="middle" fill="#3b82f6" fontSize="4" fontWeight="bold" className="select-none">
                               {productData.width}cm
                             </text>
                           </>
@@ -940,10 +932,11 @@ const Product = () => {
                         {/* Height dimension - left */}
                         {productData?.height && (
                           <>
-                            <line x1="5" y1="15" x2="5" y2="85" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="2" y1="15" x2="8" y2="15" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="2" y1="85" x2="8" y2="85" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="2" y="52" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
+                            <line x1="8" y1="15" x2="8" y2="85" stroke="#3b82f6" strokeWidth="1.5" />
+                            <circle cx="8" cy="15" r="1.5" fill="#3b82f6" />
+                            <circle cx="8" cy="85" r="1.5" fill="#3b82f6" />
+                            <rect x="-5" y="48" width="16" height="8" fill="white" stroke="#3b82f6" strokeWidth="1" rx="2" />
+                            <text x="3" y="52" textAnchor="middle" dominantBaseline="middle" fill="#3b82f6" fontSize="4" fontWeight="bold" className="select-none">
                               {productData.height}cm
                             </text>
                           </>
@@ -952,10 +945,11 @@ const Product = () => {
                         {/* Depth dimension - top right */}
                         {productData?.depth && (
                           <>
-                            <line x1="78" y1="15" x2="95" y2="15" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="78" y1="12" x2="78" y2="18" stroke="#f59e0b" strokeWidth="2" />
-                            <line x1="95" y1="12" x2="95" y2="18" stroke="#f59e0b" strokeWidth="2" />
-                            <text x="86" y="10" textAnchor="middle" fill="#d97706" fontSize="5" fontWeight="bold" className="select-none">
+                            <line x1="78" y1="12" x2="92" y2="12" stroke="#3b82f6" strokeWidth="1.5" />
+                            <circle cx="78" cy="12" r="1.5" fill="#3b82f6" />
+                            <circle cx="92" cy="12" r="1.5" fill="#3b82f6" />
+                            <rect x="75" y="2" width="16" height="8" fill="white" stroke="#3b82f6" strokeWidth="1" rx="2" />
+                            <text x="83" y="6" textAnchor="middle" dominantBaseline="middle" fill="#3b82f6" fontSize="4" fontWeight="bold" className="select-none">
                               {productData.depth}cm
                             </text>
                           </>
