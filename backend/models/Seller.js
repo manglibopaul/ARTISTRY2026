@@ -69,11 +69,6 @@ const Seller = sequelize.define('Seller', {
     defaultValue: [],
     comment: 'Array of portfolio/gallery image URLs',
   },
-  socialLinks: {
-    type: DataTypes.JSON,
-    defaultValue: {},
-    comment: 'Object of social/profile links, e.g. { website, instagram, facebook, tiktok }',
-  },
   pickupLocations: {
     type: DataTypes.JSON,
     defaultValue: [],

@@ -175,38 +175,6 @@ const ArtisanProfile = () => {
                 {seller.phone && (
                   <p className='text-gray-700'>📞 {seller.phone}</p>
                 )}
-                {(seller.socialLinks && (seller.socialLinks.website || seller.socialLinks.instagram || seller.socialLinks.facebook || seller.socialLinks.tiktok)) && (
-                  <div className='mt-3 flex items-center gap-3'>
-                    {seller.socialLinks.website && (
-                      <a href={seller.socialLinks.website} target='_blank' rel='noopener noreferrer' aria-label='Website' className='w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
-                        <svg className='w-4 h-4 text-gray-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 12a9 9 0 1118 0 9 9 0 01-18 0zm9-4v8m4-4H8' />
-                        </svg>
-                      </a>
-                    )}
-                    {seller.socialLinks.instagram && (
-                      <a href={seller.socialLinks.instagram} target='_blank' rel='noopener noreferrer' aria-label='Instagram' className='w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
-                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
-                          <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z' />
-                        </svg>
-                      </a>
-                    )}
-                    {seller.socialLinks.facebook && (
-                      <a href={seller.socialLinks.facebook} target='_blank' rel='noopener noreferrer' aria-label='Facebook' className='w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
-                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
-                          <path d='M22 12.07C22 6.44 17.52 2 12 2S2 6.44 2 12.07c0 4.78 3.44 8.74 7.93 9.67v-6.83H7.1v-2.84h2.83V9.41c0-2.8 1.66-4.34 4.2-4.34 1.22 0 2.5.22 2.5.22v2.75h-1.41c-1.39 0-1.82.86-1.82 1.74v2.09h3.1l-.5 2.84h-2.6v6.83C18.56 20.81 22 16.85 22 12.07z' />
-                        </svg>
-                      </a>
-                    )}
-                    {seller.socialLinks.tiktok && (
-                      <a href={seller.socialLinks.tiktok} target='_blank' rel='noopener noreferrer' aria-label='TikTok' className='w-9 h-9 flex items-center justify-center rounded-full bg-white border shadow-sm hover:shadow-md'>
-                        <svg className='w-4 h-4 text-gray-700' fill='currentColor' viewBox='0 0 24 24'>
-                          <path d='M9 8a3 3 0 003 3h1v5a3 3 0 11-3-3H9V8z' />
-                        </svg>
-                      </a>
-                    )}
-                  </div>
-                )}
                 {pickupLocations.length > 0 && (
                   <div className='mt-3 pt-3 border-t border-gray-200'>
                     <p className='font-bold text-gray-900 text-xs uppercase tracking-wide mb-1'>Pickup Locations</p>

@@ -24,10 +24,6 @@ const SellerProfile = () => {
     bio: '',
     expertise: [],
     pickupLocations: [],
-    website: '',
-    instagram: '',
-    facebook: '',
-    tiktok: '',
   })
   const [newPickupLocation, setNewPickupLocation] = useState('')
   const [pickupLocationPhotos, setPickupLocationPhotos] = useState({})
@@ -86,10 +82,6 @@ const SellerProfile = () => {
         bio: response.data?.bio || '',
         expertise: Array.isArray(response.data?.expertise) ? response.data.expertise : [],
         pickupLocations: Array.isArray(response.data?.pickupLocations) ? response.data.pickupLocations : [],
-        website: response.data?.socialLinks?.website || '',
-        instagram: response.data?.socialLinks?.instagram || '',
-        facebook: response.data?.socialLinks?.facebook || '',
-        tiktok: response.data?.socialLinks?.tiktok || '',
       })
       setAvatarPreview(normalizeAvatarUrl(response.data?.avatar))
     } catch (error) {
@@ -328,12 +320,6 @@ const SellerProfile = () => {
         bio: formData.bio.trim(),
         expertise: formData.expertise,
         pickupLocations: formData.pickupLocations,
-        socialLinks: {
-          website: String(formData.website || '').trim(),
-          instagram: String(formData.instagram || '').trim(),
-          facebook: String(formData.facebook || '').trim(),
-          tiktok: String(formData.tiktok || '').trim(),
-        },
         pickupLocationPhotos: pickupLocationPhotos,
       }
       const res = await axios.put(`${apiUrl}/api/sellers/profile`, payload, {
@@ -641,36 +627,6 @@ const SellerProfile = () => {
               <p className='text-gray-700 mt-1 leading-relaxed'>
                 {seller?.bio || 'No bio yet'}
               </p>
-            )}
-          </div>
-
-          <div>
-            <label className='text-sm font-medium text-gray-600'>Social Links</label>
-            {isEditing ? (
-              <div className='mt-2 grid grid-cols-1 gap-3'>
-                <input name='website' value={safeFormData.website} onChange={handleInputChange} placeholder='Website (https://...)' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
-                <input name='instagram' value={safeFormData.instagram} onChange={handleInputChange} placeholder='Instagram handle or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
-                <input name='facebook' value={safeFormData.facebook} onChange={handleInputChange} placeholder='Facebook page or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
-                <input name='tiktok' value={safeFormData.tiktok} onChange={handleInputChange} placeholder='TikTok handle or URL' className='w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-black text-sm' />
-              </div>
-            ) : (
-              <div className='mt-2 flex flex-wrap gap-3'>
-                {seller?.socialLinks?.website && (
-                  <a href={seller.socialLinks.website} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline'>Website</a>
-                )}
-                {seller?.socialLinks?.instagram && (
-                  <a href={seller.socialLinks.instagram} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline'>Instagram</a>
-                )}
-                {seller?.socialLinks?.facebook && (
-                  <a href={seller.socialLinks.facebook} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline'>Facebook</a>
-                )}
-                {seller?.socialLinks?.tiktok && (
-                  <a href={seller.socialLinks.tiktok} target='_blank' rel='noopener noreferrer' className='text-sm text-gray-700 hover:underline'>TikTok</a>
-                )}
-                {!seller?.socialLinks && (
-                  <p className='text-sm text-gray-500'>No social links provided.</p>
-                )}
-              </div>
             )}
           </div>
 
