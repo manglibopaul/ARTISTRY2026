@@ -551,12 +551,34 @@ const Product = () => {
     viewer.addEventListener('exit-vr', handleExitXR);
 
     modelViewerRef.current.appendChild(viewer);
+    // Prevent pinch-zoom gestures (two-finger) on mobile while allowing single-finger rotation
+    const preventPinch = (e) => {
+      try {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+        }
+      } catch (err) {}
+    };
+    const preventGesture = (e) => {
+      try {
+        e.preventDefault();
+      } catch (err) {}
+    };
+    viewer.addEventListener('touchstart', preventPinch, { passive: false });
+    viewer.addEventListener('touchmove', preventPinch, { passive: false });
+    // iOS Safari emits gesturestart/gesturechange for pinch; block those too
+    viewer.addEventListener('gesturestart', preventGesture);
+    viewer.addEventListener('gesturechange', preventGesture);
     
     return () => {
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
+      try { viewer.removeEventListener('touchstart', preventPinch); } catch (e) {}
+      try { viewer.removeEventListener('touchmove', preventPinch); } catch (e) {}
+      try { viewer.removeEventListener('gesturestart', preventGesture); } catch (e) {}
+      try { viewer.removeEventListener('gesturechange', preventGesture); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
