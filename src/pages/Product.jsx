@@ -916,14 +916,23 @@ const Product = () => {
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
                     <div className="absolute inset-0 pointer-events-none">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100">
+                        <defs>
+                          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#f59e0b" />
+                          </marker>
+                          <marker id="arrowhead-left" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto">
+                            <polygon points="10 0, 0 3, 10 6" fill="#f59e0b" />
+                          </marker>
+                        </defs>
+                        
                         {/* Width dimension - bottom */}
                         {productData?.width && (
                           <>
-                            <line x1="10" y1="85" x2="90" y2="85" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-                            <circle cx="10" cy="85" r="3" fill="#f59e0b" />
-                            <circle cx="90" cy="85" r="3" fill="#f59e0b" />
-                            <text x="50" y="95" textAnchor="middle" dominantBaseline="hanging" fill="#d97706" fontSize="12" fontWeight="bold" className="select-none">
-                              W: {productData.width} cm
+                            <line x1="15" y1="88" x2="85" y2="88" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="15" y1="85" x2="15" y2="91" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="85" y1="85" x2="85" y2="91" stroke="#f59e0b" strokeWidth="2" />
+                            <text x="50" y="98" textAnchor="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                              {productData.width}cm
                             </text>
                           </>
                         )}
@@ -931,11 +940,11 @@ const Product = () => {
                         {/* Height dimension - left */}
                         {productData?.height && (
                           <>
-                            <line x1="8" y1="10" x2="8" y2="80" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-                            <circle cx="8" cy="10" r="3" fill="#f59e0b" />
-                            <circle cx="8" cy="80" r="3" fill="#f59e0b" />
-                            <text x="3" y="45" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="12" fontWeight="bold" className="select-none">
-                              H: {productData.height} cm
+                            <line x1="5" y1="15" x2="5" y2="85" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="2" y1="15" x2="8" y2="15" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="2" y1="85" x2="8" y2="85" stroke="#f59e0b" strokeWidth="2" />
+                            <text x="2" y="52" textAnchor="end" dominantBaseline="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                              {productData.height}cm
                             </text>
                           </>
                         )}
@@ -943,11 +952,11 @@ const Product = () => {
                         {/* Depth dimension - top right */}
                         {productData?.depth && (
                           <>
-                            <line x1="80" y1="10" x2="95" y2="10" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-                            <circle cx="80" cy="10" r="3" fill="#f59e0b" />
-                            <circle cx="95" cy="10" r="3" fill="#f59e0b" />
-                            <text x="87.5" y="5" textAnchor="middle" dominantBaseline="auto" fill="#d97706" fontSize="12" fontWeight="bold" className="select-none">
-                              D: {productData.depth} cm
+                            <line x1="78" y1="15" x2="95" y2="15" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="78" y1="12" x2="78" y2="18" stroke="#f59e0b" strokeWidth="2" />
+                            <line x1="95" y1="12" x2="95" y2="18" stroke="#f59e0b" strokeWidth="2" />
+                            <text x="86" y="10" textAnchor="middle" fill="#d97706" fontSize="10" fontWeight="bold" className="select-none">
+                              {productData.depth}cm
                             </text>
                           </>
                         )}
