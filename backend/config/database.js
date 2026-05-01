@@ -179,6 +179,29 @@ const ensureSellersPickupMapsColumn = async () => {
   }
 };
 
+const ensureProductsDimensionsColumns = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Products');
+  if (!table.width) {
+    await qi.addColumn('Products', 'width', {
+      type: Sequelize.FLOAT,
+      allowNull: true,
+    });
+  }
+  if (!table.height) {
+    await qi.addColumn('Products', 'height', {
+      type: Sequelize.FLOAT,
+      allowNull: true,
+    });
+  }
+  if (!table.depth) {
+    await qi.addColumn('Products', 'depth', {
+      type: Sequelize.FLOAT,
+      allowNull: true,
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -192,6 +215,7 @@ const connectDB = async () => {
     await ensureProductsColorColumns();
     await ensureOrdersCompletedAtColumn();
     await ensureSellersPaymentSettingsColumn();
+    await ensureProductsDimensionsColumns();
     // pickupMaps support removed; no runtime schema-ensure needed
     console.log('✅ Database synchronized successfully');
 

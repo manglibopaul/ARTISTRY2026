@@ -902,6 +902,18 @@ const Product = () => {
 
             <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">View in Augmented Reality</h2>
 
+            {/* Display product dimensions */}
+            {(productData?.width || productData?.height || productData?.depth) && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div className="text-xs font-semibold text-gray-700 mb-2">Product Dimensions</div>
+                <div className="flex flex-wrap gap-3 justify-center text-sm">
+                  {productData?.width && <div className="flex items-center gap-1"><span className="text-gray-600">W:</span><span className="font-medium">{productData.width} cm</span></div>}
+                  {productData?.height && <div className="flex items-center gap-1"><span className="text-gray-600">H:</span><span className="font-medium">{productData.height} cm</span></div>}
+                  {productData?.depth && <div className="flex items-center gap-1"><span className="text-gray-600">D:</span><span className="font-medium">{productData.depth} cm</span></div>}
+                </div>
+              </div>
+            )}
+
             {!productData.modelUrl ? (
               <div className="p-8 text-center">
                 <p className="text-gray-600 text-base">📦 No 3D model available for this product</p>
