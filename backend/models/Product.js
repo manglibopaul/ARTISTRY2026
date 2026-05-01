@@ -86,6 +86,21 @@ const Product = sequelize.define('Product', {
     allowNull: true,
     comment: 'e.g., Crochet, Woodwork, Painting, Jewelry, Weaving, Pottery',
   },
+  width: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Width in centimeters',
+  },
+  height: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Height in centimeters',
+  },
+  depth: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Depth in centimeters',
+  },
 
 }, {
   timestamps: true,
