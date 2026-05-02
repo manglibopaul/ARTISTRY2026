@@ -925,58 +925,113 @@ const Product = () => {
                     {showDimensions ? 'Hide' : 'Show'}
                   </button>
                   
-                  {/* Dimension overlays on model */}
+                  {/* Dimension overlays on model - realistic technical drawing style */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="absolute inset-0 pointer-events-none">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{ transition: 'opacity .18s ease' }}>
-                        {/* Clean minimal badges - no arrows */}
-                        
-                        {/* Height badge (left side) */}
-                        {productData?.height && (
+                        <defs>
+                          <style>{`
+                            .dim-line { stroke: #1e293b; stroke-width: 0.8; stroke-dasharray: none; }
+                            .dim-arrow { fill: #1e293b; }
+                            .dim-text { font-family: 'Segoe UI', sans-serif; fill: #0f172a; font-weight: 700; }
+                            .dim-unit { font-family: 'Segoe UI', sans-serif; fill: #475569; font-weight: 500; }
+                            .dim-badge { fill: #ffffff; stroke: #1e293b; stroke-width: 1; }
+                          `}</style>
+                        </defs>
+
+                        {!showDimensions ? (
+                          /* Compact summary view */
                           <g>
-                            <rect x="2" y="35" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
-                            <text x="10" y="40.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
-                              {productData.height}
+                            {/* Summary badge bottom center */}
+                            <rect x="25" y="80" width="50" height="12" rx="6" className="dim-badge" opacity="0.98" />
+                            <text x="50" y="84" textAnchor="middle" dominantBaseline="middle" className="dim-text" fontSize="4.5" letterSpacing="0.2">
+                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))}
                             </text>
-                            <text x="10" y="44" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
+                            <text x="50" y="88.5" textAnchor="middle" className="dim-unit" fontSize="2.2">
                               cm
                             </text>
                           </g>
-                        )}
-                        
-                        {/* Width badge (bottom center) */}
-                        {productData?.width && (
+                        ) : (
+                          /* Detailed technical drawing view */
                           <g>
-                            <rect x="42" y="88" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
-                            <text x="50" y="93.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
-                              {productData.width}
-                            </text>
-                            <text x="50" y="97" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
-                              cm
-                            </text>
-                          </g>
-                        )}
-                        
-                        {/* Depth badge (top right) */}
-                        {productData?.depth && (
-                          <g>
-                            <rect x="82" y="6" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
-                            <text x="90" y="11.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
-                              {productData.depth}
-                            </text>
-                            <text x="90" y="15" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
-                              cm
-                            </text>
-                          </g>
-                        )}
-                        
-                        {/* Compact summary when not showing detailed view */}
-                        {!showDimensions && (
-                          <g>
-                            <rect x="30" y="82" width="40" height="10" rx="5" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
-                            <text x="50" y="88.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.5" fontWeight="700" letterSpacing="0.3">
-                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
-                            </text>
+                            {/* HEIGHT - Left vertical dimension */}
+                            {productData?.height && (
+                              <g>
+                                {/* Left extension line from model */}
+                                <line x1="8" y1="15" x2="8" y2="85" className="dim-line" strokeDasharray="2,2" opacity="0.6" />
+                                {/* Dimension line with markers */}
+                                <line x1="3" y1="15" x2="3" y2="85" className="dim-line" />
+                                {/* Top arrow */}
+                                <polygon points="3,15 1,19 5,19" className="dim-arrow" />
+                                {/* Bottom arrow */}
+                                <polygon points="3,85 1,81 5,81" className="dim-arrow" />
+                                {/* Dimension text box */}
+                                <g>
+                                  <rect x="-12" y="45" width="18" height="10" rx="4" className="dim-badge" opacity="0.97" />
+                                  <text x="-3" y="49" textAnchor="middle" dominantBaseline="middle" className="dim-text" fontSize="5.5">
+                                    {productData.height}
+                                  </text>
+                                  <text x="-3" y="53.5" textAnchor="middle" className="dim-unit" fontSize="2">
+                                    cm
+                                  </text>
+                                </g>
+                                {/* Leader line */}
+                                <line x1="3" y1="50" x2="-6" y2="50" className="dim-line" strokeDasharray="1.5,1.5" opacity="0.4" />
+                              </g>
+                            )}
+
+                            {/* WIDTH - Bottom horizontal dimension */}
+                            {productData?.width && (
+                              <g>
+                                {/* Bottom extension line from model */}
+                                <line x1="15" y1="92" x2="85" y2="92" className="dim-line" strokeDasharray="2,2" opacity="0.6" />
+                                {/* Dimension line with markers */}
+                                <line x1="15" y1="97" x2="85" y2="97" className="dim-line" />
+                                {/* Left arrow */}
+                                <polygon points="15,97 19,95 19,99" className="dim-arrow" />
+                                {/* Right arrow */}
+                                <polygon points="85,97 81,95 81,99" className="dim-arrow" />
+                                {/* Dimension text box */}
+                                <g>
+                                  <rect x="35" y="101" width="30" height="10" rx="4" className="dim-badge" opacity="0.97" />
+                                  <text x="50" y="105" textAnchor="middle" dominantBaseline="middle" className="dim-text" fontSize="5.5">
+                                    {productData.width}
+                                  </text>
+                                  <text x="50" y="109.5" textAnchor="middle" className="dim-unit" fontSize="2">
+                                    cm
+                                  </text>
+                                </g>
+                                {/* Leader line */}
+                                <line x1="50" y1="97" x2="50" y2="101" className="dim-line" strokeDasharray="1.5,1.5" opacity="0.4" />
+                              </g>
+                            )}
+
+                            {/* DEPTH - Top right diagonal dimension */}
+                            {productData?.depth && (
+                              <g>
+                                {/* Extension lines */}
+                                <line x1="75" y1="10" x2="90" y2="10" className="dim-line" strokeDasharray="2,2" opacity="0.6" />
+                                <line x1="75" y1="25" x2="90" y2="25" className="dim-line" strokeDasharray="2,2" opacity="0.6" />
+                                {/* Dimension line with markers */}
+                                <line x1="75" y1="8" x2="90" y2="8" className="dim-line" />
+                                {/* Left arrow */}
+                                <polygon points="75,8 78,6 78,10" className="dim-arrow" />
+                                {/* Right arrow */}
+                                <polygon points="90,8 87,6 87,10" className="dim-arrow" />
+                                {/* Dimension text box */}
+                                <g>
+                                  <rect x="75" y="0" width="22" height="10" rx="4" className="dim-badge" opacity="0.97" />
+                                  <text x="86" y="4" textAnchor="middle" dominantBaseline="middle" className="dim-text" fontSize="5.5">
+                                    {productData.depth}
+                                  </text>
+                                  <text x="86" y="8.5" textAnchor="middle" className="dim-unit" fontSize="2">
+                                    cm
+                                  </text>
+                                </g>
+                                {/* Leader line */}
+                                <line x1="86" y1="8" x2="86" y2="10" className="dim-line" strokeDasharray="1.5,1.5" opacity="0.4" />
+                              </g>
+                            )}
                           </g>
                         )}
                       </svg>
