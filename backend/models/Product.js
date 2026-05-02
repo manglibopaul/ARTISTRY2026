@@ -101,6 +101,31 @@ const Product = sequelize.define('Product', {
     allowNull: true,
     comment: 'Depth in centimeters',
   },
+  volume: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Calculated volume in cm³',
+  },
+  sizeCategory: {
+    type: DataTypes.ENUM('Tiny', 'Small', 'Medium', 'Large', 'Extra Large'),
+    allowNull: true,
+    comment: 'Size classification based on volume',
+  },
+  arMetadata: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      modelFormat: 'glb',
+      hasTextures: false,
+      hasAnimations: false,
+      optimized: false,
+    },
+    comment: 'AR model metadata (format, features, optimization status)',
+  },
+  boundingBox: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: 'Bounding box dimensions for collision detection',
+  },
 
 }, {
   timestamps: true,
