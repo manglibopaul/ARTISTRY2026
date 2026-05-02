@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import PropTypes from 'prop-types'
 
 /**
  * ARModelViewer Component
@@ -224,17 +223,6 @@ const ARModelViewer = ({ product, autoRotate = true }) => {
       )}
     </div>
   )
-}
-
-ARModelViewer.propTypes = {
-  product: PropTypes.shape({
-    width: PropTypes.number,
-    height: PropTypes.number,
-    depth: PropTypes.number,
-    modelUrl: PropTypes.string,
-    iosModel: PropTypes.string,
-  }).isRequired,
-  autoRotate: PropTypes.bool,
 }
 
 export default ARModelViewer

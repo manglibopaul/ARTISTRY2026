@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 /**
  * ARDimensions Component
@@ -159,17 +158,6 @@ const ARDimensions = ({ product, displayUnit = 'cm' }) => {
       )}
     </div>
   )
-}
-
-ARDimensions.propTypes = {
-  product: PropTypes.shape({
-    width: PropTypes.number,
-    height: PropTypes.number,
-    depth: PropTypes.number,
-    artisanType: PropTypes.string,
-    modelUrl: PropTypes.string,
-  }).isRequired,
-  displayUnit: PropTypes.oneOf(['cm', 'in']),
 }
 
 export default ARDimensions
