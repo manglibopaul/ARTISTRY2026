@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useState, useRef, useMemo } from 'react'
 // Simple iOS detection
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 import { useParams, useNavigate } from 'react-router-dom'
@@ -45,7 +45,7 @@ const Product = () => {
   const reviewsRef = useRef(null);
   const [reviewsInView, setReviewsInView] = useState(true);
 
-  const normalizeToHex = (color) => {
+  const normalizeToHex = useCallback((color) => {
     if (!color || typeof window === 'undefined') return null;
     try {
       const ctx = document.createElement('canvas').getContext('2d');
@@ -60,7 +60,7 @@ const Product = () => {
     } catch (e) {
       return null;
     }
-  };
+  }, []);
 
   const detectModelParts = (viewer) => {
     try {
@@ -178,16 +178,16 @@ const Product = () => {
   };
 
 
-  const getAvailableColors = (product) => {
+  const getAvailableColors = useCallback((product) => {
     if (!product || !product.colors) return [];
     if (Array.isArray(product.colors)) return product.colors.filter(Boolean);
     if (typeof product.colors === 'string') {
       return product.colors.split(',').map(c => c.trim()).filter(Boolean);
     }
     return [];
-  };
+  }, []);
 
-  const getAvailableSizes = (product) => {
+  const getAvailableSizes = useCallback((product) => {
     if (!product) return [];
     if (Array.isArray(product.sizes)) return product.sizes.filter(Boolean);
     if (typeof product.sizes === 'string') {
@@ -197,7 +197,7 @@ const Product = () => {
       return [product.size.trim()];
     }
     return [];
-  };
+  }, []);
 
   const getImageUrl = useCallback((img) => {
     if (!img) return '/path/to/placeholder.jpg';
@@ -235,13 +235,23 @@ const Product = () => {
     }
   }, [apiUrl])
 
+  const normalizeSlug = useCallback((name) => {
+    return String(name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  }, []);
+
   const fetchProductData = useCallback(async () => {
     setLoadingProduct(true)
     setProductError('')
     const ref = String(productRef || '').trim()
     const idSuffixMatch = ref.match(/-p(\d+)$/i)
     const refId = idSuffixMatch ? idSuffixMatch[1] : null
-    const slugRef = (idSuffixMatch ? ref.replace(/-p\d+$/i, '') : ref).toLowerCase()
+    const slugRef = normalizeSlug(idSuffixMatch ? ref.replace(/-p\d+$/i, '') : ref)
     const isNumericRef = /^\d+$/.test(ref) || Boolean(refId)
 
     if (!ref) {
@@ -259,13 +269,7 @@ const Product = () => {
         break
       }
       if (!isNumericRef) {
-        const localSlug = String(item?.name || '')
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
+        const localSlug = normalizeSlug(item?.name)
         if (localSlug === slugRef) {
           found = item
           break
@@ -275,27 +279,44 @@ const Product = () => {
 
     if (found) {
       setProductData(found)
-      if (found.sellerId) fetchSellerData(found.sellerId)
       setLoadingProduct(false)
-      // fetch reviews for this product
-      try {
-        const pId = found._id || found.id
-        if (pId) {
-          const res = await fetch(`${apiUrl}/api/reviews/product/${pId}`);
-          if (res.ok) {
-            const data = await res.json();
-            const list = data.reviews || data;
-            setReviews(list || []);
-            if (list && list.length) {
-              const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1);
-              setAvgRating(avg);
-            } else {
-              setAvgRating(null);
-            }
-          }
-        }
-      } catch {
-        // ignore
+      
+      // Parallelize all async operations instead of sequential fetches
+      const pId = found._id || found.id
+      const promises = []
+      
+      if (found.sellerId) {
+        promises.push(
+          fetch(`${apiUrl}/api/sellers/${found.sellerId}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(seller => seller && setSellerData(seller))
+            .catch(() => {})
+        )
+      }
+      
+      if (pId) {
+        promises.push(
+          fetch(`${apiUrl}/api/reviews/product/${pId}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+              if (data) {
+                const list = data.reviews || data
+                setReviews(list || [])
+                if (list && list.length) {
+                  const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
+                  setAvgRating(avg)
+                } else {
+                  setAvgRating(null)
+                }
+              }
+            })
+            .catch(() => {})
+        )
+      }
+      
+      // Fire all requests in parallel
+      if (promises.length > 0) {
+        Promise.all(promises).catch(() => {})
       }
     } else {
       // Product not found in context, try API fallback
@@ -304,31 +325,53 @@ const Product = () => {
         if (response.ok) {
           const product = await response.json()
           setProductData(product)
-          if (product.sellerId) fetchSellerData(product.sellerId)
-          // fetch reviews for this product
+          setLoadingProduct(false)
+          
+          // Parallelize seller and reviews fetches
           const pId = product._id || product.id
+          const fallbackPromises = []
+          
+          if (product.sellerId) {
+            fallbackPromises.push(
+              fetch(`${apiUrl}/api/sellers/${product.sellerId}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(seller => seller && setSellerData(seller))
+                .catch(() => {})
+            )
+          }
+          
           if (pId) {
-            const res = await fetch(`${apiUrl}/api/reviews/product/${pId}`)
-            if (res.ok) {
-              const data = await res.json()
-              const list = data.reviews || data
-              setReviews(list || [])
-              if (list && list.length) {
-                const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
-                setAvgRating(avg)
-              } else {
-                setAvgRating(null)
-              }
-            }
+            fallbackPromises.push(
+              fetch(`${apiUrl}/api/reviews/product/${pId}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                  if (data) {
+                    const list = data.reviews || data
+                    setReviews(list || [])
+                    if (list && list.length) {
+                      const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
+                      setAvgRating(avg)
+                    } else {
+                      setAvgRating(null)
+                    }
+                  }
+                })
+                .catch(() => {})
+            )
+          }
+          
+          if (fallbackPromises.length > 0) {
+            Promise.all(fallbackPromises).catch(() => {})
           }
         } else {
           setProductError('Product not found')
+          setLoadingProduct(false)
         }
       } catch (e) {
         console.error('Failed to fetch single product fallback', e)
         setProductError(e.message || 'Network error')
+        setLoadingProduct(false)
       }
-      setLoadingProduct(false)
     }
 
     // fetch current user profile if logged in so we can show delete controls
@@ -346,7 +389,7 @@ const Product = () => {
     }
 
     // no eligibility/form fetching here — reviews can be submitted from Order view only
-  }, [apiUrl, productRef, products, fetchSellerData, getImageUrl, navigate])
+  }, [apiUrl, productRef, products, normalizeSlug, navigate])
 
   useEffect(()=>{
     fetchProductData();
@@ -399,7 +442,8 @@ const Product = () => {
     ? (productData.iosModel.startsWith('http') ? productData.iosModel : `${apiUrl}${productData.iosModel}`)
     : '';
 
-  const availableColors = getAvailableColors(productData);
+  const availableColors = useMemo(() => getAvailableColors(productData), [getAvailableColors, productData]);
+  const availableSizes = useMemo(() => getAvailableSizes(productData), [getAvailableSizes, productData]);
 
   // Set model-viewer src when AR modal opens
   useEffect(() => {
@@ -895,8 +939,8 @@ const Product = () => {
                         </defs>
                         {!showDimensions && (
                           <g>
-                            <rect x="44" y="82" width="12" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
-                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.4" fontWeight="600">
+                            <rect x="35" y="82" width="30" height="5" rx="2" fill="#ffffff" stroke="rgba(0,0,0,0.04)" />
+                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.2" fontWeight="600">
                               {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
                             </text>
                           </g>
