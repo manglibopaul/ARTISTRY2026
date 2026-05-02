@@ -421,6 +421,20 @@ const Product = () => {
     }
   }, [productData])
 
+  // Ensure the main displayed image defaults to the first product image
+  useEffect(() => {
+    try {
+      if (!productData || !productData.image || productData.image.length === 0) return;
+      // If image already set, do not override (preserve user selection)
+      if (image && String(image).trim()) return;
+      const first = getImageUrl(productData.image[0]);
+      setImage(first);
+      setCurrentImageIndex(0);
+    } catch (e) {
+      // ignore
+    }
+  }, [productData, getImageUrl]);
+
   useEffect(() => {
     const availableSizes = getAvailableSizes(productData);
     if (availableSizes.length > 0) {
