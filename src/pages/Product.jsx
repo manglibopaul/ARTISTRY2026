@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
 const ProductChat = React.lazy(() => import('../components/ProductChat'))
+import ARDimensions from '../components/ARDimensions'
 import { getArtisanPath } from '../utils/artisanUrl'
 import { getProductPath } from '../utils/productUrl'
 
@@ -1003,6 +1004,16 @@ const Product = () => {
                   )}
                 </div>
 
+                {/* AR Dimensions Display */}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  {productData?.width && productData?.height && productData?.depth ? (
+                    <ARDimensions product={productData} displayUnit="cm" />
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      <p>Product dimensions not available</p>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
