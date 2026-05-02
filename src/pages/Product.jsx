@@ -5,7 +5,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
 const ProductChat = React.lazy(() => import('../components/ProductChat'))
-import ARDimensions from '../components/ARDimensions'
 import { getArtisanPath } from '../utils/artisanUrl'
 import { getProductPath } from '../utils/productUrl'
 
@@ -925,8 +924,21 @@ const Product = () => {
                   >
                     {showDimensions ? 'Hide' : 'Show'}
                   </button>
-                  
-                  {/* Dimensions removed */}
+
+                  {showDimensions && productData?.width && productData?.height && productData?.depth && (
+                    <div className="absolute z-20 left-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm">
+                      <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions</div>
+                      <div className="text-gray-700">
+                        W {Number(productData.width).toFixed(1)} cm
+                      </div>
+                      <div className="text-gray-700">
+                        H {Number(productData.height).toFixed(1)} cm
+                      </div>
+                      <div className="text-gray-700">
+                        D {Number(productData.depth).toFixed(1)} cm
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Color picker controls - only show when product supports color change */}
                   {(productData?.colorChangeable || availableColors.length > 0) && (
@@ -1000,17 +1012,6 @@ const Product = () => {
                         <div className="text-2xl mb-2">⏳</div>
                         <span>Loading 3D model...</span>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* AR Dimensions Display */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  {productData?.width && productData?.height && productData?.depth ? (
-                    <ARDimensions product={productData} displayUnit="cm" />
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 text-sm">
-                      <p>Product dimensions not available</p>
                     </div>
                   )}
                 </div>
