@@ -201,13 +201,14 @@ const Product = () => {
 
   const getImageUrl = useCallback((img) => {
     if (!img) return '/path/to/placeholder.jpg';
+    const base = apiUrl && apiUrl.length ? apiUrl : (typeof window !== 'undefined' ? window.location.origin : '');
 
     if (typeof img === 'object' && img.url) {
-      return img.url.startsWith('http') ? img.url : `${apiUrl}${img.url}`;
+      return img.url.startsWith('http') ? img.url : `${base}${img.url}`;
     } else if (typeof img === 'string') {
       if (img.startsWith('http')) return img;
-      if (img.startsWith('/')) return `${apiUrl}${img}`;
-      return `${apiUrl}/uploads/images/${img}`;
+      if (img.startsWith('/')) return `${base}${img}`;
+      return `${base}/uploads/images/${img}`;
     }
     return '/path/to/placeholder.jpg';
   }, [apiUrl])
