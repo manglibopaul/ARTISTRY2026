@@ -927,81 +927,56 @@ const Product = () => {
                   
                   {/* Dimension overlays on model */}
                   {(productData?.width || productData?.height || productData?.depth) && !arLoading && (
-                    <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                       <svg className="w-full h-full absolute top-0 left-0" preserveAspectRatio="none" viewBox="0 0 100 100" style={{ transition: 'opacity .18s ease' }}>
-                        <defs>
-                          <filter id="dimShadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="0.5" stdDeviation="0.5" floodOpacity="0.3" />
-                          </filter>
-                          <marker id="triA" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 z" fill="#1e293b" />
-                          </marker>
-                          <marker id="triB" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
-                            <path d="M6,0 L0,3 L6,6 z" fill="#1e293b" />
-                          </marker>
-                        </defs>
+                        {/* Clean minimal badges - no arrows */}
                         
-                        {!showDimensions && (
-                          <g filter="url(#dimShadow)">
-                            <rect x="32" y="80" width="36" height="6" rx="3" fill="#ffffff" stroke="#0f172a" strokeWidth="0.6" />
-                            <text x="50" y="84.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.4" fontWeight="700" letterSpacing="0.5">
-                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
+                        {/* Height badge (left side) */}
+                        {productData?.height && (
+                          <g>
+                            <rect x="2" y="35" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
+                            <text x="10" y="40.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
+                              {productData.height}
+                            </text>
+                            <text x="10" y="44" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
+                              cm
                             </text>
                           </g>
                         )}
                         
-                        {showDimensions && (
-                          <g strokeLinecap="round" strokeLinejoin="round">
-                            {/* Height dimension (left) */}
-                            {productData?.height && (
-                              <g filter="url(#dimShadow)">
-                                <circle cx="12" cy="12" r="1.5" fill="#1e293b" />
-                                <circle cx="12" cy="88" r="1.5" fill="#1e293b" />
-                                <line x1="12" y1="12" x2="12" y2="88" stroke="#1e293b" strokeWidth="1.2" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="10" y1="30" x2="22" y2="30" stroke="#64748b" strokeWidth="0.4" strokeDasharray="2" opacity="0.4" />
-                                <rect x="6" y="46" width="12" height="6" rx="3" fill="#ffffff" stroke="#0f172a" strokeWidth="0.6" />
-                                <text x="12" y="50.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.6" fontWeight="700">
-                                  {productData.height}
-                                </text>
-                                <text x="12" y="54.5" textAnchor="middle" fill="#475569" fontSize="1.8" fontWeight="500">
-                                  cm
-                                </text>
-                              </g>
-                            )}
-                            
-                            {/* Width dimension (bottom) */}
-                            {productData?.width && (
-                              <g filter="url(#dimShadow)">
-                                <circle cx="20" cy="92" r="1.5" fill="#1e293b" />
-                                <circle cx="80" cy="92" r="1.5" fill="#1e293b" />
-                                <line y1="92" y2="92" x1="20" x2="80" stroke="#1e293b" strokeWidth="1.2" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="50" y1="88" x2="50" y2="100" stroke="#64748b" strokeWidth="0.4" strokeDasharray="2" opacity="0.4" />
-                                <rect x="40" y="95" width="20" height="6" rx="3" fill="#ffffff" stroke="#0f172a" strokeWidth="0.6" />
-                                <text x="50" y="99.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.6" fontWeight="700">
-                                  {productData.width}
-                                </text>
-                                <text x="50" y="103.5" textAnchor="middle" fill="#475569" fontSize="1.8" fontWeight="500">
-                                  cm
-                                </text>
-                              </g>
-                            )}
-                            
-                            {/* Depth dimension (top-right) */}
-                            {productData?.depth && (
-                              <g filter="url(#dimShadow)">
-                                <circle cx="68" cy="16" r="1.5" fill="#1e293b" />
-                                <circle cx="92" cy="16" r="1.5" fill="#1e293b" />
-                                <line x1="68" y1="16" x2="92" y2="16" stroke="#1e293b" strokeWidth="1.2" markerStart="url(#triB)" markerEnd="url(#triA)" />
-                                <line x1="80" y1="12" x2="80" y2="4" stroke="#64748b" strokeWidth="0.4" strokeDasharray="2" opacity="0.4" />
-                                <rect x="70" y="2" width="20" height="6" rx="3" fill="#ffffff" stroke="#0f172a" strokeWidth="0.6" />
-                                <text x="80" y="6.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.6" fontWeight="700">
-                                  {productData.depth}
-                                </text>
-                                <text x="80" y="10.5" textAnchor="middle" fill="#475569" fontSize="1.8" fontWeight="500">
-                                  cm
-                                </text>
-                              </g>
-                            )}
+                        {/* Width badge (bottom center) */}
+                        {productData?.width && (
+                          <g>
+                            <rect x="42" y="88" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
+                            <text x="50" y="93.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
+                              {productData.width}
+                            </text>
+                            <text x="50" y="97" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
+                              cm
+                            </text>
+                          </g>
+                        )}
+                        
+                        {/* Depth badge (top right) */}
+                        {productData?.depth && (
+                          <g>
+                            <rect x="82" y="6" width="16" height="12" rx="6" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
+                            <text x="90" y="11.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="4.5" fontWeight="700">
+                              {productData.depth}
+                            </text>
+                            <text x="90" y="15" textAnchor="middle" fill="#475569" fontSize="2" fontWeight="500">
+                              cm
+                            </text>
+                          </g>
+                        )}
+                        
+                        {/* Compact summary when not showing detailed view */}
+                        {!showDimensions && (
+                          <g>
+                            <rect x="30" y="82" width="40" height="10" rx="5" fill="#ffffff" stroke="#0f172a" strokeWidth="1.2" opacity="0.95" />
+                            <text x="50" y="88.5" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="3.5" fontWeight="700" letterSpacing="0.3">
+                              {([productData.width, productData.height, productData.depth].filter(Boolean).join(' × '))} cm
+                            </text>
                           </g>
                         )}
                       </svg>
