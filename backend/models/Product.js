@@ -107,9 +107,10 @@ const Product = sequelize.define('Product', {
     comment: 'Calculated volume in cm³',
   },
   sizeCategory: {
-    type: DataTypes.ENUM('Tiny', 'Small', 'Medium', 'Large', 'Extra Large'),
+    type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Size classification based on volume',
+    defaultValue: 'Medium',
+    comment: 'Size classification based on volume (Tiny, Small, Medium, Large, Extra Large)',
   },
   arMetadata: {
     type: DataTypes.JSON,

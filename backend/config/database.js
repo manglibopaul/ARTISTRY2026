@@ -202,6 +202,42 @@ const ensureProductsDimensionsColumns = async () => {
   }
 };
 
+const ensureProductsArMetadataColumns = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Products');
+  
+  if (!table.volume) {
+    await qi.addColumn('Products', 'volume', {
+      type: Sequelize.FLOAT,
+      allowNull: true,
+    });
+  }
+  if (!table.sizeCategory) {
+    await qi.addColumn('Products', 'sizeCategory', {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue: 'Medium',
+    });
+  }
+  if (!table.arMetadata) {
+    await qi.addColumn('Products', 'arMetadata', {
+      type: Sequelize.JSON,
+      defaultValue: {
+        modelFormat: 'glb',
+        hasTextures: false,
+        hasAnimations: false,
+        optimized: false,
+      },
+    });
+  }
+  if (!table.boundingBox) {
+    await qi.addColumn('Products', 'boundingBox', {
+      type: Sequelize.JSON,
+      allowNull: true,
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
@@ -216,6 +252,7 @@ const connectDB = async () => {
     await ensureOrdersCompletedAtColumn();
     await ensureSellersPaymentSettingsColumn();
     await ensureProductsDimensionsColumns();
+    await ensureProductsArMetadataColumns();
     // pickupMaps support removed; no runtime schema-ensure needed
     console.log('✅ Database synchronized successfully');
 

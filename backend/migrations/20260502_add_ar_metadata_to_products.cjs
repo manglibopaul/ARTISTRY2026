@@ -37,8 +37,9 @@ module.exports = {
 
     if (!columns.sizeCategory) {
       await queryInterface.addColumn(table, 'sizeCategory', {
-        type: Sequelize.ENUM('Tiny', 'Small', 'Medium', 'Large', 'Extra Large'),
+        type: Sequelize.STRING,
         allowNull: true,
+        defaultValue: 'Medium',
         comment: 'Size classification based on volume',
       });
     }
