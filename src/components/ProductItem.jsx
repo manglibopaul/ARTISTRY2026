@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useShop } from '../context/ShopContext'
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { getArtisanPath } from '../utils/artisanUrl';
 import { getProductPath } from '../utils/productUrl';
@@ -69,11 +69,12 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
     }
 
   const productHref = getProductPath({ id, name })
+  const productState = { product: { id, name, image, price, sellerId, sellerName, artisanType, stock } }
   // quick view removed
 
   return (
     <div className='text-gray cursor-pointer block h-full group'>
-      <a href={productHref} className='block w-full text-left'>
+      <Link to={productHref} state={productState} className='block w-full text-left'>
         <div className='bg-white p-3 pb-6 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
           <div className='overflow-hidden w-full aspect-[4/5] bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
             <img
@@ -100,7 +101,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
             <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
           </div>
         </div>
-      </a>
+      </Link>
 
       {/* Seller Info */}
       {sellerData && (

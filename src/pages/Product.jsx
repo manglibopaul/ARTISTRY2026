@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState, useRef, useMemo } from 'react'
 // Simple iOS detection
 const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
 const ProductChat = React.lazy(() => import('../components/ProductChat'))
@@ -11,13 +11,15 @@ import { getProductPath } from '../utils/productUrl'
 const Product = () => {
 
   const { productRef } = useParams();
+  const location = useLocation();
   const navigate = useNavigate()
   const {products, currency, addToCart} = useContext(ShopContext);
+  const hasRouteProduct = Boolean(location.state?.product);
   // Use localhost fallback only in development; production must use configured API URL.
   const apiUrl = import.meta.env.VITE_API_URL
     || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
-  const [productData,setProductData] = useState(false);
-  const [loadingProduct, setLoadingProduct] = useState(true)
+  const [productData,setProductData] = useState(location.state?.product || false);
+  const [loadingProduct, setLoadingProduct] = useState(!hasRouteProduct)
   const [productError, setProductError] = useState('')
   const [sellerData, setSellerData] = useState(null)
   const [image,setImage] = useState('')
@@ -247,7 +249,9 @@ const Product = () => {
   }, []);
 
   const fetchProductData = useCallback(async () => {
-    setLoadingProduct(true)
+    if (!hasRouteProduct) {
+      setLoadingProduct(true)
+    }
     setProductError('')
     const ref = String(productRef || '').trim()
     const idSuffixMatch = ref.match(/-p(\d+)$/i)
@@ -259,6 +263,13 @@ const Product = () => {
       setProductError('Product not found')
       setLoadingProduct(false)
       return
+    }
+
+    const routeProduct = location.state?.product || null
+
+    if (routeProduct && (String(routeProduct.id || routeProduct._id || '') === String(refId || ref) || normalizeSlug(routeProduct.name) === slugRef)) {
+      setProductData(routeProduct)
+      setLoadingProduct(false)
     }
 
     // Try to find product in context first (fast)
@@ -390,7 +401,7 @@ const Product = () => {
     }
 
     // no eligibility/form fetching here — reviews can be submitted from Order view only
-  }, [apiUrl, productRef, products, normalizeSlug, navigate])
+  }, [apiUrl, productRef, products, normalizeSlug, navigate, hasRouteProduct])
 
   useEffect(()=>{
     fetchProductData();
