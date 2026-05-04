@@ -67,6 +67,44 @@ const normalizeProductPayload = (product) => {
   return plain;
 };
 
+const toDimensionNumber = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  return Number(num.toFixed(3));
+};
+
+const normalizeSizeDimensions = (value) => {
+  if (!value) return {};
+
+  let parsed = value;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return {};
+    }
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+
+  const normalized = {};
+  for (const [rawSize, rawDimensions] of Object.entries(parsed)) {
+    const sizeKey = String(rawSize || '').trim();
+    if (!sizeKey) continue;
+    if (!rawDimensions || typeof rawDimensions !== 'object') continue;
+
+    const width = toDimensionNumber(rawDimensions.width);
+    const height = toDimensionNumber(rawDimensions.height);
+    const depth = toDimensionNumber(rawDimensions.depth);
+
+    if (width && height && depth) {
+      normalized[sizeKey] = { width, height, depth, unit: 'cm' };
+    }
+  }
+
+  return normalized;
+};
+
 const toProductSlug = (value) => {
   return String(value || '')
     .trim()
@@ -161,6 +199,7 @@ export const createProduct = async (req, res) => {
     console.log('CREATE PRODUCT: req.body:', req.body);
     const sellerId = req.seller?.id; // From auth middleware
     const productData = { ...req.body, sellerId: sellerId || null };
+    delete productData.sizeDimensions;
 
     // Handle colors (comma-separated string or JSON array)
     if (req.body.colors) {
@@ -238,6 +277,19 @@ export const createProduct = async (req, res) => {
       productData.sizes = [req.body.size].filter(Boolean);
     }
 
+    if (typeof req.body.sizeDimensions !== 'undefined') {
+      const sizeDimensions = normalizeSizeDimensions(req.body.sizeDimensions);
+      if (Object.keys(sizeDimensions).length > 0) {
+        const baseArMetadata = (req.body.arMetadata && typeof req.body.arMetadata === 'object')
+          ? req.body.arMetadata
+          : {};
+        productData.arMetadata = {
+          ...baseArMetadata,
+          sizeDimensions,
+        };
+      }
+    }
+
     // Handle file uploads
     if (req.files) {
       const modelFile = req.files.find(f => f.fieldname === 'model');
@@ -296,6 +348,7 @@ export const updateProduct = async (req, res) => {
     }
 
     const updateData = { ...req.body };
+    delete updateData.sizeDimensions;
 
     // Handle colors (comma-separated string or JSON array)
     if (req.body.colors) {
@@ -359,6 +412,21 @@ export const updateProduct = async (req, res) => {
       }
     } else if (req.body.size && !req.body.sizes) {
       updateData.sizes = [req.body.size].filter(Boolean);
+    }
+
+    if (typeof req.body.sizeDimensions !== 'undefined') {
+      const sizeDimensions = normalizeSizeDimensions(req.body.sizeDimensions);
+      const currentArMetadata = (product.arMetadata && typeof product.arMetadata === 'object' && !Array.isArray(product.arMetadata))
+        ? { ...product.arMetadata }
+        : {};
+
+      if (Object.keys(sizeDimensions).length > 0) {
+        currentArMetadata.sizeDimensions = sizeDimensions;
+      } else {
+        delete currentArMetadata.sizeDimensions;
+      }
+
+      updateData.arMetadata = currentArMetadata;
     }
 
     // Handle existing images passed from frontend (for removal/reordering)

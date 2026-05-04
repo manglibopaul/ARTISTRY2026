@@ -70,10 +70,12 @@ const SellerDashboard = () => {
     width: '',
     height: '',
     depth: '',
+    sizeDimensions: '',
     image: [],
     model: null,
     iosModel: null,
   })
+  const [sizeDimensionRows, setSizeDimensionRows] = useState([])
   const [imagePreview, setImagePreview] = useState([])
   const [existingImages, setExistingImages] = useState([])
   const [newImages, setNewImages] = useState([])
@@ -120,6 +122,61 @@ const SellerDashboard = () => {
     } catch (e) {
       return `₱${value}`
     }
+  }
+
+  const parseSizesList = (value) => {
+    if (Array.isArray(value)) return value.map((size) => String(size || '').trim()).filter(Boolean)
+    if (typeof value === 'string') {
+      return value.split(',').map((size) => size.trim()).filter(Boolean)
+    }
+    return []
+  }
+
+  const parseSizeDimensionsMap = (value) => {
+    if (!value) return {}
+    let parsed = value
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed)
+      } catch {
+        return {}
+      }
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed
+  }
+
+  const buildSizeDimensionRows = (sizesValue, existingValue = '', previousRows = []) => {
+    const sizes = parseSizesList(sizesValue)
+    const existingMap = parseSizeDimensionsMap(existingValue)
+    const previousMap = new Map((Array.isArray(previousRows) ? previousRows : []).map((row) => [String(row.size || '').trim(), row]))
+
+    return sizes.map((size) => {
+      const previous = previousMap.get(size) || {}
+      const existing = existingMap[size] || {}
+      return {
+        size,
+        width: previous.width ?? existing.width ?? '',
+        height: previous.height ?? existing.height ?? '',
+        depth: previous.depth ?? existing.depth ?? '',
+      }
+    })
+  }
+
+  const serializeSizeDimensionRows = (rows) => {
+    const normalized = {}
+    ;(Array.isArray(rows) ? rows : []).forEach((row) => {
+      const size = String(row?.size || '').trim()
+      const width = Number(row?.width)
+      const height = Number(row?.height)
+      const depth = Number(row?.depth)
+      if (!size) return
+      if (!Number.isFinite(width) || width <= 0) return
+      if (!Number.isFinite(height) || height <= 0) return
+      if (!Number.isFinite(depth) || depth <= 0) return
+      normalized[size] = { width, height, depth }
+    })
+    return JSON.stringify(normalized)
   }
 
   const statusBadgeClass = (status) => {
@@ -476,6 +533,30 @@ const SellerDashboard = () => {
     setFormData(prev => ({ ...prev, [name]: next }))
   }
 
+  useEffect(() => {
+    if (!showForm) return
+    setSizeDimensionRows((prevRows) => buildSizeDimensionRows(formData.sizes, formData.sizeDimensions, prevRows))
+  }, [formData.sizes, formData.sizeDimensions, showForm])
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const next = serializeSizeDimensionRows(sizeDimensionRows)
+      return prev.sizeDimensions === next ? prev : { ...prev, sizeDimensions: next }
+    })
+  }, [sizeDimensionRows])
+
+  const updateSizeDimensionRow = (index, field, value) => {
+    setSizeDimensionRows((prevRows) => prevRows.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)))
+  }
+
+  const addSizeDimensionRow = () => {
+    setSizeDimensionRows((prevRows) => [...prevRows, { size: '', width: '', height: '', depth: '' }])
+  }
+
+  const removeSizeDimensionRow = (index) => {
+    setSizeDimensionRows((prevRows) => prevRows.filter((_, rowIndex) => rowIndex !== index))
+  }
+
   // Compress an image file using canvas; returns a Promise<File>
   const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
     return new Promise((resolve, reject) => {
@@ -700,6 +781,11 @@ const SellerDashboard = () => {
       if (formData.width) uploadData.append('width', formData.width)
       if (formData.height) uploadData.append('height', formData.height)
       if (formData.depth) uploadData.append('depth', formData.depth)
+      if (formData.sizeDimensions) {
+        uploadData.append('sizeDimensions', formData.sizeDimensions)
+      } else if (editingProduct) {
+        uploadData.append('sizeDimensions', JSON.stringify({}))
+      }
 
       // Always send existing images when editing, including [] when user removed all old photos.
       if (editingProduct) {
@@ -827,10 +913,12 @@ const SellerDashboard = () => {
       width: product.width || '',
       height: product.height || '',
       depth: product.depth || '',
+      sizeDimensions: product?.arMetadata?.sizeDimensions ? JSON.stringify(product.arMetadata.sizeDimensions) : '',
       image: product.image || [],
       model: null,
       iosModel: null,
     })
+    setSizeDimensionRows(buildSizeDimensionRows(product.sizes || product.size || '', product?.arMetadata?.sizeDimensions || {}))
     // Store existing images
     const existingImgs = Array.isArray(product.image) ? product.image : []
     setExistingImages(existingImgs)
@@ -872,10 +960,12 @@ const SellerDashboard = () => {
       width: '',
       height: '',
       depth: '',
+      sizeDimensions: '',
       image: [],
       model: null,
       iosModel: null,
     })
+    setSizeDimensionRows([])
     setImagePreview([])
     setExistingImages([])
     setNewImages([])
@@ -1116,6 +1206,96 @@ const SellerDashboard = () => {
                 className='px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
                 step='0.1'
               />
+
+              <div className='col-span-1 md:col-span-2 rounded-lg border border-gray-200 bg-gray-50 p-4'>
+                <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3'>
+                  <div>
+                    <p className='text-sm font-medium text-gray-800'>Size Dimensions</p>
+                    <p className='text-xs text-gray-500'>Enter dimensions per size. These will be used on the product page and AR overlay.</p>
+                  </div>
+                  <button
+                    type='button'
+                    onClick={addSizeDimensionRow}
+                    disabled={isSubmitting}
+                    className='self-start sm:self-auto bg-black text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50'
+                  >
+                    Add Size Row
+                  </button>
+                </div>
+
+                {sizeDimensionRows.length > 0 ? (
+                  <div className='space-y-3'>
+                    {sizeDimensionRows.map((row, index) => (
+                      <div key={`${row.size || 'size'}-${index}`} className='grid grid-cols-1 sm:grid-cols-12 gap-2 items-end bg-white border border-gray-200 rounded-lg p-3'>
+                        <div className='sm:col-span-3'>
+                          <label className='block text-xs font-medium text-gray-600 mb-1'>Size</label>
+                          <input
+                            type='text'
+                            value={row.size}
+                            onChange={(e) => updateSizeDimensionRow(index, 'size', e.target.value)}
+                            placeholder='S, M, L'
+                            disabled={isSubmitting}
+                            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                          />
+                        </div>
+                        <div className='sm:col-span-2'>
+                          <label className='block text-xs font-medium text-gray-600 mb-1'>Width</label>
+                          <input
+                            type='number'
+                            value={row.width}
+                            onChange={(e) => updateSizeDimensionRow(index, 'width', e.target.value)}
+                            placeholder='cm'
+                            step='0.1'
+                            min='0'
+                            disabled={isSubmitting}
+                            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                          />
+                        </div>
+                        <div className='sm:col-span-2'>
+                          <label className='block text-xs font-medium text-gray-600 mb-1'>Height</label>
+                          <input
+                            type='number'
+                            value={row.height}
+                            onChange={(e) => updateSizeDimensionRow(index, 'height', e.target.value)}
+                            placeholder='cm'
+                            step='0.1'
+                            min='0'
+                            disabled={isSubmitting}
+                            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                          />
+                        </div>
+                        <div className='sm:col-span-2'>
+                          <label className='block text-xs font-medium text-gray-600 mb-1'>Depth</label>
+                          <input
+                            type='number'
+                            value={row.depth}
+                            onChange={(e) => updateSizeDimensionRow(index, 'depth', e.target.value)}
+                            placeholder='cm'
+                            step='0.1'
+                            min='0'
+                            disabled={isSubmitting}
+                            className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black disabled:bg-gray-100'
+                          />
+                        </div>
+                        <div className='sm:col-span-3 flex justify-end'>
+                          <button
+                            type='button'
+                            onClick={() => removeSizeDimensionRow(index)}
+                            disabled={isSubmitting}
+                            className='w-full sm:w-auto px-3 py-2 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-50'
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='rounded-lg border border-dashed border-gray-300 bg-white px-4 py-5 text-sm text-gray-500'>
+                    Add size options in the field above first, then click Add Size Row or edit an existing product to load them here.
+                  </div>
+                )}
+              </div>
 
               <textarea
                 name='description'

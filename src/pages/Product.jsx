@@ -201,6 +201,28 @@ const Product = () => {
     return [];
   }, []);
 
+  const getSizeDimensionsMap = useCallback((product) => {
+    if (!product) return {};
+    const raw = product?.arMetadata?.sizeDimensions || product?.sizeDimensions || {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+
+    const map = {};
+    for (const [rawSize, rawDimensions] of Object.entries(raw)) {
+      const size = String(rawSize || '').trim();
+      if (!size || !rawDimensions || typeof rawDimensions !== 'object') continue;
+
+      const width = Number(rawDimensions.width);
+      const height = Number(rawDimensions.height);
+      const depth = Number(rawDimensions.depth);
+
+      if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0 && Number.isFinite(depth) && depth > 0) {
+        map[size] = { width, height, depth };
+      }
+    }
+
+    return map;
+  }, []);
+
   const getImageUrl = useCallback((img) => {
     if (!img) return '/path/to/placeholder.jpg';
     const base = apiUrl && apiUrl.length ? apiUrl : (typeof window !== 'undefined' ? window.location.origin : '');
@@ -470,6 +492,21 @@ const Product = () => {
 
   const availableColors = useMemo(() => getAvailableColors(productData), [getAvailableColors, productData]);
   const availableSizes = useMemo(() => getAvailableSizes(productData), [getAvailableSizes, productData]);
+  const sizeDimensionsMap = useMemo(() => getSizeDimensionsMap(productData), [getSizeDimensionsMap, productData]);
+  const selectedDimensions = useMemo(() => {
+    const exact = sizeDimensionsMap[selectedSize];
+    if (exact) return exact;
+    const matchedKey = Object.keys(sizeDimensionsMap).find((key) => key.toLowerCase() === String(selectedSize || '').toLowerCase());
+    if (matchedKey) return sizeDimensionsMap[matchedKey];
+
+    const width = Number(productData?.width);
+    const height = Number(productData?.height);
+    const depth = Number(productData?.depth);
+    if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0 && Number.isFinite(depth) && depth > 0) {
+      return { width, height, depth };
+    }
+    return null;
+  }, [sizeDimensionsMap, selectedSize, productData?.width, productData?.height, productData?.depth]);
 
   // Set model-viewer src when AR modal opens
   useEffect(() => {
@@ -738,6 +775,11 @@ const Product = () => {
                     </button>
                   ))}
                 </div>
+                {selectedDimensions && (
+                  <p className='text-xs text-gray-600 mt-2'>
+                    Dimensions {selectedSize ? `for ${selectedSize}` : ''}: {selectedDimensions.width.toFixed(1)} x {selectedDimensions.height.toFixed(1)} x {selectedDimensions.depth.toFixed(1)} cm
+                  </p>
+                )}
               </div>
             )}
 
@@ -951,17 +993,17 @@ const Product = () => {
                     {showDimensions ? 'Hide' : 'Show'}
                   </button>
 
-                  {showDimensions && productData?.width && productData?.height && productData?.depth && (
+                  {showDimensions && selectedDimensions && (
                     <div className="absolute z-20 left-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm">
-                      <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions</div>
+                      <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions {selectedSize ? `(${selectedSize})` : ''}</div>
                       <div className="text-gray-700">
-                        W {Number(productData.width).toFixed(1)} cm
+                        W {selectedDimensions.width.toFixed(1)} cm
                       </div>
                       <div className="text-gray-700">
-                        H {Number(productData.height).toFixed(1)} cm
+                        H {selectedDimensions.height.toFixed(1)} cm
                       </div>
                       <div className="text-gray-700">
-                        D {Number(productData.depth).toFixed(1)} cm
+                        D {selectedDimensions.depth.toFixed(1)} cm
                       </div>
                     </div>
                   )}
