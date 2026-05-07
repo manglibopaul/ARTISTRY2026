@@ -86,7 +86,9 @@ export const sendUserSignupOtp = async (req, res) => {
       });
     } catch (mailErr) {
       signupOtpStore.delete(normalized);
-      throw mailErr;
+      console.error('sendUserSignupOtp mail error:', mailErr && mailErr.message ? mailErr.message : mailErr);
+      // Return the mailer error to client for debugging (remove/soften in production)
+      return res.status(500).json({ message: 'Failed to send OTP', error: String(mailErr && mailErr.message ? mailErr.message : mailErr) });
     }
 
     return res.json({ message: 'OTP sent to your email.' });
