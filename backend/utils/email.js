@@ -59,6 +59,24 @@ const buildTransporter = async () => {
     }
   }
 
+  // If SMTP is not configured or blocked, use test account as fallback so OTP emails still work
+  try {
+    console.warn('SMTP not configured or blocked. Using Nodemailer test account for OTP emails.');
+    const testAccount = await nodemailer.createTestAccount();
+    return nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      family: 4,
+      auth: { user: testAccount.user, pass: testAccount.pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
+  } catch (err) {
+    console.warn('Test account fallback failed:', err && err.message ? err.message : err);
+  }
+
   return null;
 };
 
