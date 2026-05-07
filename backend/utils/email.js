@@ -3,15 +3,20 @@ import nodemailer from 'nodemailer';
 const buildTransporter = async () => {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
+  const secureEnv = String(process.env.SMTP_SECURE || '').toLowerCase();
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
+  const secure = secureEnv === 'true' ? true : secureEnv === 'false' ? false : port === 465;
 
   if (host && user && pass) {
     return nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure,
       auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
 
@@ -24,6 +29,9 @@ const buildTransporter = async () => {
         port: testAccount.smtp.port,
         secure: testAccount.smtp.secure,
         auth: { user: testAccount.user, pass: testAccount.pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
       });
     } catch (err) {
       console.warn('Failed to create nodemailer test account:', err && err.message ? err.message : err);
