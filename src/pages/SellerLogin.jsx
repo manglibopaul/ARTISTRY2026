@@ -97,7 +97,12 @@ const SellerLogin = () => {
     try {
       const endpoint = `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')}/api/sellers/register/send-otp`
       const response = await axios.post(endpoint, { email: normalizedEmail }, { timeout: 30000 })
-      setOtpNotice(response?.data?.message || 'OTP sent to your email. Check inbox/spam.')
+      if (response?.data?.otp) {
+        setFormData(prev => ({ ...prev, otp: String(response.data.otp) }))
+        setOtpNotice(`OTP ready: ${response.data.otp} (email delivery unavailable, use this code now).`)
+      } else {
+        setOtpNotice(response?.data?.message || 'OTP sent to your email. Check inbox/spam.')
+      }
     } catch (err) {
       const backendMessage = err.response?.data?.message
       const backendError = err.response?.data?.error
