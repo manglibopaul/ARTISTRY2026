@@ -18,37 +18,96 @@ const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
   }
 };
 
-const sendViaSendGrid = async ({ to, subject, html, text }) => {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const from = process.env.SENDGRID_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
+const toBase64Url = (value) => Buffer.from(value)
+  .toString('base64')
+  .replace(/\+/g, '-')
+  .replace(/\//g, '_')
+  .replace(/=+$/g, '');
 
-  if (!apiKey || !from) {
-    return false;
+const buildMimeMessage = ({ from, to, subject, html, text }) => {
+  const messageBody = html || text || '';
+  const contentType = html ? 'text/html; charset="UTF-8"' : 'text/plain; charset="UTF-8"';
+  return [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    `Content-Type: ${contentType}`,
+    '',
+    messageBody,
+  ].join('\r\n');
+};
+
+const getGmailAccessToken = async () => {
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    return null;
   }
 
   const response = await withTimeout(async (signal) => {
-    return fetch('https://api.sendgrid.com/v3/mail/send', {
+    return fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: from },
-        subject,
-        content: [
-          { type: 'text/plain', value: text || '' },
-          { type: 'text/html', value: html || '' },
-        ],
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
       }),
       signal,
     });
-  }, DEFAULT_TIMEOUT_MS, 'SendGrid request timed out');
+  }, DEFAULT_TIMEOUT_MS, 'Gmail OAuth token request timed out');
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
-    throw new Error(`SendGrid error ${response.status}${body ? `: ${body}` : ''}`);
+    throw new Error(`Gmail OAuth token error ${response.status}${body ? `: ${body}` : ''}`);
+  }
+
+  const data = await response.json();
+  if (!data?.access_token) {
+    throw new Error('Gmail OAuth token response did not include an access token');
+  }
+
+  return data.access_token;
+};
+
+const sendViaGmailApi = async ({ to, subject, html, text }) => {
+  const userEmail = process.env.GMAIL_USER_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
+  if (!userEmail) {
+    return false;
+  }
+
+  const accessToken = await getGmailAccessToken();
+  if (!accessToken) {
+    return false;
+  }
+
+  const rawMessage = buildMimeMessage({
+    from: userEmail,
+    to,
+    subject,
+    html,
+    text,
+  });
+
+  const response = await withTimeout(async (signal) => {
+    return fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ raw: toBase64Url(rawMessage) }),
+      signal,
+    });
+  }, DEFAULT_TIMEOUT_MS, 'Gmail API request timed out');
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Gmail API error ${response.status}${body ? `: ${body}` : ''}`);
   }
 
   return true;
@@ -100,12 +159,12 @@ const buildTransporter = async () => {
 
 export const sendResetEmail = async ({ to, subject, html, text }) => {
   try {
-    const sendgridSent = await sendViaSendGrid({ to, subject, html, text });
-    if (sendgridSent) {
+    const gmailSent = await sendViaGmailApi({ to, subject, html, text });
+    if (gmailSent) {
       return true;
     }
   } catch (error) {
-    console.warn('SendGrid email send failed, falling back to SMTP:', error && error.message ? error.message : error);
+    console.warn('Gmail API send failed, falling back to SMTP:', error && error.message ? error.message : error);
   }
 
   const transporter = await buildTransporter();
