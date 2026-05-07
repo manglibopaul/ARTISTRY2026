@@ -18,6 +18,52 @@ const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
   }
 };
 
+const parseSender = (rawFrom) => {
+  const source = String(rawFrom || '').trim();
+  const match = source.match(/^(.*)<([^>]+)>$/);
+  if (match) {
+    return {
+      name: String(match[1] || '').trim().replace(/^"|"$/g, ''),
+      email: String(match[2] || '').trim(),
+    };
+  }
+  return { name: '', email: source };
+};
+
+const sendViaBrevo = async ({ to, subject, html, text }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  const fromRaw = process.env.BREVO_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
+  if (!apiKey || !fromRaw) return false;
+
+  const sender = parseSender(fromRaw);
+  if (!sender.email) return false;
+
+  const response = await withTimeout(async (signal) => {
+    return fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': apiKey,
+      },
+      body: JSON.stringify({
+        sender: sender.name ? { name: sender.name, email: sender.email } : { email: sender.email },
+        to: [{ email: String(to || '').trim() }],
+        subject,
+        htmlContent: html || undefined,
+        textContent: text || undefined,
+      }),
+      signal,
+    });
+  }, DEFAULT_TIMEOUT_MS, 'Brevo API request timed out');
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Brevo API error ${response.status}${body ? `: ${body}` : ''}`);
+  }
+
+  return true;
+};
+
 const buildTransporter = async () => {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
@@ -107,6 +153,15 @@ const sendWithTestAccount = async ({ to, subject, html, text }) => {
 };
 
 export const sendResetEmail = async ({ to, subject, html, text }) => {
+  try {
+    const brevoSent = await sendViaBrevo({ to, subject, html, text });
+    if (brevoSent) {
+      return true;
+    }
+  } catch (brevoError) {
+    console.warn('Brevo send failed, falling back to SMTP:', brevoError && brevoError.message ? brevoError.message : brevoError);
+  }
+
   const transporter = await buildTransporter();
   if (!transporter) {
     return sendWithTestAccount({ to, subject, html, text });
