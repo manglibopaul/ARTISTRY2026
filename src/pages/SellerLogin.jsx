@@ -99,7 +99,11 @@ const SellerLogin = () => {
       const response = await axios.post(endpoint, { email: normalizedEmail }, { timeout: 30000 })
       setOtpNotice(response?.data?.message || 'OTP sent to your email. Check inbox/spam.')
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Failed to send OTP'
+      const backendMessage = err.response?.data?.message
+      const backendError = err.response?.data?.error
+      const msg = backendError
+        ? `${backendMessage || 'Failed to send OTP'}: ${backendError}`
+        : (backendMessage || err.message || 'Failed to send OTP')
       setError(msg)
     } finally {
       setSendingOtp(false)

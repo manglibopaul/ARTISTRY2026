@@ -92,7 +92,7 @@ const Login = () => {
     if (!text) return 'Authentication failed';
     try {
       const parsed = JSON.parse(text);
-      return parsed?.message || 'Authentication failed';
+      return parsed?.error ? `${parsed.message || 'Authentication failed'}: ${parsed.error}` : (parsed?.message || 'Authentication failed');
     } catch {
       return text;
     }
