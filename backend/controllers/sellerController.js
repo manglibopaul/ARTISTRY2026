@@ -84,12 +84,9 @@ export const sendSellerSignupOtp = async (req, res) => {
         html: `<p>Your seller sign-up OTP is <strong style="font-size: 20px; letter-spacing: 2px;">${otp}</strong>.</p><p>This code expires in 10 minutes.</p>`,
       });
     } catch (mailErr) {
+      sellerSignupOtpStore.delete(normalized);
       console.error('sendSellerSignupOtp mail error:', mailErr && mailErr.message ? mailErr.message : mailErr);
-      return res.json({
-        message: 'Email delivery failed. Use the OTP shown to continue signup.',
-        otp,
-        warning: String(mailErr && mailErr.message ? mailErr.message : mailErr),
-      });
+      return res.status(500).json({ message: 'Failed to send OTP', error: String(mailErr && mailErr.message ? mailErr.message : mailErr) });
     }
 
     return res.json({ message: 'OTP sent to your email.' });

@@ -128,13 +128,6 @@ const Login = () => {
         throw new Error(message || 'Failed to send OTP')
       }
 
-      const data = await res.json()
-      if (data?.otp) {
-        setSignupOtp(String(data.otp))
-        setOtpNotice(`OTP ready: ${data.otp} (email delivery unavailable, use this code now).`)
-        return
-      }
-
       setOtpNotice('OTP sent to your email. Check inbox/spam.')
     } catch (err) {
       setError(err.message || 'Failed to send OTP')

@@ -164,6 +164,10 @@ export const sendResetEmail = async ({ to, subject, html, text }) => {
     console.warn('SendGrid send failed, falling back to SMTP:', sendgridError && sendgridError.message ? sendgridError.message : sendgridError);
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SendGrid is not configured or failed. Set SENDGRID_API_KEY and SENDGRID_FROM on the deployed backend.');
+  }
+
   const transporter = await buildTransporter();
   if (!transporter) {
     return sendWithTestAccount({ to, subject, html, text });
