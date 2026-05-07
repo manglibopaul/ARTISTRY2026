@@ -155,17 +155,19 @@ const sendWithTestAccount = async ({ to, subject, html, text }) => {
 };
 
 export const sendResetEmail = async ({ to, subject, html, text }) => {
+  let sendgridErrorMessage = '';
   try {
     const sendgridSent = await sendViaSendGrid({ to, subject, html, text });
     if (sendgridSent) {
       return true;
     }
   } catch (sendgridError) {
+    sendgridErrorMessage = sendgridError && sendgridError.message ? sendgridError.message : String(sendgridError || '');
     console.warn('SendGrid send failed, falling back to SMTP:', sendgridError && sendgridError.message ? sendgridError.message : sendgridError);
   }
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('SendGrid is not configured or failed. Set SENDGRID_API_KEY and SENDGRID_FROM on the deployed backend.');
+    throw new Error(sendgridErrorMessage || 'SendGrid is not configured or failed. Set SENDGRID_API_KEY and SENDGRID_FROM on the deployed backend.');
   }
 
   const transporter = await buildTransporter();
