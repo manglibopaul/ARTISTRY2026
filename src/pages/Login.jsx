@@ -25,6 +25,9 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [signupOtp, setSignupOtp] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [otpNotice, setOtpNotice] = useState('');
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [signupMapLat, setSignupMapLat] = useState(null);
   const [signupMapLon, setSignupMapLon] = useState(null);
@@ -95,6 +98,44 @@ const Login = () => {
     }
   };
 
+  const sendSignupOtp = async () => {
+    setError(null)
+    setOtpNotice('')
+
+    const normalizedEmail = String(email || '').trim()
+    if (!normalizedEmail) {
+      setError('Enter your email first to receive an OTP.')
+      return
+    }
+
+    const normalizedLower = normalizedEmail.toLowerCase()
+    const isGmail = normalizedLower.endsWith('@gmail.com') || normalizedLower.endsWith('@googlemail.com')
+    if (!isGmail) {
+      setError('OTP can only be sent to Gmail addresses. Please provide a Gmail account.')
+      return
+    }
+
+    setSendingOtp(true)
+    try {
+      const res = await fetch(`${apiUrl}/api/users/register/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      })
+
+      if (!res.ok) {
+        const message = await readErrorMessage(res)
+        throw new Error(message || 'Failed to send OTP')
+      }
+
+      setOtpNotice('OTP sent to your email. Check inbox/spam.')
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP')
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -102,10 +143,14 @@ const Login = () => {
       setError('You must accept the Terms and Conditions to sign up.');
       return;
     }
+    if (mode === 'Sign Up' && !String(signupOtp || '').trim()) {
+      setError('OTP is required to complete sign up.');
+      return;
+    }
     setLoading(true);
     try {
       const endpoint = mode === 'Sign In' ? `${apiUrl}/api/users/login` : `${apiUrl}/api/users/register`;
-      const body = mode === 'Sign In' ? { email, password } : { name, email, password, street, city, state, zipcode, country, phone };
+      const body = mode === 'Sign In' ? { email, password } : { name, email, password, street, city, state, zipcode, country, phone, otp: signupOtp };
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -264,6 +309,29 @@ const Login = () => {
             className='w-full border rounded-md px-4 py-3 placeholder-gray-400'
           />
 
+          {mode === 'Sign Up' && (
+            <>
+              <div className='flex gap-2'>
+                <input
+                  value={signupOtp}
+                  onChange={e => setSignupOtp(e.target.value)}
+                  required
+                  placeholder='Enter OTP'
+                  className='w-full border rounded-md px-4 py-3 placeholder-gray-400'
+                />
+                <button
+                  type='button'
+                  onClick={sendSignupOtp}
+                  disabled={sendingOtp}
+                  className='whitespace-nowrap border rounded-md px-4 py-3 text-sm hover:bg-gray-50 disabled:opacity-60'
+                >
+                  {sendingOtp ? 'Sending...' : 'Send OTP'}
+                </button>
+              </div>
+              {otpNotice && <p className='text-xs text-green-700'>{otpNotice}</p>}
+            </>
+          )}
+
           <div className="relative">
             <input
               value={password}
@@ -327,7 +395,7 @@ const Login = () => {
               </>
             ) : (
               <>
-                Already have an account? <button type='button' onClick={() => { setMode('Sign In'); setAcceptedTerms(false); }} className='text-black underline ml-1'>Sign In</button>
+                Already have an account? <button type='button' onClick={() => { setMode('Sign In'); setAcceptedTerms(false); setSignupOtp(''); setOtpNotice(''); }} className='text-black underline ml-1'>Sign In</button>
               </>
             )}
           </div>

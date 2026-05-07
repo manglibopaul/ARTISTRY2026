@@ -13,57 +13,155 @@ import { Op } from 'sequelize';
 
 const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
 
+const signupOtpStore = new Map();
+const SIGNUP_OTP_EXPIRY_MS = 10 * 60 * 1000;
+const SIGNUP_OTP_MAX_ATTEMPTS = 5;
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const buildSignupOtpHash = (email, otp) => {
+  return crypto.createHash('sha256').update(`${normalizeEmail(email)}:${String(otp || '').trim()}`).digest('hex');
+};
+
+const validateSignupOtp = (email, otp) => {
+  const key = normalizeEmail(email);
+  const record = signupOtpStore.get(key);
+
+  if (!record) {
+    return { valid: false, message: 'OTP not found. Please request a new OTP.' };
+  }
+
+  if (record.expiresAt <= Date.now()) {
+    signupOtpStore.delete(key);
+    return { valid: false, message: 'OTP expired. Please request a new OTP.' };
+  }
+
+  if (record.attempts >= SIGNUP_OTP_MAX_ATTEMPTS) {
+    signupOtpStore.delete(key);
+    return { valid: false, message: 'Too many invalid OTP attempts. Please request a new OTP.' };
+  }
+
+  if (record.hash !== buildSignupOtpHash(email, otp)) {
+    record.attempts += 1;
+    signupOtpStore.set(key, record);
+    return { valid: false, message: 'Invalid OTP code.' };
+  }
+
+  return { valid: true };
+};
+
+export const sendUserSignupOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalized = normalizeEmail(email);
+
+    if (!normalized) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    // Only send OTP to Gmail addresses to reduce abuse and ensure provider consistency
+    const isGmail = normalized.endsWith('@gmail.com') || normalized.endsWith('@googlemail.com');
+    if (!isGmail) {
+      return res.status(400).json({ message: 'OTP can only be sent to Gmail addresses. Please provide a Gmail account.' });
+    }
+
+    const existing = await User.findOne({ where: { email: normalized }, paranoid: false });
+    if (existing && !existing.deletedAt) {
+      return res.status(400).json({ message: 'Email is already registered.' });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    signupOtpStore.set(normalized, {
+      hash: buildSignupOtpHash(normalized, otp),
+      expiresAt: Date.now() + SIGNUP_OTP_EXPIRY_MS,
+      attempts: 0,
+    });
+
+    try {
+      await sendEmail({
+        to: normalized,
+        subject: 'Aninaya — Your Sign-up OTP',
+        text: `Your sign-up OTP is ${otp}. It expires in 10 minutes.`,
+        html: `<p>Your sign-up OTP is <strong style="font-size: 20px; letter-spacing: 2px;">${otp}</strong>.</p><p>This code expires in 10 minutes.</p>`,
+      });
+    } catch (mailErr) {
+      signupOtpStore.delete(normalized);
+      throw mailErr;
+    }
+
+    return res.json({ message: 'OTP sent to your email.' });
+  } catch (error) {
+    console.error('sendUserSignupOtp error:', error);
+    return res.status(500).json({ message: 'Failed to send OTP.' });
+  }
+};
+
 // Register user
 export const register = async (req, res) => {
   try {
-    const { name, email, password, street, city, state, zipcode, country, phone } = req.body;
+    const { name, email, password, street, city, state, zipcode, country, phone, otp } = req.body;
+    const normalized = normalizeEmail(email);
 
-    if (!name || !email || !password || !street || !city || !state || !zipcode || !country || !phone) {
+    if (!name || !normalized || !password || !street || !city || !state || !zipcode || !country || !phone) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    let user = await User.findOne({ where: { email }, paranoid: false });
+    if (!otp) {
+      return res.status(400).json({ message: 'OTP is required for sign up.' });
+    }
+
+    let user = await User.findOne({ where: { email: normalized }, paranoid: false });
     if (user) {
-      if (user.deletedAt) {
-        await user.restore();
-        await user.update({
-          name,
-          email,
-          password,
-          street,
-          city,
-          state,
-          zipcode,
-          country,
-          phone,
-        });
-
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-          expiresIn: '7d',
-        });
-
-        return res.status(200).json({
-          token,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            street: user.street,
-            city: user.city,
-            state: user.state,
-            zipcode: user.zipcode,
-            country: user.country,
-            phone: user.phone,
-            isAdmin: user.isAdmin,
-          },
-        });
+      if (!user.deletedAt) {
+        return res.status(400).json({ message: 'User already exists' });
       }
-      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const otpValidation = validateSignupOtp(normalized, otp);
+    if (!otpValidation.valid) {
+      return res.status(400).json({ message: otpValidation.message });
+    }
+
+    if (user && user.deletedAt) {
+      await user.restore();
+      await user.update({
+        name,
+        email: normalized,
+        password,
+        street,
+        city,
+        state,
+        zipcode,
+        country,
+        phone,
+      });
+
+      signupOtpStore.delete(normalized);
+
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+        expiresIn: '7d',
+      });
+
+      return res.status(200).json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          street: user.street,
+          city: user.city,
+          state: user.state,
+          zipcode: user.zipcode,
+          country: user.country,
+          phone: user.phone,
+          isAdmin: user.isAdmin,
+        },
+      });
     }
 
     user = await User.create({
       name,
-      email,
+      email: normalized,
       password,
       street,
       city,
@@ -72,6 +170,8 @@ export const register = async (req, res) => {
       country,
       phone,
     });
+
+    signupOtpStore.delete(normalized);
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '7d',

@@ -12,6 +12,88 @@ import { uploadImage } from '../utils/media.js';
 import { sequelize } from '../config/database.js';
 
 const SUPPORT_SELLER_EMAIL = 'admin.support@artistry.local';
+const sellerSignupOtpStore = new Map();
+const SIGNUP_OTP_EXPIRY_MS = 10 * 60 * 1000;
+const SIGNUP_OTP_MAX_ATTEMPTS = 5;
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const buildSignupOtpHash = (email, otp) => {
+  return crypto.createHash('sha256').update(`${normalizeEmail(email)}:${String(otp || '').trim()}`).digest('hex');
+};
+
+const validateSellerSignupOtp = (email, otp) => {
+  const key = normalizeEmail(email);
+  const record = sellerSignupOtpStore.get(key);
+
+  if (!record) {
+    return { valid: false, message: 'OTP not found. Please request a new OTP.' };
+  }
+
+  if (record.expiresAt <= Date.now()) {
+    sellerSignupOtpStore.delete(key);
+    return { valid: false, message: 'OTP expired. Please request a new OTP.' };
+  }
+
+  if (record.attempts >= SIGNUP_OTP_MAX_ATTEMPTS) {
+    sellerSignupOtpStore.delete(key);
+    return { valid: false, message: 'Too many invalid OTP attempts. Please request a new OTP.' };
+  }
+
+  if (record.hash !== buildSignupOtpHash(email, otp)) {
+    record.attempts += 1;
+    sellerSignupOtpStore.set(key, record);
+    return { valid: false, message: 'Invalid OTP code.' };
+  }
+
+  return { valid: true };
+};
+
+export const sendSellerSignupOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalized = normalizeEmail(email);
+
+    if (!normalized) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    // Restrict OTP delivery to Gmail addresses for sign-up verification
+    const isGmail = normalized.endsWith('@gmail.com') || normalized.endsWith('@googlemail.com');
+    if (!isGmail) {
+      return res.status(400).json({ message: 'OTP can only be sent to Gmail addresses. Please provide a Gmail account.' });
+    }
+
+    const existing = await Seller.findOne({ where: { email: normalized }, paranoid: false });
+    if (existing && !existing.deletedAt) {
+      return res.status(400).json({ message: 'Email already registered.' });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    sellerSignupOtpStore.set(normalized, {
+      hash: buildSignupOtpHash(normalized, otp),
+      expiresAt: Date.now() + SIGNUP_OTP_EXPIRY_MS,
+      attempts: 0,
+    });
+
+    try {
+      await sendEmail({
+        to: normalized,
+        subject: 'Aninaya — Seller Sign-up OTP',
+        text: `Your seller sign-up OTP is ${otp}. It expires in 10 minutes.`,
+        html: `<p>Your seller sign-up OTP is <strong style="font-size: 20px; letter-spacing: 2px;">${otp}</strong>.</p><p>This code expires in 10 minutes.</p>`,
+      });
+    } catch (mailErr) {
+      sellerSignupOtpStore.delete(normalized);
+      throw mailErr;
+    }
+
+    return res.json({ message: 'OTP sent to your email.' });
+  } catch (error) {
+    console.error('sendSellerSignupOtp error:', error);
+    return res.status(500).json({ message: 'Failed to send OTP.' });
+  }
+};
 
 const normalizePickupLocations = (raw) => {
   let parsed = raw;
@@ -81,8 +163,33 @@ const normalizePaymentSettings = (raw) => {
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
-    const { name, email, password, storeName, artisanType, phone, address } = req.body;
+    const { name, email, password, storeName, artisanType, phone, address, otp } = req.body;
+    const normalizedEmail = normalizeEmail(email);
     const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
+
+    if (!name || !normalizedEmail || !password || !storeName) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    if (!otp) {
+      return res.status(400).json({ message: 'OTP is required for sign up.' });
+    }
+
+    // Check both active and soft-deleted sellers to avoid unique-constraint 500s.
+    const existingSeller = await Seller.findOne({ where: { email: normalizedEmail }, paranoid: false });
+    let seller;
+    let responseMessage = 'Seller registered successfully';
+
+    if (existingSeller) {
+      if (!existingSeller.deletedAt) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+    }
+
+    const otpValidation = validateSellerSignupOtp(normalizedEmail, otp);
+    if (!otpValidation.valid) {
+      return res.status(400).json({ message: otpValidation.message });
+    }
 
     let proofOfArtisan = null;
     const portfolioImages = [];
@@ -99,39 +206,26 @@ export const registerSeller = async (req, res) => {
       }
     }
 
-    if (!name || !email || !password || !storeName) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
-    }
-
-    // Check both active and soft-deleted sellers to avoid unique-constraint 500s.
-    const existingSeller = await Seller.findOne({ where: { email }, paranoid: false });
-    let seller;
-    let responseMessage = 'Seller registered successfully';
-
-    if (existingSeller) {
-      if (existingSeller.deletedAt) {
-        await existingSeller.restore();
-        await existingSeller.update({
-          name,
-          password,
-          storeName,
-          artisanType: artisanType || null,
-          phone,
-          address,
-          pickupLocations,
-          proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
-          portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
-          isVerified: false,
-        });
-        seller = existingSeller;
-        responseMessage = 'Deleted seller account restored and updated successfully';
-      } else {
-        return res.status(400).json({ message: 'Email already registered' });
-      }
+    if (existingSeller && existingSeller.deletedAt) {
+      await existingSeller.restore();
+      await existingSeller.update({
+        name,
+        password,
+        storeName,
+        artisanType: artisanType || null,
+        phone,
+        address,
+        pickupLocations,
+        proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
+        portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
+        isVerified: false,
+      });
+      seller = existingSeller;
+      responseMessage = 'Deleted seller account restored and updated successfully';
     } else {
       seller = await Seller.create({
         name,
-        email,
+        email: normalizedEmail,
         password,
         storeName,
         artisanType: artisanType || null,
@@ -142,6 +236,8 @@ export const registerSeller = async (req, res) => {
         portfolioImages,
       });
     }
+
+    sellerSignupOtpStore.delete(normalizedEmail);
 
     const token = generateSellerToken(seller.id);
 

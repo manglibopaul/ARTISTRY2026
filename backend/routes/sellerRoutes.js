@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   registerSeller,
+  sendSellerSignupOtp,
   loginSeller,
   getSellerProfile,
   updateSellerProfile,
@@ -34,6 +35,7 @@ import { upload } from '../middleware/upload.js';
 const router = express.Router();
 
 // Public routes
+router.post('/register/send-otp', sendSellerSignupOtp);
 router.post('/register', upload.fields([{ name: 'proofOfArtisan', maxCount: 1 }, { name: 'images', maxCount: 10 }]), registerSeller);
 router.post('/login', loginSeller);
 router.post('/forgot-password', forgotSellerPassword);

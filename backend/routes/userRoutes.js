@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   register,
+  sendUserSignupOtp,
   login,
   getUserProfile,
   updateUserProfile,
@@ -18,6 +19,7 @@ import { verifyUser, verifyAdmin } from '../middleware/auth.js';
 const router = express.Router();
 
 // Public routes
+router.post('/register/send-otp', sendUserSignupOtp);
 router.post('/register', register);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);

@@ -22,6 +22,8 @@ const SellerLogin = () => {
   const [loading, setLoading] = useState(false)
   const [isLogin, setIsLogin] = useState(() => !new URLSearchParams(location.search).get('mode')?.toLowerCase().includes('signup'))
   const [error, setError] = useState('')
+  const [otpNotice, setOtpNotice] = useState('')
+  const [sendingOtp, setSendingOtp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showSellerAddressPicker, setShowSellerAddressPicker] = useState(false)
@@ -36,6 +38,7 @@ const SellerLogin = () => {
     address: '',
     pickupLocations: [],
     proofOfArtisan: null,
+    otp: '',
   })
   const [pickupInput, setPickupInput] = useState('')
 
@@ -73,10 +76,44 @@ const SellerLogin = () => {
     setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))
   }
 
+  const sendSignupOtp = async () => {
+    setError('')
+    setOtpNotice('')
+
+    const normalizedEmail = String(formData.email || '').trim()
+    if (!normalizedEmail) {
+      setError('Enter your email first to receive an OTP.')
+      return
+    }
+
+    const normalizedLower = normalizedEmail.toLowerCase()
+    const isGmail = normalizedLower.endsWith('@gmail.com') || normalizedLower.endsWith('@googlemail.com')
+    if (!isGmail) {
+      setError('OTP can only be sent to Gmail addresses. Please provide a Gmail account.')
+      return
+    }
+
+    setSendingOtp(true)
+    try {
+      const endpoint = `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')}/api/sellers/register/send-otp`
+      const response = await axios.post(endpoint, { email: normalizedEmail }, { timeout: 30000 })
+      setOtpNotice(response?.data?.message || 'OTP sent to your email. Check inbox/spam.')
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Failed to send OTP'
+      setError(msg)
+    } finally {
+      setSendingOtp(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!isLogin && !acceptedTerms) {
       setError('You must accept the Terms and Conditions to sign up.')
+      return
+    }
+    if (!isLogin && !String(formData.otp || '').trim()) {
+      setError('OTP is required to complete sign up.')
       return
     }
     setLoading(true)
@@ -229,6 +266,31 @@ const SellerLogin = () => {
             required
           />
 
+          {!isLogin && (
+            <>
+              <div className='flex gap-2'>
+                <input
+                  type='text'
+                  name='otp'
+                  placeholder='Enter OTP'
+                  value={formData.otp}
+                  onChange={handleChange}
+                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                  required
+                />
+                <button
+                  type='button'
+                  onClick={sendSignupOtp}
+                  disabled={sendingOtp}
+                  className='whitespace-nowrap border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60'
+                >
+                  {sendingOtp ? 'Sending...' : 'Send OTP'}
+                </button>
+              </div>
+              {otpNotice && <p className='text-xs text-green-700'>{otpNotice}</p>}
+            </>
+          )}
+
           <div className='relative'>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -305,7 +367,9 @@ const SellerLogin = () => {
                 address: '',
                 pickupLocations: [],
                 proofOfArtisan: null,
+                otp: '',
               })
+              setOtpNotice('')
             }}
             className='text-black font-medium hover:underline'
           >
