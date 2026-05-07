@@ -1,37 +1,58 @@
 import nodemailer from 'nodemailer';
 
-const buildTransporter = () => {
+const buildTransporter = async () => {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 587);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
-  if (!host || !user || !pass) {
-    return null;
+  if (host && user && pass) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  // Development fallback: create a test account and return transporter so developers can preview messages
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      return nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: { user: testAccount.user, pass: testAccount.pass },
+      });
+    } catch (err) {
+      console.warn('Failed to create nodemailer test account:', err && err.message ? err.message : err);
+      return null;
+    }
+  }
+
+  return null;
 };
 
 export const sendResetEmail = async ({ to, subject, html, text }) => {
-  const transporter = buildTransporter();
+  const transporter = await buildTransporter();
   if (!transporter) {
-    console.warn('SMTP not configured. Skipping email send.');
-    return false;
+    throw new Error('SMTP not configured. Set SMTP_HOST/SMTP_USER/SMTP_PASS or run a local SMTP dev server.');
   }
 
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to,
     subject,
     text,
     html,
   });
+
+  // If using nodemailer test account, log preview URL for developer convenience
+  try {
+    const preview = nodemailer.getTestMessageUrl(info);
+    if (preview) console.info('Email preview URL:', preview);
+  } catch {}
 
   return true;
 };
