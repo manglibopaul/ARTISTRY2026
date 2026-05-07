@@ -149,6 +149,17 @@ const ensureOrdersCompletedAtColumn = async () => {
   }
 };
 
+const ensureOrdersGcashReceiptColumn = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Orders');
+  if (!table.gcashReceipt) {
+    await qi.addColumn('Orders', 'gcashReceipt', {
+      type: Sequelize.STRING,
+      allowNull: true,
+    });
+  }
+};
+
 const ensureSellersPaymentSettingsColumn = async () => {
   const qi = sequelize.getQueryInterface();
   const table = await qi.describeTable('Sellers');
@@ -250,6 +261,7 @@ const connectDB = async () => {
     await ensureProductsSizesColumn();
     await ensureProductsColorColumns();
     await ensureOrdersCompletedAtColumn();
+    await ensureOrdersGcashReceiptColumn();
     await ensureSellersPaymentSettingsColumn();
     await ensureProductsDimensionsColumns();
     await ensureProductsArMetadataColumns();
