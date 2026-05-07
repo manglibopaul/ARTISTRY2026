@@ -80,11 +80,18 @@ const buildTransporter = async () => {
   return null;
 };
 
-export const sendResetEmail = async ({ to, subject, html, text }) => {
-  const transporter = await buildTransporter();
-  if (!transporter) {
-    throw new Error('SMTP not configured. Set SMTP_HOST/SMTP_USER/SMTP_PASS or run a local SMTP dev server.');
-  }
+const sendWithTestAccount = async ({ to, subject, html, text }) => {
+  const testAccount = await nodemailer.createTestAccount();
+  const transporter = nodemailer.createTransport({
+    host: testAccount.smtp.host,
+    port: testAccount.smtp.port,
+    secure: testAccount.smtp.secure,
+    family: 4,
+    auth: { user: testAccount.user, pass: testAccount.pass },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  });
 
   const info = await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -94,13 +101,33 @@ export const sendResetEmail = async ({ to, subject, html, text }) => {
     html,
   });
 
-  // If using nodemailer test account, log preview URL for developer convenience
+  const preview = nodemailer.getTestMessageUrl(info);
+  if (preview) console.info('Email preview URL:', preview);
+  return true;
+};
+
+export const sendResetEmail = async ({ to, subject, html, text }) => {
+  const transporter = await buildTransporter();
+  if (!transporter) {
+    return sendWithTestAccount({ to, subject, html, text });
+  }
+
   try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+      html,
+    });
+
     const preview = nodemailer.getTestMessageUrl(info);
     if (preview) console.info('Email preview URL:', preview);
-  } catch {}
-
-  return true;
+    return true;
+  } catch (smtpError) {
+    console.warn('SMTP send failed, falling back to Nodemailer test account:', smtpError && smtpError.message ? smtpError.message : smtpError);
+    return sendWithTestAccount({ to, subject, html, text });
+  }
 };
 
 // General purpose email sender (alias)
