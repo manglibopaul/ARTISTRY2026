@@ -30,35 +30,37 @@ const parseSender = (rawFrom) => {
   return { name: '', email: source };
 };
 
-const sendViaBrevo = async ({ to, subject, html, text }) => {
-  const apiKey = process.env.BREVO_API_KEY;
-  const fromRaw = process.env.BREVO_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
+const sendViaSendGrid = async ({ to, subject, html, text }) => {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const fromRaw = process.env.SENDGRID_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
   if (!apiKey || !fromRaw) return false;
 
   const sender = parseSender(fromRaw);
   if (!sender.email) return false;
 
   const response = await withTimeout(async (signal) => {
-    return fetch('https://api.brevo.com/v3/smtp/email', {
+    return fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        sender: sender.name ? { name: sender.name, email: sender.email } : { email: sender.email },
-        to: [{ email: String(to || '').trim() }],
+        from: sender.name ? { name: sender.name, email: sender.email } : { email: sender.email },
+        personalizations: [{ to: [{ email: String(to || '').trim() }] }],
         subject,
-        htmlContent: html || undefined,
-        textContent: text || undefined,
+        content: [
+          { type: 'text/plain', value: String(text || '') },
+          { type: 'text/html', value: String(html || text || '') },
+        ],
       }),
       signal,
     });
-  }, DEFAULT_TIMEOUT_MS, 'Brevo API request timed out');
+  }, DEFAULT_TIMEOUT_MS, 'SendGrid API request timed out');
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
-    throw new Error(`Brevo API error ${response.status}${body ? `: ${body}` : ''}`);
+    throw new Error(`SendGrid API error ${response.status}${body ? `: ${body}` : ''}`);
   }
 
   return true;
@@ -154,12 +156,12 @@ const sendWithTestAccount = async ({ to, subject, html, text }) => {
 
 export const sendResetEmail = async ({ to, subject, html, text }) => {
   try {
-    const brevoSent = await sendViaBrevo({ to, subject, html, text });
-    if (brevoSent) {
+    const sendgridSent = await sendViaSendGrid({ to, subject, html, text });
+    if (sendgridSent) {
       return true;
     }
-  } catch (brevoError) {
-    console.warn('Brevo send failed, falling back to SMTP:', brevoError && brevoError.message ? brevoError.message : brevoError);
+  } catch (sendgridError) {
+    console.warn('SendGrid send failed, falling back to SMTP:', sendgridError && sendgridError.message ? sendgridError.message : sendgridError);
   }
 
   const transporter = await buildTransporter();
