@@ -2470,12 +2470,23 @@ const SellerDashboard = () => {
                   {viewOrder.gcashReceipt && (
                     <div className='mt-3'>
                       <div className='text-sm font-medium mb-1'>Customer Uploaded Receipt</div>
-                      <img
-                        src={resolveImageUrl(viewOrder.gcashReceipt)}
-                        alt={`Receipt for order ${viewOrder.id}`}
-                        className='w-40 h-40 object-contain border rounded cursor-pointer'
-                        onClick={() => window.open(resolveImageUrl(viewOrder.gcashReceipt), '_blank')}
-                      />
+                      {String(viewOrder.gcashReceipt).toLowerCase().endsWith('.pdf') ? (
+                        <a
+                          href={resolveImageUrl(viewOrder.gcashReceipt)}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-block px-3 py-2 text-sm bg-gray-100 border rounded hover:bg-gray-200'
+                        >
+                          Open receipt PDF
+                        </a>
+                      ) : (
+                        <img
+                          src={resolveImageUrl(viewOrder.gcashReceipt)}
+                          alt={`Receipt for order ${viewOrder.id}`}
+                          className='w-40 h-40 object-contain border rounded cursor-pointer'
+                          onClick={() => window.open(resolveImageUrl(viewOrder.gcashReceipt), '_blank')}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

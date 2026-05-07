@@ -198,6 +198,7 @@ const PlaceOrder = () => {
   const [selectedShippingRate, setSelectedShippingRate] = React.useState(null)
   const [sellerShippingInfo, setSellerShippingInfo] = React.useState({})
   const [sellerPaymentInfo, setSellerPaymentInfo] = React.useState({})
+  const [sellerIdentityById, setSellerIdentityById] = React.useState({})
   const [availablePaymentMethods, setAvailablePaymentMethods] = React.useState({ cod: true, gcash: true })
   const [modalState, setModalState] = React.useState({
     open: false,
@@ -305,6 +306,7 @@ const PlaceOrder = () => {
       if (sellerIds.size === 0) {
         setSellerPickupLocations([])
         setSellerPaymentInfo({})
+        setSellerIdentityById({})
         setAvailablePaymentMethods({ cod: true, gcash: true })
         return
       }
@@ -313,11 +315,17 @@ const PlaceOrder = () => {
       const allRates = []
       const shippingInfo = {}
       const paymentInfo = {}
+      const identityById = {}
       for (const sid of sellerIds) {
         try {
           const res = await fetch(`${apiUrl}/api/sellers/${sid}`)
             if (res.ok) {
             const seller = await res.json()
+            identityById[String(sid)] = {
+              sellerId: Number(sid),
+              storeName: seller.storeName || `Seller #${sid}`,
+              sellerName: String(seller.name || '').trim(),
+            }
             // Pickup locations
             const locs = normalizePickupLocations(seller)
             locs.forEach(loc => {
@@ -395,6 +403,7 @@ const PlaceOrder = () => {
       }
       setSellerShippingInfo(shippingInfo)
       setSellerPaymentInfo(paymentInfo)
+      setSellerIdentityById(identityById)
 
       const paymentValues = Object.values(paymentInfo)
       const deliverySellerIds = Object.keys(deliveryModeBySeller).filter((sid) => deliveryModeBySeller[sid] !== 'pickup')
@@ -480,12 +489,14 @@ const PlaceOrder = () => {
       const shipping = sellerShippingInfo[sid]
       const payment = sellerPaymentInfo[sid]
       const pickupGroup = pickupLocationsGrouped.find((group) => String(group.sellerId) === String(sid))
+      const identity = sellerIdentityById[String(sid)] || {}
       return {
         sellerId: String(sid),
-        storeName: shipping?.storeName || payment?.storeName || pickupGroup?.storeName || `Seller #${sid}`,
+        storeName: identity.storeName || shipping?.storeName || payment?.storeName || pickupGroup?.storeName || `Seller #${sid}`,
+        sellerName: identity.sellerName || '',
       }
     })
-  }, [sellerIdsInCart, sellerShippingInfo, sellerPaymentInfo, pickupLocationsGrouped])
+  }, [sellerIdsInCart, sellerShippingInfo, sellerPaymentInfo, pickupLocationsGrouped, sellerIdentityById])
 
   // Geocode delivery address to get map coordinates
 
@@ -740,6 +751,7 @@ const PlaceOrder = () => {
                     <div className='mt-3 space-y-3'>
                       <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s GCash account. Use the details below:</p>
                       {Object.values(sellerPaymentInfo).map((info) => {
+                        const identity = sellerIdentityById[String(info.sellerId)] || {}
                         const qrUrl = info.gcashQr
                           ? (info.gcashQr.startsWith('http')
                             ? info.gcashQr
@@ -748,6 +760,7 @@ const PlaceOrder = () => {
                         return (
                           <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
                             <p className='text-sm font-medium text-gray-800 mb-1'>{info.storeName}</p>
+                            {identity.sellerName && <p className='text-xs text-gray-700'>Seller: {identity.sellerName}</p>}
                             <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
                             <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
                             {qrUrl ? (
@@ -890,6 +903,16 @@ const PlaceOrder = () => {
                     </span>
                   </div>
                   <div className='flex-1'>
+                    {(() => {
+                      const sid = String(productData.sellerId || '')
+                      const identity = sellerIdentityById[sid]
+                      if (!identity) return null
+                      return (
+                        <p className='text-[11px] sm:text-xs text-gray-500 mb-1'>
+                          Seller: {identity.sellerName || 'Unknown'} • Store: {identity.storeName || `Seller #${sid}`}
+                        </p>
+                      )
+                    })()}
                     <h3 className='font-medium text-sm sm:text-base'>{productData.name}</h3>
                       {item.size ? (
                         <p className='text-xs sm:text-sm text-gray-600'>Size: {item.size}</p>
@@ -952,6 +975,7 @@ const PlaceOrder = () => {
               {sellerModeOptions.map((seller) => (
                 <div key={seller.sellerId} className='border rounded p-3 sm:p-4'>
                   <p className='text-sm sm:text-base font-medium mb-3'>{seller.storeName}</p>
+                  {seller.sellerName && <p className='text-xs text-gray-600 -mt-2 mb-3'>Seller: {seller.sellerName}</p>}
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3'>
                     <label className='flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50'>
                       <input
