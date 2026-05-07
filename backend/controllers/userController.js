@@ -9,11 +9,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/email.js';
+import { normalizePhoneNumber, sendSms } from '../utils/sms.js';
 import { Op } from 'sequelize';
 
 const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
 
 const signupOtpStore = new Map();
+const signupPhoneOtpStore = new Map();
 const SIGNUP_OTP_EXPIRY_MS = 10 * 60 * 1000;
 const SIGNUP_OTP_MAX_ATTEMPTS = 5;
 
@@ -21,6 +23,10 @@ const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 const buildSignupOtpHash = (email, otp) => {
   return crypto.createHash('sha256').update(`${normalizeEmail(email)}:${String(otp || '').trim()}`).digest('hex');
+};
+
+const buildPhoneOtpHash = (phone, otp) => {
+  return crypto.createHash('sha256').update(`${normalizePhoneNumber(phone)}:${String(otp || '').trim()}`).digest('hex');
 };
 
 const validateSignupOtp = (email, otp) => {
@@ -45,6 +51,33 @@ const validateSignupOtp = (email, otp) => {
     record.attempts += 1;
     signupOtpStore.set(key, record);
     return { valid: false, message: 'Invalid OTP code.' };
+  }
+
+  return { valid: true };
+};
+
+const validatePhoneSignupOtp = (phone, otp) => {
+  const key = normalizePhoneNumber(phone);
+  const record = signupPhoneOtpStore.get(key);
+
+  if (!record) {
+    return { valid: false, message: 'Phone OTP not found. Please request a new OTP.' };
+  }
+
+  if (record.expiresAt <= Date.now()) {
+    signupPhoneOtpStore.delete(key);
+    return { valid: false, message: 'Phone OTP expired. Please request a new OTP.' };
+  }
+
+  if (record.attempts >= SIGNUP_OTP_MAX_ATTEMPTS) {
+    signupPhoneOtpStore.delete(key);
+    return { valid: false, message: 'Too many invalid phone OTP attempts. Please request a new OTP.' };
+  }
+
+  if (record.hash !== buildPhoneOtpHash(phone, otp)) {
+    record.attempts += 1;
+    signupPhoneOtpStore.set(key, record);
+    return { valid: false, message: 'Invalid phone OTP code.' };
   }
 
   return { valid: true };
@@ -97,18 +130,61 @@ export const sendUserSignupOtp = async (req, res) => {
   }
 };
 
+export const sendUserSignupPhoneOtp = async (req, res) => {
+  try {
+    const normalizedPhone = normalizePhoneNumber(req.body.phone);
+
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: 'Valid phone number is required.' });
+    }
+
+    const existing = await User.findOne({ where: { phone: normalizedPhone }, paranoid: false });
+    if (existing && !existing.deletedAt) {
+      return res.status(400).json({ message: 'Phone number is already registered.' });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    signupPhoneOtpStore.set(normalizedPhone, {
+      hash: buildPhoneOtpHash(normalizedPhone, otp),
+      expiresAt: Date.now() + SIGNUP_OTP_EXPIRY_MS,
+      attempts: 0,
+    });
+
+    try {
+      await sendSms({
+        to: normalizedPhone,
+        body: `Your Artistry phone OTP is ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (smsErr) {
+      signupPhoneOtpStore.delete(normalizedPhone);
+      console.error('sendUserSignupPhoneOtp sms error:', smsErr && smsErr.message ? smsErr.message : smsErr);
+      return res.status(500).json({ message: 'Failed to send phone OTP', error: String(smsErr && smsErr.message ? smsErr.message : smsErr) });
+    }
+
+    return res.json({ message: 'Phone OTP sent successfully.' });
+  } catch (error) {
+    console.error('sendUserSignupPhoneOtp error:', error);
+    return res.status(500).json({ message: 'Failed to send phone OTP.' });
+  }
+};
+
 // Register user
 export const register = async (req, res) => {
   try {
-    const { name, email, password, street, city, state, zipcode, country, phone, otp } = req.body;
+    const { name, email, password, street, city, state, zipcode, country, phone, otp, phoneOtp } = req.body;
     const normalized = normalizeEmail(email);
+    const normalizedPhone = normalizePhoneNumber(phone);
 
-    if (!name || !normalized || !password || !street || !city || !state || !zipcode || !country || !phone) {
+    if (!name || !normalized || !password || !street || !city || !state || !zipcode || !country || !normalizedPhone) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required for sign up.' });
+    }
+
+    if (!phoneOtp) {
+      return res.status(400).json({ message: 'Phone OTP is required for sign up.' });
     }
 
     let user = await User.findOne({ where: { email: normalized }, paranoid: false });
@@ -123,6 +199,11 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: otpValidation.message });
     }
 
+    const phoneOtpValidation = validatePhoneSignupOtp(normalizedPhone, phoneOtp);
+    if (!phoneOtpValidation.valid) {
+      return res.status(400).json({ message: phoneOtpValidation.message });
+    }
+
     if (user && user.deletedAt) {
       await user.restore();
       await user.update({
@@ -134,10 +215,11 @@ export const register = async (req, res) => {
         state,
         zipcode,
         country,
-        phone,
+        phone: normalizedPhone,
       });
 
       signupOtpStore.delete(normalized);
+      signupPhoneOtpStore.delete(normalizedPhone);
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: '7d',
@@ -169,10 +251,11 @@ export const register = async (req, res) => {
       state,
       zipcode,
       country,
-      phone,
+      phone: normalizedPhone,
     });
 
     signupOtpStore.delete(normalized);
+    signupPhoneOtpStore.delete(normalizedPhone);
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '7d',

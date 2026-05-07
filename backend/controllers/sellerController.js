@@ -7,12 +7,14 @@ import ReturnRequest from '../models/ReturnRequest.js';
 import { ARTISAN_TYPES_ARRAY } from '../utils/artisanTypes.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
+import { normalizePhoneNumber, sendSms } from '../utils/sms.js';
 import { Op } from 'sequelize';
 import { uploadImage } from '../utils/media.js';
 import { sequelize } from '../config/database.js';
 
 const SUPPORT_SELLER_EMAIL = 'admin.support@artistry.local';
 const sellerSignupOtpStore = new Map();
+const sellerSignupPhoneOtpStore = new Map();
 const SIGNUP_OTP_EXPIRY_MS = 10 * 60 * 1000;
 const SIGNUP_OTP_MAX_ATTEMPTS = 5;
 
@@ -20,6 +22,10 @@ const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 const buildSignupOtpHash = (email, otp) => {
   return crypto.createHash('sha256').update(`${normalizeEmail(email)}:${String(otp || '').trim()}`).digest('hex');
+};
+
+const buildPhoneOtpHash = (phone, otp) => {
+  return crypto.createHash('sha256').update(`${normalizePhoneNumber(phone)}:${String(otp || '').trim()}`).digest('hex');
 };
 
 const validateSellerSignupOtp = (email, otp) => {
@@ -44,6 +50,33 @@ const validateSellerSignupOtp = (email, otp) => {
     record.attempts += 1;
     sellerSignupOtpStore.set(key, record);
     return { valid: false, message: 'Invalid OTP code.' };
+  }
+
+  return { valid: true };
+};
+
+const validateSellerPhoneSignupOtp = (phone, otp) => {
+  const key = normalizePhoneNumber(phone);
+  const record = sellerSignupPhoneOtpStore.get(key);
+
+  if (!record) {
+    return { valid: false, message: 'Phone OTP not found. Please request a new OTP.' };
+  }
+
+  if (record.expiresAt <= Date.now()) {
+    sellerSignupPhoneOtpStore.delete(key);
+    return { valid: false, message: 'Phone OTP expired. Please request a new OTP.' };
+  }
+
+  if (record.attempts >= SIGNUP_OTP_MAX_ATTEMPTS) {
+    sellerSignupPhoneOtpStore.delete(key);
+    return { valid: false, message: 'Too many invalid phone OTP attempts. Please request a new OTP.' };
+  }
+
+  if (record.hash !== buildPhoneOtpHash(phone, otp)) {
+    record.attempts += 1;
+    sellerSignupPhoneOtpStore.set(key, record);
+    return { valid: false, message: 'Invalid phone OTP code.' };
   }
 
   return { valid: true };
@@ -93,6 +126,44 @@ export const sendSellerSignupOtp = async (req, res) => {
   } catch (error) {
     console.error('sendSellerSignupOtp error:', error);
     return res.status(500).json({ message: 'Failed to send OTP.' });
+  }
+};
+
+export const sendSellerSignupPhoneOtp = async (req, res) => {
+  try {
+    const normalizedPhone = normalizePhoneNumber(req.body.phone);
+
+    if (!normalizedPhone) {
+      return res.status(400).json({ message: 'Valid phone number is required.' });
+    }
+
+    const existing = await Seller.findOne({ where: { phone: normalizedPhone }, paranoid: false });
+    if (existing && !existing.deletedAt) {
+      return res.status(400).json({ message: 'Phone number is already registered.' });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    sellerSignupPhoneOtpStore.set(normalizedPhone, {
+      hash: buildPhoneOtpHash(normalizedPhone, otp),
+      expiresAt: Date.now() + SIGNUP_OTP_EXPIRY_MS,
+      attempts: 0,
+    });
+
+    try {
+      await sendSms({
+        to: normalizedPhone,
+        body: `Your Artistry seller phone OTP is ${otp}. It expires in 10 minutes.`,
+      });
+    } catch (smsErr) {
+      sellerSignupPhoneOtpStore.delete(normalizedPhone);
+      console.error('sendSellerSignupPhoneOtp sms error:', smsErr && smsErr.message ? smsErr.message : smsErr);
+      return res.status(500).json({ message: 'Failed to send phone OTP', error: String(smsErr && smsErr.message ? smsErr.message : smsErr) });
+    }
+
+    return res.json({ message: 'Phone OTP sent successfully.' });
+  } catch (error) {
+    console.error('sendSellerSignupPhoneOtp error:', error);
+    return res.status(500).json({ message: 'Failed to send phone OTP.' });
   }
 };
 
@@ -164,16 +235,21 @@ const normalizePaymentSettings = (raw) => {
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
-    const { name, email, password, storeName, artisanType, phone, address, otp } = req.body;
+    const { name, email, password, storeName, artisanType, phone, address, otp, phoneOtp } = req.body;
     const normalizedEmail = normalizeEmail(email);
+    const normalizedPhone = normalizePhoneNumber(phone);
     const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
 
-    if (!name || !normalizedEmail || !password || !storeName) {
+    if (!name || !normalizedEmail || !password || !storeName || !normalizedPhone) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required for sign up.' });
+    }
+
+    if (!phoneOtp) {
+      return res.status(400).json({ message: 'Phone OTP is required for sign up.' });
     }
 
     // Check both active and soft-deleted sellers to avoid unique-constraint 500s.
@@ -190,6 +266,11 @@ export const registerSeller = async (req, res) => {
     const otpValidation = validateSellerSignupOtp(normalizedEmail, otp);
     if (!otpValidation.valid) {
       return res.status(400).json({ message: otpValidation.message });
+    }
+
+    const phoneOtpValidation = validateSellerPhoneSignupOtp(normalizedPhone, phoneOtp);
+    if (!phoneOtpValidation.valid) {
+      return res.status(400).json({ message: phoneOtpValidation.message });
     }
 
     let proofOfArtisan = null;
@@ -214,7 +295,7 @@ export const registerSeller = async (req, res) => {
         password,
         storeName,
         artisanType: artisanType || null,
-        phone,
+        phone: normalizedPhone,
         address,
         pickupLocations,
         proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
@@ -230,7 +311,7 @@ export const registerSeller = async (req, res) => {
         password,
         storeName,
         artisanType: artisanType || null,
-        phone,
+        phone: normalizedPhone,
         address,
         pickupLocations,
         proofOfArtisan,
@@ -239,6 +320,7 @@ export const registerSeller = async (req, res) => {
     }
 
     sellerSignupOtpStore.delete(normalizedEmail);
+    sellerSignupPhoneOtpStore.delete(normalizedPhone);
 
     const token = generateSellerToken(seller.id);
 

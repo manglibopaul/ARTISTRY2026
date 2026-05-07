@@ -26,8 +26,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [signupOtp, setSignupOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [otpNotice, setOtpNotice] = useState('');
+  const [phoneOtpNotice, setPhoneOtpNotice] = useState('');
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [signupMapLat, setSignupMapLat] = useState(null);
   const [signupMapLon, setSignupMapLon] = useState(null);
@@ -136,6 +139,37 @@ const Login = () => {
     }
   }
 
+  const sendPhoneSignupOtp = async () => {
+    setError(null)
+    setPhoneOtpNotice('')
+
+    const normalizedPhone = String(phone || '').trim()
+    if (!normalizedPhone) {
+      setError('Enter your phone number first to receive a phone OTP.')
+      return
+    }
+
+    setSendingPhoneOtp(true)
+    try {
+      const res = await fetch(`${apiUrl}/api/users/register/send-phone-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: normalizedPhone }),
+      })
+
+      if (!res.ok) {
+        const message = await readErrorMessage(res)
+        throw new Error(message || 'Failed to send phone OTP')
+      }
+
+      setPhoneOtpNotice('Phone OTP sent successfully. Check your phone.')
+    } catch (err) {
+      setError(err.message || 'Failed to send phone OTP')
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -147,10 +181,14 @@ const Login = () => {
       setError('OTP is required to complete sign up.');
       return;
     }
+    if (mode === 'Sign Up' && !String(phoneOtp || '').trim()) {
+      setError('Phone OTP is required to complete sign up.');
+      return;
+    }
     setLoading(true);
     try {
       const endpoint = mode === 'Sign In' ? `${apiUrl}/api/users/login` : `${apiUrl}/api/users/register`;
-      const body = mode === 'Sign In' ? { email, password } : { name, email, password, street, city, state, zipcode, country, phone, otp: signupOtp };
+      const body = mode === 'Sign In' ? { email, password } : { name, email, password, street, city, state, zipcode, country, phone, otp: signupOtp, phoneOtp };
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -230,6 +268,24 @@ const Login = () => {
                 placeholder='Phone'
                 className='w-full border rounded-md px-4 py-3 placeholder-gray-400'
               />
+              <div className='flex gap-2'>
+                <input
+                  value={phoneOtp}
+                  onChange={e => setPhoneOtp(e.target.value)}
+                  required
+                  placeholder='Phone OTP'
+                  className='w-full border rounded-md px-4 py-3 placeholder-gray-400'
+                />
+                <button
+                  type='button'
+                  onClick={sendPhoneSignupOtp}
+                  disabled={sendingPhoneOtp}
+                  className='whitespace-nowrap border rounded-md px-4 py-3 text-sm hover:bg-gray-50 disabled:opacity-60'
+                >
+                  {sendingPhoneOtp ? 'Sending...' : 'Send Phone OTP'}
+                </button>
+              </div>
+              {phoneOtpNotice && <p className='text-xs text-green-700'>{phoneOtpNotice}</p>}
               <input
                 value={street}
                 onChange={e => setStreet(e.target.value)}
@@ -316,7 +372,7 @@ const Login = () => {
                   value={signupOtp}
                   onChange={e => setSignupOtp(e.target.value)}
                   required
-                  placeholder='Enter OTP'
+                  placeholder='Email OTP'
                   className='w-full border rounded-md px-4 py-3 placeholder-gray-400'
                 />
                 <button
@@ -391,11 +447,11 @@ const Login = () => {
           <div className='text-center text-sm text-gray-600'>
             {mode === 'Sign In' ? (
               <>
-                Don't have an account? <button type='button' onClick={() => setMode('Sign Up')} className='text-black underline ml-1'>Sign Up</button>
+                Don't have an account? <button type='button' onClick={() => { setMode('Sign Up'); setPhoneOtp(''); setPhoneOtpNotice(''); }} className='text-black underline ml-1'>Sign Up</button>
               </>
             ) : (
               <>
-                Already have an account? <button type='button' onClick={() => { setMode('Sign In'); setAcceptedTerms(false); setSignupOtp(''); setOtpNotice(''); }} className='text-black underline ml-1'>Sign In</button>
+                Already have an account? <button type='button' onClick={() => { setMode('Sign In'); setAcceptedTerms(false); setSignupOtp(''); setPhoneOtp(''); setOtpNotice(''); setPhoneOtpNotice(''); }} className='text-black underline ml-1'>Sign In</button>
               </>
             )}
           </div>

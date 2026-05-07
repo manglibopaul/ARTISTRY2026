@@ -23,7 +23,9 @@ const SellerLogin = () => {
   const [isLogin, setIsLogin] = useState(() => !new URLSearchParams(location.search).get('mode')?.toLowerCase().includes('signup'))
   const [error, setError] = useState('')
   const [otpNotice, setOtpNotice] = useState('')
+  const [phoneOtpNotice, setPhoneOtpNotice] = useState('')
   const [sendingOtp, setSendingOtp] = useState(false)
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showSellerAddressPicker, setShowSellerAddressPicker] = useState(false)
@@ -39,6 +41,7 @@ const SellerLogin = () => {
     pickupLocations: [],
     proofOfArtisan: null,
     otp: '',
+    phoneOtp: '',
   })
   const [pickupInput, setPickupInput] = useState('')
 
@@ -110,6 +113,33 @@ const SellerLogin = () => {
     }
   }
 
+  const sendPhoneSignupOtp = async () => {
+    setError('')
+    setPhoneOtpNotice('')
+
+    const normalizedPhone = String(formData.phone || '').trim()
+    if (!normalizedPhone) {
+      setError('Enter your phone number first to receive a phone OTP.')
+      return
+    }
+
+    setSendingPhoneOtp(true)
+    try {
+      const endpoint = `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')}/api/sellers/register/send-phone-otp`
+      const response = await axios.post(endpoint, { phone: normalizedPhone }, { timeout: 30000 })
+      setPhoneOtpNotice(response?.data?.message || 'Phone OTP sent successfully. Check your phone.')
+    } catch (err) {
+      const backendMessage = err.response?.data?.message
+      const backendError = err.response?.data?.error
+      const msg = backendError
+        ? `${backendMessage || 'Failed to send phone OTP'}: ${backendError}`
+        : (backendMessage || err.message || 'Failed to send phone OTP')
+      setError(msg)
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!isLogin && !acceptedTerms) {
@@ -118,6 +148,10 @@ const SellerLogin = () => {
     }
     if (!isLogin && !String(formData.otp || '').trim()) {
       setError('OTP is required to complete sign up.')
+      return
+    }
+    if (!isLogin && !String(formData.phoneOtp || '').trim()) {
+      setError('Phone OTP is required to complete sign up.')
       return
     }
     setLoading(true)
@@ -215,7 +249,28 @@ const SellerLogin = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                required
               />
+              <div className='flex gap-2'>
+                <input
+                  type='text'
+                  name='phoneOtp'
+                  placeholder='Phone OTP'
+                  value={formData.phoneOtp}
+                  onChange={handleChange}
+                  className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                  required
+                />
+                <button
+                  type='button'
+                  onClick={sendPhoneSignupOtp}
+                  disabled={sendingPhoneOtp}
+                  className='whitespace-nowrap border border-gray-300 rounded-lg px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60'
+                >
+                  {sendingPhoneOtp ? 'Sending...' : 'Send Phone OTP'}
+                </button>
+              </div>
+              {phoneOtpNotice && <p className='text-xs text-green-700'>{phoneOtpNotice}</p>}
               <textarea
                 name='address'
                 placeholder='Address'
@@ -276,7 +331,7 @@ const SellerLogin = () => {
                 <input
                   type='text'
                   name='otp'
-                  placeholder='Enter OTP'
+                  placeholder='Email OTP'
                   value={formData.otp}
                   onChange={handleChange}
                   className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
@@ -372,8 +427,10 @@ const SellerLogin = () => {
                 pickupLocations: [],
                 proofOfArtisan: null,
                 otp: '',
+                    phoneOtp: '',
               })
               setOtpNotice('')
+                  setPhoneOtpNotice('')
             }}
             className='text-black font-medium hover:underline'
           >
