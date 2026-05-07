@@ -107,7 +107,8 @@ export const createOrder = async (req, res) => {
     let commission = req.body.commission;
     const couponCode = req.body.couponCode || null;
     const discount = Number(req.body.discount) || 0;
-    const isPickup = (String(paymentMethod || '') === 'pickup');
+    let deliveryModeBySeller = req.body?.deliveryModeBySeller || {};
+    let pickupLocationsBySeller = req.body?.pickupLocationsBySeller || {};
 
     // If `items` was sent as a JSON string (multipart/form-data), parse it.
     if (typeof items === 'string') {
@@ -123,20 +124,38 @@ export const createOrder = async (req, res) => {
       try { address = JSON.parse(address); } catch (e) { /* keep as string fallback */ }
     }
 
+    if (typeof deliveryModeBySeller === 'string') {
+      try { deliveryModeBySeller = JSON.parse(deliveryModeBySeller); } catch { deliveryModeBySeller = {}; }
+    }
+    if (!deliveryModeBySeller || typeof deliveryModeBySeller !== 'object') {
+      deliveryModeBySeller = {};
+    }
+
+    if (typeof pickupLocationsBySeller === 'string') {
+      try { pickupLocationsBySeller = JSON.parse(pickupLocationsBySeller); } catch { pickupLocationsBySeller = {}; }
+    }
+    if (!pickupLocationsBySeller || typeof pickupLocationsBySeller !== 'object') {
+      pickupLocationsBySeller = {};
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Cannot place order with empty cart' });
     }
 
-    if (!isPickup) {
+    const requestedPaymentMethod = String(paymentMethod || '').toLowerCase();
+    const defaultMode = requestedPaymentMethod === 'pickup' ? 'pickup' : 'delivery';
+
+    if (!['cod', 'gcash', 'pickup'].includes(requestedPaymentMethod)) {
+      return res.status(400).json({ message: 'Invalid payment method.' });
+    }
+
+    if (!['cod', 'gcash'].includes(requestedPaymentMethod) && defaultMode !== 'pickup') {
+      return res.status(400).json({ message: 'Invalid payment method for delivery.' });
+    }
+
+    if (requestedPaymentMethod !== 'pickup') {
       if (!['cod', 'gcash'].includes(paymentMethod)) {
         return res.status(400).json({ message: 'Invalid payment method for delivery.' });
-      }
-
-      const addressErrors = validateDeliveryAddress(address);
-      if (addressErrors.length) {
-        return res.status(400).json({
-          message: `Delivery address validation failed: ${addressErrors.join(' ')}`,
-        });
       }
     }
 
@@ -172,7 +191,10 @@ export const createOrder = async (req, res) => {
           }
           // Add delivery mode for admin display
           if (!newItem.deliveryMode) {
-            newItem.deliveryMode = req.body.paymentMethod === 'pickup' ? 'pickup' : 'delivery';
+            const sellerMode = deliveryModeBySeller[String(newItem.sellerId)] || deliveryModeBySeller[newItem.sellerId];
+            newItem.deliveryMode = String(sellerMode || defaultMode).toLowerCase() === 'pickup' ? 'pickup' : 'delivery';
+          } else {
+            newItem.deliveryMode = String(newItem.deliveryMode).toLowerCase() === 'pickup' ? 'pickup' : 'delivery';
           }
           return newItem;
         } catch {
@@ -182,6 +204,24 @@ export const createOrder = async (req, res) => {
       })
     );
 
+    const pickupItems = normalizedItems.filter((it) => String(it.deliveryMode || '').toLowerCase() === 'pickup');
+    const deliveryItems = normalizedItems.filter((it) => String(it.deliveryMode || '').toLowerCase() !== 'pickup');
+    const hasPickupItems = pickupItems.length > 0;
+    const hasDeliveryItems = deliveryItems.length > 0;
+
+    if (hasDeliveryItems) {
+      if (!['cod', 'gcash'].includes(requestedPaymentMethod)) {
+        return res.status(400).json({ message: 'Invalid payment method for delivery items.' });
+      }
+
+      const addressErrors = validateDeliveryAddress(address);
+      if (addressErrors.length) {
+        return res.status(400).json({
+          message: `Delivery address validation failed: ${addressErrors.join(' ')}`,
+        });
+      }
+    }
+
     // Determine shipping fee and initial status for pickup vs delivery.
     // Delivery shipping is summed per seller in the cart.
     let shippingFee = 0;
@@ -189,9 +229,9 @@ export const createOrder = async (req, res) => {
     const shippingMethod = req.body.shippingMethod || 'Standard Shipping';
     const initialStatus = 'pending';
 
-    if (!isPickup) {
+    if (hasDeliveryItems) {
       const sellerIds = [...new Set(
-        normalizedItems
+        deliveryItems
           .map((it) => Number(it.sellerId))
           .filter((id) => Number.isFinite(id) && id > 0)
       )];
@@ -207,14 +247,14 @@ export const createOrder = async (req, res) => {
           .filter((sid) => {
             const seller = sellerMap[sid];
             const paymentSettings = normalizePaymentSettings(seller?.paymentSettings);
-            if (paymentMethod === 'cod') return !paymentSettings.acceptsCOD;
-            if (paymentMethod === 'gcash') return !paymentSettings.acceptsGCash;
+            if (requestedPaymentMethod === 'cod') return !paymentSettings.acceptsCOD;
+            if (requestedPaymentMethod === 'gcash') return !paymentSettings.acceptsGCash;
             return true;
           })
           .map((sid) => sellerMap[sid]?.storeName || `Seller #${sid}`);
 
         if (unsupportedSellers.length > 0) {
-          const methodLabel = paymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery';
+          const methodLabel = requestedPaymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery';
           return res.status(400).json({
             message: `${methodLabel} is not accepted by: ${unsupportedSellers.join(', ')}. Please choose another payment method.`,
           });
@@ -222,7 +262,7 @@ export const createOrder = async (req, res) => {
       }
 
       // Calculate each seller subtotal to support seller-level free shipping thresholds.
-      const sellerSubtotals = normalizedItems.reduce((acc, it) => {
+      const sellerSubtotals = deliveryItems.reduce((acc, it) => {
         const sid = Number(it.sellerId);
         if (!Number.isFinite(sid) || sid <= 0) return acc;
         const line = (Number(it.price) || 0) * (Number(it.quantity) || 1);
@@ -254,10 +294,9 @@ export const createOrder = async (req, res) => {
 
     // Validate pickup location per seller for pickup orders.
     let pickupLocation = null;
-    if (isPickup) {
-      const pickupLocationsBySeller = req.body?.pickupLocationsBySeller || {};
+    if (hasPickupItems) {
       const sellerIds = [...new Set(
-        normalizedItems
+        pickupItems
           .map((it) => Number(it.sellerId))
           .filter((id) => Number.isFinite(id) && id > 0)
       )];
@@ -287,6 +326,9 @@ export const createOrder = async (req, res) => {
       }
 
       normalizedItems = normalizedItems.map((it) => {
+        if (String(it.deliveryMode || '').toLowerCase() !== 'pickup') {
+          return { ...it, pickupLocation: null };
+        }
         const sid = Number(it.sellerId);
         if (!Number.isFinite(sid) || sid <= 0) return it;
         return {
@@ -308,7 +350,7 @@ export const createOrder = async (req, res) => {
     // Reservation fields (optional)
     let reservationDateTime = req.body?.reservationDateTime ? new Date(req.body.reservationDateTime) : null;
     let reservationNote = req.body?.reservationNote || null;
-    if (!isPickup) {
+    if (!hasPickupItems) {
       reservationDateTime = null;
       reservationNote = null;
     }
@@ -328,7 +370,7 @@ export const createOrder = async (req, res) => {
     // remove the uploaded file and clear any gcashReceipt path to avoid
     // accidental DB writes or schema-dependent errors on older deployments.
     try {
-      if (req.file && String(paymentMethod || '').toLowerCase() !== 'gcash') {
+      if (req.file && requestedPaymentMethod !== 'gcash') {
         try {
           if (req.file.path) {
             fs.unlink(req.file.path, (err) => {
@@ -352,7 +394,7 @@ export const createOrder = async (req, res) => {
     let firstName = address?.firstName;
     let lastName = address?.lastName;
     let email = address?.email;
-    if (isPickup && (!firstName && !lastName)) {
+    if (!hasDeliveryItems && (!firstName && !lastName)) {
       // Fetch user profile
       const user = await (await import('../models/User.js')).default.findByPk(req.user.id);
       if (user) {
@@ -366,7 +408,9 @@ export const createOrder = async (req, res) => {
 
     const groupedBySeller = normalizedItems.reduce((acc, item) => {
       const sid = Number(item.sellerId);
-      const key = Number.isFinite(sid) && sid > 0 ? String(sid) : 'unspecified';
+      const mode = String(item.deliveryMode || '').toLowerCase() === 'pickup' ? 'pickup' : 'delivery';
+      const sellerKey = Number.isFinite(sid) && sid > 0 ? String(sid) : 'unspecified';
+      const key = `${sellerKey}::${mode}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(item);
       return acc;
@@ -382,14 +426,16 @@ export const createOrder = async (req, res) => {
         return sum + ((Number(it.price) || 0) * (Number(it.quantity) || 1));
       }, 0);
 
-      const numericSellerId = Number(groupKey);
-      const sellerSpecificShipping = isPickup
+      const [rawSellerId, groupMode = 'delivery'] = String(groupKey).split('::');
+      const numericSellerId = Number(rawSellerId);
+      const groupIsPickup = groupMode === 'pickup';
+      const sellerSpecificShipping = groupIsPickup
         ? 0
         : (Number.isFinite(numericSellerId) && shippingFeeBySeller[numericSellerId] !== undefined
           ? Number(shippingFeeBySeller[numericSellerId])
           : (shouldSplitBySeller ? 40 : shippingFee));
 
-      const sellerSpecificPickupLocation = isPickup
+      const sellerSpecificPickupLocation = groupIsPickup
         ? (itemsForOrder[0]?.pickupLocation || null)
         : null;
 
@@ -413,7 +459,7 @@ export const createOrder = async (req, res) => {
         pickupLocation: sellerSpecificPickupLocation,
         reservationDateTime,
         reservationNote,
-        paymentMethod,
+        paymentMethod: groupIsPickup ? 'pickup' : requestedPaymentMethod,
         subtotal: sellerSpecificSubtotal,
         commission,
         shippingFee: sellerSpecificShipping,
@@ -446,7 +492,7 @@ export const createOrder = async (req, res) => {
       }
 
       // Only attach gcashReceipt when payment method is GCash and a file was uploaded
-      if (String(paymentMethod || '').toLowerCase() === 'gcash' && gcashReceiptPath && hasGcashColumn) {
+      if (!groupIsPickup && requestedPaymentMethod === 'gcash' && gcashReceiptPath && hasGcashColumn) {
         orderData.gcashReceipt = gcashReceiptPath;
       }
 
@@ -457,7 +503,7 @@ export const createOrder = async (req, res) => {
         const fieldsToInsert = Object.keys(orderData).filter(k => modelFields.includes(k));
 
         // If payment is not GCash, ensure gcashReceipt is not present
-        if (String(paymentMethod || '').toLowerCase() !== 'gcash') {
+        if (groupIsPickup || requestedPaymentMethod !== 'gcash') {
           delete orderData.gcashReceipt;
         }
 
@@ -553,11 +599,13 @@ export const createOrder = async (req, res) => {
       const orderIdList = createdOrders.map((o) => `#${o.id}`).join(', ');
       const combinedTotal = createdOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
-      const paymentLabel = paymentMethod === 'pickup'
-        ? 'Pickup'
-        : paymentMethod === 'gcash'
-          ? 'GCash'
-          : 'Cash on Delivery';
+      const paymentLabel = hasPickupItems && hasDeliveryItems
+        ? (requestedPaymentMethod === 'gcash' ? 'Mixed (Pickup + GCash Delivery)' : 'Mixed (Pickup + COD Delivery)')
+        : hasPickupItems
+          ? 'Pickup'
+          : requestedPaymentMethod === 'gcash'
+            ? 'GCash'
+            : 'Cash on Delivery';
 
       try {
         await sendEmail({
@@ -577,7 +625,7 @@ export const createOrder = async (req, res) => {
               <p>Shipping: <strong>₱${shippingFee.toFixed(2)}</strong></p>
               <p style="font-size: 18px;">Total: <strong>₱${combinedTotal.toFixed(2)}</strong></p>
               <p>Payment Method: <strong>${paymentLabel}</strong></p>
-              ${isPickup && pickupLocation ? `<p>Pickup Location: <strong>${pickupLocation}</strong></p>` : ''}
+              ${hasPickupItems && pickupLocation ? `<p>Pickup Location: <strong>${pickupLocation}</strong></p>` : ''}
               <hr style="border: 1px solid #eee;" />
               <p style="color: #666; font-size: 14px;">Thank you for shopping with Aninaya!</p>
             </div>

@@ -167,7 +167,6 @@ const buildPickupGeocodeQueries = (location) => {
 
 const PlaceOrder = () => {
 
-  const [method,setMethod] = useState('delivery')
   const [paymentOption, setPaymentOption] = useState('cod')
   const [gcashReceipt, setGcashReceipt] = useState(null);
   const [gcashReceiptError, setGcashReceiptError] = useState('');
@@ -209,6 +208,7 @@ const PlaceOrder = () => {
   const [deliveryMapLat, setDeliveryMapLat] = useState(null)
   const [deliveryMapLon, setDeliveryMapLon] = useState(null)
   const [pickupMapLocations, setPickupMapLocations] = useState({})
+  const [deliveryModeBySeller, setDeliveryModeBySeller] = React.useState({})
 
   const openModal = (title, message) => {
     setModalState({ open: true, title, message })
@@ -224,18 +224,6 @@ const PlaceOrder = () => {
 
   const closePhotoModal = () => {
     setPhotoModal({ open: false, photoUrl: '', title: '' })
-  }
-
-  // Use this to change delivery method and clear GCash receipt state for pickup
-  const handleSetMethod = (m) => {
-    setMethod(m)
-    if (m === 'pickup') {
-      // clear any GCash receipt since payment happens at pickup
-      setGcashReceipt(null)
-      setGcashReceiptError('')
-      // prefer COD as default option when switching to pickup
-      setPaymentOption('cod')
-    }
   }
 
   React.useEffect(() => {
@@ -409,8 +397,10 @@ const PlaceOrder = () => {
       setSellerPaymentInfo(paymentInfo)
 
       const paymentValues = Object.values(paymentInfo)
-      const canUseCOD = paymentValues.length === 0 ? true : paymentValues.every((info) => info.acceptsCOD)
-      const canUseGCash = paymentValues.length === 0 ? true : paymentValues.every((info) => info.acceptsGCash)
+      const deliverySellerIds = Object.keys(deliveryModeBySeller).filter((sid) => deliveryModeBySeller[sid] !== 'pickup')
+      const deliveryPaymentValues = paymentValues.filter((info) => deliverySellerIds.includes(String(info.sellerId)))
+      const canUseCOD = deliveryPaymentValues.length === 0 ? true : deliveryPaymentValues.every((info) => info.acceptsCOD)
+      const canUseGCash = deliveryPaymentValues.length === 0 ? true : deliveryPaymentValues.every((info) => info.acceptsGCash)
       setAvailablePaymentMethods({ cod: canUseCOD, gcash: canUseGCash })
 
       setPaymentOption((prev) => {
@@ -420,7 +410,7 @@ const PlaceOrder = () => {
       })
     }
     fetchSellerData()
-  }, [cartsItems, products, apiUrl, selectedShippingRate])
+  }, [cartsItems, products, apiUrl, selectedShippingRate, deliveryModeBySeller])
 
   const pickupLocationsGrouped = React.useMemo(() => {
     const grouped = {}
@@ -437,6 +427,10 @@ const PlaceOrder = () => {
     console.log('DEBUG pickupLocationsGrouped:', result)
     return result
   }, [sellerPickupLocations])
+
+  const pickupLocationsForSelectedSellers = React.useMemo(() => {
+    return pickupLocationsGrouped.filter((seller) => deliveryModeBySeller[String(seller.sellerId)] === 'pickup')
+  }, [pickupLocationsGrouped, deliveryModeBySeller])
 
   React.useEffect(() => {
     const tempData = []
@@ -455,13 +449,51 @@ const PlaceOrder = () => {
     setCartData(tempData)
   }, [cartsItems])
 
+  const sellerIdsInCart = React.useMemo(() => {
+    const ids = new Set()
+    for (const key in cartsItems) {
+      const qty = Number(cartsItems[key]) || 0
+      if (qty <= 0) continue
+      const { id } = parseCartKey(key)
+      const prod = (products || []).find(p => String(p._id || p.id) === String(id))
+      const sid = Number(prod?.sellerId)
+      if (Number.isFinite(sid) && sid > 0) ids.add(String(sid))
+    }
+    return Array.from(ids)
+  }, [cartsItems, products])
+
+  React.useEffect(() => {
+    setDeliveryModeBySeller((prev) => {
+      const next = {}
+      sellerIdsInCart.forEach((sid) => {
+        next[sid] = prev[sid] || 'delivery'
+      })
+      return next
+    })
+  }, [sellerIdsInCart])
+
+  const hasAnyPickup = sellerIdsInCart.some((sid) => deliveryModeBySeller[sid] === 'pickup')
+  const hasAnyDelivery = sellerIdsInCart.some((sid) => deliveryModeBySeller[sid] !== 'pickup')
+
+  const sellerModeOptions = React.useMemo(() => {
+    return sellerIdsInCart.map((sid) => {
+      const shipping = sellerShippingInfo[sid]
+      const payment = sellerPaymentInfo[sid]
+      const pickupGroup = pickupLocationsGrouped.find((group) => String(group.sellerId) === String(sid))
+      return {
+        sellerId: String(sid),
+        storeName: shipping?.storeName || payment?.storeName || pickupGroup?.storeName || `Seller #${sid}`,
+      }
+    })
+  }, [sellerIdsInCart, sellerShippingInfo, sellerPaymentInfo, pickupLocationsGrouped])
+
   // Geocode delivery address to get map coordinates
 
 
   const subtotal = getCartAmount ? getCartAmount() : 0
 
   const computedShippingFee = React.useMemo(() => {
-    if (method === 'pickup') return 0
+    if (!hasAnyDelivery) return 0
 
     const sellerSubtotals = {}
     const sellerIds = new Set()
@@ -472,6 +504,7 @@ const PlaceOrder = () => {
       const prod = (products || []).find(p => String(p._id || p.id) === String(id))
       const sid = Number(prod?.sellerId)
       if (!Number.isFinite(sid) || sid <= 0) continue
+      if (deliveryModeBySeller[String(sid)] === 'pickup') continue
       sellerIds.add(sid)
       const line = (Number(prod?.price) || 0) * qty
       sellerSubtotals[sid] = (sellerSubtotals[sid] || 0) + line
@@ -497,7 +530,7 @@ const PlaceOrder = () => {
 
     if (sellerIds.size === 0) return 40
     return totalShipping
-  }, [method, cartsItems, products, sellerShippingInfo, selectedShippingRate])
+  }, [hasAnyDelivery, cartsItems, products, sellerShippingInfo, selectedShippingRate, deliveryModeBySeller])
 
   const fillNewAddress = () => {
     if (savedAddress) {
@@ -538,7 +571,7 @@ const PlaceOrder = () => {
           {/* Contact Section removed */}
 
           {/* Delivery Section */}
-          {method !== 'pickup' ? (
+          {hasAnyDelivery && (
             <div>
               <h2 className='text-xl sm:text-2xl font-bold mb-3 sm:mb-4'>Delivery</h2>
 
@@ -765,10 +798,12 @@ const PlaceOrder = () => {
                 </div>
               )}
             </div>
-          ) : (
+          )}
+
+          {hasAnyPickup && (
             <div className='p-3 sm:p-4 border rounded bg-yellow-50'>
               <div className='text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4'>
-                You selected <strong>Pick Up</strong>. No shipping address is required — your order will be held for pickup.
+                Pickup is selected for one or more sellers. Select a pickup location per pickup seller.
               </div>
               <div className='mb-3 sm:mb-4 p-3 bg-blue-50 border border-blue-200 rounded'>
                 <p className='text-xs sm:text-sm text-blue-800'>
@@ -777,9 +812,9 @@ const PlaceOrder = () => {
               </div>
               <div>
                 <label className='block text-xs sm:text-sm font-medium mb-2'>Pickup location per seller</label>
-                {pickupLocationsGrouped.length > 0 ? (
+                {pickupLocationsForSelectedSellers.length > 0 ? (
                   <div className='space-y-3'>
-                    {pickupLocationsGrouped.map((seller) => (
+                    {pickupLocationsForSelectedSellers.map((seller) => (
                       <div key={seller.sellerId} className='border rounded p-3 bg-white'>
                         <p className='text-xs sm:text-sm font-medium text-gray-700 mb-2'>{seller.storeName}</p>
                         <select
@@ -816,7 +851,7 @@ const PlaceOrder = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className='text-sm text-gray-500'>No pickup locations available. The sellers in your cart have not set pickup locations yet.</p>
+                  <p className='text-sm text-gray-500'>No pickup locations available for the sellers currently set to pickup.</p>
                 )}
               </div>
             </div>
@@ -888,7 +923,7 @@ const PlaceOrder = () => {
               </div>
             )}
 
-            {method !== 'pickup' && (
+            {hasAnyDelivery && (
               <div className='flex justify-between text-sm'>
                 <span className='text-gray-600'>Shipping{selectedShippingRate ? ` (${selectedShippingRate.name})` : ''}</span>
                 <span className='font-medium'>
@@ -910,18 +945,41 @@ const PlaceOrder = () => {
             </div>
           </div>
 
-          {/* Payment Method */}
+          {/* Delivery Mode Per Seller */}
           <div className='mt-6 sm:mt-8'>
             <h3 className='font-bold mb-3 sm:mb-4 text-base sm:text-lg'>Mode of Delivery</h3>
-            <div className='space-y-2 sm:space-y-3'>
-              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>handleSetMethod('pickup')}>
-                <input type="radio" name="payment" checked={method === 'pickup'} onChange={() => handleSetMethod('pickup')} className='w-4 h-4' />
-                <span className='font-medium text-sm sm:text-base'>Pick Up</span>
-              </label>
-              <label className='flex items-center gap-3 p-3 sm:p-4 border rounded cursor-pointer hover:bg-gray-50' onClick={()=>handleSetMethod('delivery')}>
-                <input type="radio" name="payment" checked={method === 'delivery'} onChange={() => handleSetMethod('delivery')} className='w-4 h-4' />
-                <span className='font-medium text-sm sm:text-base'>Delivery</span>
-              </label>
+            <div className='space-y-3'>
+              {sellerModeOptions.map((seller) => (
+                <div key={seller.sellerId} className='border rounded p-3 sm:p-4'>
+                  <p className='text-sm sm:text-base font-medium mb-3'>{seller.storeName}</p>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3'>
+                    <label className='flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50'>
+                      <input
+                        type="radio"
+                        name={`delivery-mode-${seller.sellerId}`}
+                        checked={(deliveryModeBySeller[seller.sellerId] || 'delivery') === 'pickup'}
+                        onChange={() => {
+                          setDeliveryModeBySeller((prev) => ({ ...prev, [seller.sellerId]: 'pickup' }))
+                          setGcashReceipt(null)
+                          setGcashReceiptError('')
+                        }}
+                        className='w-4 h-4'
+                      />
+                      <span className='text-sm sm:text-base'>Pick Up</span>
+                    </label>
+                    <label className='flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50'>
+                      <input
+                        type="radio"
+                        name={`delivery-mode-${seller.sellerId}`}
+                        checked={(deliveryModeBySeller[seller.sellerId] || 'delivery') === 'delivery'}
+                        onChange={() => setDeliveryModeBySeller((prev) => ({ ...prev, [seller.sellerId]: 'delivery' }))}
+                        className='w-4 h-4'
+                      />
+                      <span className='text-sm sm:text-base'>Delivery</span>
+                    </label>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -941,14 +999,20 @@ const PlaceOrder = () => {
               }
 
               const sellerIdsInCart = [...new Set(items.map(it => String(it.sellerId || '')).filter(Boolean))]
+              const pickupSellerIds = sellerIdsInCart.filter((sid) => deliveryModeBySeller[sid] === 'pickup')
+              const deliverySellerIds = sellerIdsInCart.filter((sid) => deliveryModeBySeller[sid] !== 'pickup')
+              const hasPickupInOrder = pickupSellerIds.length > 0
+              const hasDeliveryInOrder = deliverySellerIds.length > 0
 
-              if (method === 'pickup') {
-                const missingSellerPickup = sellerIdsInCart.filter((sid) => !pickupLocationsBySeller[sid])
+              if (hasPickupInOrder) {
+                const missingSellerPickup = pickupSellerIds.filter((sid) => !pickupLocationsBySeller[sid])
                 if (missingSellerPickup.length > 0) {
                   openModal('Pickup Location Required', 'Please select a pickup location for every seller in your order.')
                   return
                 }
-              } else {
+              }
+
+              if (hasDeliveryInOrder) {
                 if (!availablePaymentMethods.cod && !availablePaymentMethods.gcash) {
                   openModal('Payment Method Unavailable', 'No common payment method is available for all sellers in your cart. Please remove conflicting items or use pickup.')
                   return
@@ -971,14 +1035,24 @@ const PlaceOrder = () => {
                 }
               }
 
-              const itemsWithPickup = method === 'pickup'
-                ? items.map((it) => ({
+              const itemsWithPickupAndMode = items.map((it) => {
+                const sid = String(it.sellerId || '')
+                const deliveryMode = deliveryModeBySeller[sid] === 'pickup' ? 'pickup' : 'delivery'
+                if (deliveryMode === 'pickup') {
+                  return {
                     ...it,
-                    pickupLocation: pickupLocationsBySeller[String(it.sellerId)] || null,
-                  }))
-                : items
+                    deliveryMode,
+                    pickupLocation: pickupLocationsBySeller[sid] || null,
+                  }
+                }
+                return {
+                  ...it,
+                  deliveryMode,
+                  pickupLocation: null,
+                }
+              })
 
-              if (method !== 'pickup') {
+              if (hasDeliveryInOrder) {
                 const addressErrors = validateDeliveryAddress(selectedAddress)
 
                 if (addressErrors.length > 0) {
@@ -990,6 +1064,11 @@ const PlaceOrder = () => {
                 }
               }
 
+              if (!hasDeliveryInOrder) {
+                setGcashReceipt(null)
+                setGcashReceiptError('')
+              }
+
               // Split fullName into firstName and lastName
               let firstName = '';
               let lastName = '';
@@ -998,8 +1077,10 @@ const PlaceOrder = () => {
                 firstName = parts[0];
                 lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
               }
-              const address = method === 'pickup' ? {} : { firstName, lastName, phone: selectedAddress.phone, regionProvinceCityBarangay: selectedAddress.regionProvinceCityBarangay, zipcode: selectedAddress.zipcode, street: selectedAddress.street, email: selectedAddress.email, country: selectedAddress.country };
-              const pickupInfo = method === 'pickup' ? { reservationDateTime: reservationDateTime || null, reservationNote: reservationNote || null } : undefined;
+              const address = hasDeliveryInOrder
+                ? { firstName, lastName, phone: selectedAddress.phone, regionProvinceCityBarangay: selectedAddress.regionProvinceCityBarangay, zipcode: selectedAddress.zipcode, street: selectedAddress.street, email: selectedAddress.email, country: selectedAddress.country }
+                : {}
+              const pickupInfo = hasPickupInOrder ? { reservationDateTime: reservationDateTime || null, reservationNote: reservationNote || null } : undefined;
 
               try {
                 setPlacing(true);
@@ -1007,19 +1088,21 @@ const PlaceOrder = () => {
                   cartsItems,
                   productsCount: Array.isArray(products) ? products.length : 0,
                   items,
+                  deliveryModeBySeller,
                   pickupLocationsBySeller,
                 })
                 let orderPayload = {
-                  items: itemsWithPickup,
+                  items: itemsWithPickupAndMode,
                   address,
-                  paymentMethod: method === 'pickup' ? 'pickup' : paymentOption,
+                  paymentMethod: hasDeliveryInOrder ? paymentOption : 'pickup',
                   subtotal,
                   shippingFee: computedShippingFee,
                   shippingMethod: selectedShippingRate?.name || 'Standard Shipping',
                   commission: 0,
                   discount: appliedDiscount,
                   couponCode: appliedCoupon || null,
-                  pickupLocationsBySeller: method === 'pickup' ? pickupLocationsBySeller : null,
+                  deliveryModeBySeller,
+                  pickupLocationsBySeller: hasPickupInOrder ? pickupLocationsBySeller : null,
                   reservationDateTime: pickupInfo?.reservationDateTime || null,
                   reservationNote: pickupInfo?.reservationNote || null,
                 };
