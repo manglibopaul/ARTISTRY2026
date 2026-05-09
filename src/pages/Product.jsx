@@ -843,6 +843,31 @@ const Product = () => {
                 >
                   {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
                 </button>
+                <button
+                  onClick={async () => {
+                    if (productData.stock <= 0) return;
+                    try {
+                      // ensure only this item is in cart for buy-now
+                      await clearCart();
+                    } catch (e) {}
+                    const availableColors = getAvailableColors(productData);
+                    const availableSizes = getAvailableSizes(productData);
+                    try {
+                      await addToCart(
+                        productData._id || productData.id,
+                        quantity,
+                        availableColors.length ? cartColor : null,
+                        availableSizes.length ? selectedSize : null,
+                      );
+                    } catch (e) {}
+                    // navigate to checkout / place order
+                    try { navigate('/place-order'); } catch (e) {}
+                  }}
+                  className={`bg-amber-500 text-black px-6 py-3 text-sm rounded-md active:opacity-90 shadow-md hover:shadow-lg ml-2 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={productData.stock <= 0}
+                >
+                  BUY NOW
+                </button>
                 {/* added feedback badge */}
                 <div aria-hidden={!showAdded} className={`absolute -top-3 right-0 transform translate-x-1/2 transition-all duration-300 ${showAdded ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
                   <div className='bg-black text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md'>Added ✓</div>
