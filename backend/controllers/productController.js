@@ -189,7 +189,7 @@ export const getAllProducts = async (req, res) => {
     const offset = (page - 1) * limit;
     const isSummary = String(req.query?.summary || '').trim() === '1';
     const productAttributes = isSummary
-      ? ['id', 'name', 'price', 'stock', 'image', 'sellerId', 'sellerName', 'artisanType', 'category', 'subCategory', 'bestseller', 'createdAt']
+      ? ['id', 'name', 'price', 'stock', 'image', 'sellerId', 'category', 'subCategory', 'bestseller', 'createdAt']
       : undefined;
     const sellerAttributes = isSummary
       ? ['id', 'name', 'storeName', 'artisanType', 'avatar']
@@ -204,6 +204,7 @@ export const getAllProducts = async (req, res) => {
       include: [{
         model: Seller,
         attributes: sellerAttributes,
+        paranoid: false,
       }],
       distinct: true,
     });
@@ -234,6 +235,7 @@ export const getProduct = async (req, res) => {
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        paranoid: false,
       }],
     });
     if (!product) {
@@ -260,6 +262,7 @@ export const getProductByName = async (req, res) => {
         include: [{
           model: Seller,
           attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+          paranoid: false,
         }],
       });
       if (!productById) {
@@ -273,6 +276,7 @@ export const getProductByName = async (req, res) => {
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        paranoid: false,
       }],
     });
     const match = products.find((p) => toProductSlug(p.name) === wantedSlug);
@@ -296,6 +300,7 @@ export const getProductsByCategory = async (req, res) => {
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        paranoid: false,
       }],
     });
     res.json(products.map(normalizeProductPayload));
@@ -313,6 +318,7 @@ export const getSellerProducts = async (req, res) => {
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        paranoid: false,
       }],
     });
     res.json(products.map(normalizeProductPayload));
