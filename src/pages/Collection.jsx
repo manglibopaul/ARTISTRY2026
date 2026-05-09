@@ -1,24 +1,34 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
+import axios from 'axios'
 import ProductItem from '../components/ProductItem'
 
 const Collection = () => {
   const { products, search, showSearch } = useContext(ShopContext)
-  const [filterProducts, setFilterProducts] = useState([])
   const [availabilityFilter, setAvailabilityFilter] = useState('all')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [sortType, setSortType] = useState('featured')
   const [activeCollection, setActiveCollection] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(12)
+  const [remoteProducts, setRemoteProducts] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, limit: 12, totalItems: 0, totalPages: 1 })
+  const [remoteLoaded, setRemoteLoaded] = useState(false)
+  const [remoteError, setRemoteError] = useState('')
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [filterSignature, setFilterSignature] = useState('')
 
-  const isLoading = !products
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
 
-  const applyFilter = useCallback(() => {
-    let productsCopy = products.slice()
+  const fallbackProducts = useMemo(() => {
+    const sourceProducts = Array.isArray(products) ? products.slice() : []
+    let productsCopy = sourceProducts
 
     if (showSearch && search) {
+      const searchTerm = search.toLowerCase()
       productsCopy = productsCopy.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
+        item.name.toLowerCase().includes(searchTerm)
       )
     }
 
@@ -36,7 +46,6 @@ const Collection = () => {
       productsCopy = productsCopy.filter((item) => (item.stock ?? 0) === 0)
     }
 
-    // Apply custom price range filter
     if (minPrice !== '' || maxPrice !== '') {
       productsCopy = productsCopy.filter((item) => {
         const price = Number(item.price) || 0
@@ -46,32 +55,95 @@ const Collection = () => {
       })
     }
 
-    setFilterProducts(productsCopy)
-  }, [products, showSearch, search, activeCollection, availabilityFilter, minPrice, maxPrice])
-
-  const sortProduct = useCallback(() => {
-    const fpCopy = filterProducts.slice()
-
     if (sortType === 'price-asc') {
-      setFilterProducts(fpCopy.sort((a, b) => a.price - b.price))
-      return
+      productsCopy.sort((a, b) => a.price - b.price)
+    } else if (sortType === 'price-desc') {
+      productsCopy.sort((a, b) => b.price - a.price)
     }
 
-    if (sortType === 'price-desc') {
-      setFilterProducts(fpCopy.sort((a, b) => b.price - a.price))
-      return
+    return productsCopy
+  }, [products, showSearch, search, activeCollection, availabilityFilter, minPrice, maxPrice, sortType])
+
+  const effectiveProducts = remoteLoaded ? remoteProducts : fallbackProducts
+  const effectivePagination = remoteLoaded
+    ? pagination
+    : {
+        page: 1,
+        limit: pageSize,
+        totalItems: fallbackProducts.length,
+        totalPages: Math.max(1, Math.ceil(fallbackProducts.length / pageSize)),
+      }
+
+  const isLoading = remoteLoading && !remoteLoaded && fallbackProducts.length === 0
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setRemoteLoading(true)
+      setRemoteError('')
+
+      const params = {
+        page: currentPage,
+        limit: pageSize,
+        sort: sortType,
+      }
+
+      if (showSearch && search) {
+        params.search = search
+      }
+
+      if (activeCollection) {
+        params.category = activeCollection
+      }
+
+      if (availabilityFilter !== 'all') {
+        params.availability = availabilityFilter
+      }
+
+      if (minPrice !== '') {
+        params.minPrice = minPrice
+      }
+
+      if (maxPrice !== '') {
+        params.maxPrice = maxPrice
+      }
+
+      const res = await axios.get(`${apiUrl}/api/products`, { params })
+      const remoteData = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.products)
+          ? res.data.products
+          : []
+
+      setRemoteProducts(remoteData)
+      setPagination(res.data?.pagination || {
+        page: currentPage,
+        limit: pageSize,
+        totalItems: remoteData.length,
+        totalPages: Math.max(1, Math.ceil(remoteData.length / pageSize)),
+      })
+      setRemoteLoaded(true)
+    } catch (error) {
+      console.error('Error fetching products for collection:', error)
+      setRemoteError('Unable to load the latest products. Showing cached results instead.')
+      setRemoteLoaded(false)
+    } finally {
+      setRemoteLoading(false)
+    }
+  }, [apiUrl, currentPage, pageSize, sortType, showSearch, search, activeCollection, availabilityFilter, minPrice, maxPrice])
+
+  useEffect(() => {
+    const nextSignature = [showSearch ? search : '', activeCollection, availabilityFilter, minPrice, maxPrice, sortType].join('|')
+
+    if (nextSignature !== filterSignature) {
+      setFilterSignature(nextSignature)
+      if (currentPage !== 1) {
+        setCurrentPage(1)
+        return
+      }
     }
 
-    // 'featured' or unknown sort: keep current filtered order (no-op)
-  }, [filterProducts, sortType, applyFilter])
-
-  useEffect(() => {
-    applyFilter()
-  }, [applyFilter])
-
-  useEffect(() => {
-    sortProduct()
-  }, [sortProduct])
+    fetchProducts()
+  }, [fetchProducts, currentPage, showSearch, search, activeCollection, availabilityFilter, minPrice, maxPrice, sortType, filterSignature])
 
   return (
     <div className='min-h-screen bg-white'>
@@ -141,8 +213,14 @@ const Collection = () => {
               </div>
             </div>
 
+            {remoteError && (
+              <div className='rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
+                {remoteError}
+              </div>
+            )}
+
             <div className='text-gray-600 text-sm'>
-              {filterProducts.length} product{filterProducts.length !== 1 ? 's' : ''}
+              {effectivePagination.totalItems} product{effectivePagination.totalItems !== 1 ? 's' : ''}
             </div>
 
             {activeCollection && (
@@ -158,14 +236,14 @@ const Collection = () => {
 
           {isLoading ? (
             <div className='text-center py-20 text-gray-500'>Loading products...</div>
-          ) : filterProducts.length === 0 ? (
+          ) : effectiveProducts.length === 0 ? (
             <div className='text-center py-20'>
               <p className='text-gray-700 font-medium'>No products match your filters.</p>
               <p className='text-sm text-gray-500 mt-2'>Try adjusting filters or searching something else.</p>
             </div>
           ) : (
             <div className='grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8'>
-              {filterProducts.map((item, index) => (
+              {effectiveProducts.map((item, index) => (
                 <ProductItem
                   key={index}
                   name={item.name}
@@ -180,6 +258,28 @@ const Collection = () => {
               ))}
             </div>
           )}
+
+          <div className='flex items-center justify-between gap-3 pt-2'>
+            <p className='text-sm text-gray-500'>
+              Page {effectivePagination.page} of {effectivePagination.totalPages}
+            </p>
+            <div className='flex items-center gap-2'>
+              <button
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={effectivePagination.page <= 1 || remoteLoading}
+                className='px-4 py-2 rounded-lg border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage((page) => Math.min(effectivePagination.totalPages, page + 1))}
+                disabled={effectivePagination.page >= effectivePagination.totalPages || remoteLoading}
+                className='px-4 py-2 rounded-lg border border-gray-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50'
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

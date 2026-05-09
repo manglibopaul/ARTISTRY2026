@@ -123,16 +123,97 @@ const toProductSlug = (value) => {
     .replace(/^-|-$/g, '');
 };
 
+const parsePositiveInt = (value, defaultValue) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+};
+
+const buildProductQueryOptions = (query = {}) => {
+  const where = {};
+  const order = [];
+
+  const searchTerm = String(query.search || query.query || '').trim();
+  if (searchTerm) {
+    where[Op.or] = [
+      { name: { [Op.like]: `%${searchTerm}%` } },
+      { description: { [Op.like]: `%${searchTerm}%` } },
+    ];
+  }
+
+  const category = String(query.category || '').trim();
+  if (category) {
+    where.category = category;
+  }
+
+  const availability = String(query.availability || '').trim().toLowerCase();
+  if (availability === 'in-stock') {
+    where.stock = { [Op.gt]: 0 };
+  } else if (availability === 'sold-out') {
+    where.stock = 0;
+  }
+
+  const minPrice = query.minPrice !== undefined && query.minPrice !== '' ? Number(query.minPrice) : null;
+  const maxPrice = query.maxPrice !== undefined && query.maxPrice !== '' ? Number(query.maxPrice) : null;
+  if (Number.isFinite(minPrice) || Number.isFinite(maxPrice)) {
+    where.price = {};
+    if (Number.isFinite(minPrice)) {
+      where.price[Op.gte] = minPrice;
+    }
+    if (Number.isFinite(maxPrice)) {
+      where.price[Op.lte] = maxPrice;
+    }
+  }
+
+  const sort = String(query.sort || 'featured').trim().toLowerCase();
+  if (sort === 'price-asc') {
+    order.push(['price', 'ASC']);
+  } else if (sort === 'price-desc') {
+    order.push(['price', 'DESC']);
+  } else if (sort === 'newest') {
+    order.push(['createdAt', 'DESC']);
+  } else {
+    order.push(['bestseller', 'DESC'], ['createdAt', 'DESC']);
+  }
+
+  const page = parsePositiveInt(query.page, 1);
+  const limit = Math.min(parsePositiveInt(query.limit, 24), 100);
+
+  return { where, order, page, limit };
+};
+
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll({
+    const hasQueryFilters = Object.keys(req.query || {}).length > 0;
+    const { where, order, page, limit } = buildProductQueryOptions(req.query);
+    const offset = (page - 1) * limit;
+
+    const result = await Product.findAndCountAll({
+      where,
+      order,
+      limit,
+      offset,
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
       }],
+      distinct: true,
     });
-    res.json(products.map(normalizeProductPayload));
+
+    const products = result.rows.map(normalizeProductPayload);
+    if (!hasQueryFilters) {
+      return res.json(products);
+    }
+
+    return res.json({
+      products,
+      pagination: {
+        page,
+        limit,
+        totalItems: result.count,
+        totalPages: Math.max(1, Math.ceil(result.count / limit)),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

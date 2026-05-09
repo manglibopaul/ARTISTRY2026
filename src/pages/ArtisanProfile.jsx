@@ -342,6 +342,9 @@ const ArtisanProfile = () => {
                       name={product.name}
                       price={product.price}
                       sellerId={product.sellerId}
+                      sellerName={seller?.storeName}
+                      artisanType={seller?.artisanType}
+                      stock={product.stock}
                     />
                   </div>
                 ))}
