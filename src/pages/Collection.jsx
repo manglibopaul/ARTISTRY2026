@@ -173,6 +173,9 @@ const Collection = () => {
                   price={item.price}
                   image={item.image}
                   sellerId={item.sellerId}
+                  sellerName={item.sellerName || item.seller?.storeName || item.seller?.name}
+                  artisanType={item.artisanType || item.seller?.artisanType}
+                  stock={item.stock}
                 />
               ))}
             </div>

@@ -1,4 +1,5 @@
 import Product from '../models/Product.js';
+import Seller from '../models/Seller.js';
 import { Op } from 'sequelize';
 import { uploadImage, uploadModel } from '../utils/media.js';
 import fs from 'fs';
@@ -64,6 +65,13 @@ const normalizeProductImages = (imageValue) => {
 const normalizeProductPayload = (product) => {
   const plain = typeof product?.toJSON === 'function' ? product.toJSON() : { ...product };
   plain.image = normalizeProductImages(plain.image);
+  if (plain.Seller && !plain.seller) {
+    plain.seller = plain.Seller;
+  }
+  if (plain.seller) {
+    plain.sellerName = plain.seller.storeName || plain.seller.name || plain.sellerName || null;
+    plain.artisanType = plain.seller.artisanType || plain.artisanType || null;
+  }
   return plain;
 };
 
@@ -118,7 +126,12 @@ const toProductSlug = (value) => {
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll();
+    const products = await Product.findAll({
+      include: [{
+        model: Seller,
+        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+      }],
+    });
     res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -128,7 +141,12 @@ export const getAllProducts = async (req, res) => {
 // Get single product
 export const getProduct = async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(req.params.id, {
+      include: [{
+        model: Seller,
+        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+      }],
+    });
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -149,7 +167,12 @@ export const getProductByName = async (req, res) => {
     const decodedName = decodeURIComponent(name);
     const idSuffixMatch = decodedName.match(/-p(\d+)$/i);
     if (idSuffixMatch) {
-      const productById = await Product.findByPk(idSuffixMatch[1]);
+      const productById = await Product.findByPk(idSuffixMatch[1], {
+        include: [{
+          model: Seller,
+          attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        }],
+      });
       if (!productById) {
         return res.status(404).json({ message: 'Product not found' });
       }
@@ -157,7 +180,12 @@ export const getProductByName = async (req, res) => {
     }
 
     const wantedSlug = toProductSlug(decodedName);
-    const products = await Product.findAll();
+    const products = await Product.findAll({
+      include: [{
+        model: Seller,
+        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+      }],
+    });
     const match = products.find((p) => toProductSlug(p.name) === wantedSlug);
 
     if (!match) {
@@ -174,7 +202,13 @@ export const getProductByName = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    const products = await Product.findAll({ where: { category } });
+    const products = await Product.findAll({
+      where: { category },
+      include: [{
+        model: Seller,
+        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+      }],
+    });
     res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -185,7 +219,13 @@ export const getProductsByCategory = async (req, res) => {
 export const getSellerProducts = async (req, res) => {
   try {
     const sellerId = req.seller.id;
-    const products = await Product.findAll({ where: { sellerId } });
+    const products = await Product.findAll({
+      where: { sellerId },
+      include: [{
+        model: Seller,
+        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+      }],
+    });
     res.json(products.map(normalizeProductPayload));
   } catch (error) {
     res.status(500).json({ message: error.message });
