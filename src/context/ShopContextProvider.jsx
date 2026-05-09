@@ -154,7 +154,9 @@ const ShopContextProvider = (props) => {
   // Fetch products from backend
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await axios.get(`${apiUrl}/api/products`);
+      const res = await axios.get(`${apiUrl}/api/products`, {
+        params: { summary: 1 },
+      });
       setProducts(res.data || []);
     } catch (error) {
       console.error('Error fetching products for context:', error);

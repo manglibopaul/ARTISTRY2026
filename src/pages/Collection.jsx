@@ -107,7 +107,12 @@ const Collection = () => {
         params.maxPrice = maxPrice
       }
 
-      const res = await axios.get(`${apiUrl}/api/products`, { params })
+      const res = await axios.get(`${apiUrl}/api/products`, {
+        params: {
+          ...params,
+          summary: 1,
+        },
+      })
       const remoteData = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.products)

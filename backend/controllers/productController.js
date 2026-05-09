@@ -184,18 +184,26 @@ const buildProductQueryOptions = (query = {}) => {
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
-    const hasQueryFilters = Object.keys(req.query || {}).length > 0;
+    const hasQueryFilters = Object.keys(req.query || {}).some((key) => key !== 'summary');
     const { where, order, page, limit } = buildProductQueryOptions(req.query);
     const offset = (page - 1) * limit;
+    const isSummary = String(req.query?.summary || '').trim() === '1';
+    const productAttributes = isSummary
+      ? ['id', 'name', 'price', 'stock', 'image', 'sellerId', 'sellerName', 'artisanType', 'category', 'subCategory', 'bestseller', 'createdAt']
+      : undefined;
+    const sellerAttributes = isSummary
+      ? ['id', 'name', 'storeName', 'artisanType', 'avatar']
+      : ['id', 'name', 'storeName', 'artisanType', 'avatar'];
 
     const result = await Product.findAndCountAll({
       where,
       order,
       limit,
       offset,
+      attributes: productAttributes,
       include: [{
         model: Seller,
-        attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
+        attributes: sellerAttributes,
       }],
       distinct: true,
     });
