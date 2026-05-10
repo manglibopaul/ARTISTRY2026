@@ -126,13 +126,28 @@ const toProductSlug = (value) => {
 // Get all products (public)
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll({
+    // Support pagination for performance: ?page=1&limit=24
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 24);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Product.findAndCountAll({
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
       }],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
-    res.json(products.map(normalizeProductPayload));
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      data: rows.map(normalizeProductPayload),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

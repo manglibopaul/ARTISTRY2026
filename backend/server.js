@@ -118,7 +118,17 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
-app.listen(PORT, HOST, () => {
+
+// Keep-alive function to prevent connection pool from closing during idle periods
+const keepAlive = async () => {
+  try {
+    await sequelize.authenticate();
+  } catch (err) {
+    console.error('Keep-alive ping failed:', err.message);
+  }
+};
+
+app.listen(PORT, HOST, async () => {
   const isAllInterfaces = HOST === '0.0.0.0';
   const localHint = `http://localhost:${PORT}`;
   const publicUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || '';
@@ -129,4 +139,21 @@ app.listen(PORT, HOST, () => {
   if (publicUrl) {
     console.log(`🌐 Public URL: ${publicUrl}`);
   }
+
+  // Warm up database connections on startup
+  console.log('⚙️ Warming up database connections...');
+  try {
+    // Create initial connections by accessing the pool
+    for (let i = 0; i < 2; i++) {
+      await keepAlive();
+    }
+    console.log('✅ Database connections warmed up');
+  } catch (err) {
+    console.error('Failed to warm up database:', err.message);
+  }
+
+  // Keep-alive pings every 4 minutes to maintain connection pool
+  setInterval(() => {
+    keepAlive();
+  }, 4 * 60 * 1000);
 });

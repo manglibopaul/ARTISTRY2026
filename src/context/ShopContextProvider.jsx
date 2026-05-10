@@ -151,11 +151,34 @@ const ShopContextProvider = (props) => {
     return totalAmount;
   }
 
-  // Fetch products from backend
+  // Fetch products from backend with pagination
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await axios.get(`${apiUrl}/api/products`);
-      setProducts(res.data || []);
+      // Fetch first page quickly for initial render
+      const res = await axios.get(`${apiUrl}/api/products`, {
+        params: { page: 1, limit: 48 }
+      });
+      
+      const body = res.data || {};
+      const initialProducts = body.data || [];
+      setProducts(initialProducts);
+
+      // Load remaining pages in background if needed
+      if (body.totalPages && body.totalPages > 1) {
+        let allProducts = [...initialProducts];
+        for (let page = 2; page <= Math.min(body.totalPages, 10); page++) {
+          try {
+            const pageRes = await axios.get(`${apiUrl}/api/products`, {
+              params: { page, limit: 48 }
+            });
+            allProducts = allProducts.concat(pageRes.data.data || []);
+          } catch (err) {
+            console.warn(`Failed to load products page ${page}:`, err);
+            break;
+          }
+        }
+        setProducts(allProducts);
+      }
     } catch (error) {
       console.error('Error fetching products for context:', error);
       toast.error('Failed to load products');
