@@ -163,20 +163,31 @@ const ShopContextProvider = (props) => {
       const initialProducts = body.data || [];
       setProducts(initialProducts);
 
-      // Load remaining pages in background if needed
+      // Load remaining pages in parallel (not sequential) for speed
       if (body.totalPages && body.totalPages > 1) {
-        let allProducts = [...initialProducts];
-        for (let page = 2; page <= Math.min(body.totalPages, 10); page++) {
-          try {
-            const pageRes = await axios.get(`${apiUrl}/api/products`, {
+        const remainingPages = Math.min(body.totalPages - 1, 9);
+        const pageRequests = [];
+        
+        for (let page = 2; page <= remainingPages + 1; page++) {
+          pageRequests.push(
+            axios.get(`${apiUrl}/api/products`, {
               params: { page, limit: 48 }
-            });
-            allProducts = allProducts.concat(pageRes.data.data || []);
-          } catch (err) {
-            console.warn(`Failed to load products page ${page}:`, err);
-            break;
-          }
+            }).catch(err => {
+              console.warn(`Failed to load products page ${page}:`, err);
+              return null;
+            })
+          );
         }
+        
+        const results = await Promise.all(pageRequests);
+        let allProducts = [...initialProducts];
+        
+        results.forEach(pageRes => {
+          if (pageRes?.data?.data) {
+            allProducts = allProducts.concat(pageRes.data.data);
+          }
+        });
+        
         setProducts(allProducts);
       }
     } catch (error) {
