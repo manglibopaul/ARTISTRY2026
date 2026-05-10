@@ -25,7 +25,16 @@ const LatestCollection = () => {
                 <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5 md:gap-7'>
                     {latestProducts.map((item, index) => (
                         <div key={index} className='bg-white rounded-xl shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-md transition'>
-                            <ProductItem id={item._id || item.id} image={item.image} name={item.name} price={item.price} sellerId={item.sellerId}/>
+                            <ProductItem 
+                              id={item._id || item.id} 
+                              image={item.image} 
+                              name={item.name} 
+                              price={item.price} 
+                              sellerId={item.sellerId}
+                              sellerName={item.sellerName}
+                              artisanType={item.artisanType}
+                              stock={item.stock}
+                            />
                         </div>
                     ))}
                 </div>

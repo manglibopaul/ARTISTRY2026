@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useMemo } from 'react'
 import { useShop } from '../context/ShopContext'
 import { Link, useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
@@ -12,31 +12,14 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
     const { currency } = useShop();
     const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
     const fallbackImage = assets.p_img7
-    const [sellerData, setSellerData] = useState(null)
-    const [, setLoadingSeller] = useState(false)
 
-    const fetchSellerData = useCallback(async () => {
-      try {
-        setLoadingSeller(true)
-        const res = await fetch(`${apiUrl}/api/sellers/${sellerId}`)
-        if (res.ok) {
-          const seller = await res.json()
-          setSellerData(seller)
-        }
-      } catch (e) {
-        console.error('Failed to fetch seller data:', e)
-      } finally {
-        setLoadingSeller(false)
+    // Use provided seller data directly (backend already includes this)
+    const sellerData = useMemo(() => {
+      if (sellerName) {
+        return { storeName: sellerName, artisanType, id: sellerId }
       }
-    }, [apiUrl, sellerId])
-
-    useEffect(() => {
-      if (sellerId && !sellerName) {
-        fetchSellerData()
-      } else if (sellerName) {
-        setSellerData({ storeName: sellerName, artisanType, id: sellerId })
-      }
-    }, [sellerId, sellerName, artisanType, fetchSellerData])
+      return null
+    }, [sellerName, artisanType, sellerId])
 
     // Handle array of strings and object formats returned by different API versions.
     let imageUrl = fallbackImage;
@@ -124,4 +107,4 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
   )
 }
 
-export default ProductItem
+export default React.memo(ProductItem)

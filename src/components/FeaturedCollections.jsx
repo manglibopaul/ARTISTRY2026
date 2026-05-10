@@ -50,6 +50,9 @@ const FeaturedCollections = () => {
                                         name={item.name}
                                         price={item.price}
                                         sellerId={item.sellerId}
+                                        sellerName={item.sellerName}
+                                        artisanType={item.artisanType}
+                                        stock={item.stock}
                                     />
                                 </div>
                             </div>
