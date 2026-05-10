@@ -79,7 +79,7 @@ export const geocodeAddress = async (street, city, region) => {
  * Reverse geocode - get address from coordinates
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
- * @returns {Promise} - address object or null
+ * @returns {Promise} - address object with formatted address or null
  */
 export const reverseGeocode = async (lat, lon) => {
   try {
@@ -88,13 +88,24 @@ export const reverseGeocode = async (lat, lon) => {
         lat,
         lon,
         format: 'json',
+        addressdetails: '1',
       })
     );
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn('Reverse geocoding API error:', response.status);
+      return null;
+    }
 
     const data = await response.json();
-    return data.address || null;
+    if (!data) return null;
+
+    // Return address object with formatted address
+    return {
+      display_name: data.display_name,
+      address: data.address || {},
+      ...data.address,
+    };
   } catch (error) {
     console.error('Reverse geocoding error:', error);
     return null;

@@ -19,72 +19,108 @@ const AddressPickerMap = ({ onLocationPick }) => {
   const [loadingAddress, setLoadingAddress] = useState(false)
 
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return
+    // Ensure mapRef is attached to DOM before initializing
+    if (!mapRef.current) return
+    
+    // Prevent duplicate initialization
+    if (mapInstance.current) return
 
-    mapInstance.current = L.map(mapRef.current, {
-      preferCanvas: true,
-      zoomControl: true,
-      touchZoom: true,
-      dragging: true,
-    }).setView(DEFAULT_CENTER, 13)
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(mapInstance.current)
-
-
-    const addMarker = async (lat, lon) => {
-      if (!mapInstance.current) return
-
-      const marker = L.marker([lat, lon], { draggable: true }).addTo(mapInstance.current)
-      marker.on('dragend', async (e) => {
-        const pos = e.target.getLatLng()
-        await handleReverseGeocode(pos.lat, pos.lng, marker)
-      })
-      markersRef.current.push(marker)
-      await handleReverseGeocode(lat, lon, marker)
-    }
-
-    const handleReverseGeocode = async (lat, lon, marker) => {
-      setLoadingAddress(true)
-      try {
-        const addr = await reverseGeocode(lat, lon)
-        if (onLocationPick) {
-          onLocationPick({ lat, lon, address: addr })
-        }
-        if (marker) {
-          marker.bindPopup(addr).openPopup()
-        }
-      } finally {
-        setLoadingAddress(false)
+    try {
+      // Initialize map with container check
+      const container = mapRef.current
+      if (!container || container.offsetParent === null) {
+        console.warn('Map container not visible in DOM')
+        return
       }
-    }
 
-    mapInstance.current.on('click', async (e) => {
-      await addMarker(e.latlng.lat, e.latlng.lng)
-    })
+      mapInstance.current = L.map(container, {
+        preferCanvas: true,
+        zoomControl: true,
+        touchZoom: true,
+        dragging: true,
+      }).setView(DEFAULT_CENTER, 13)
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude
-          const lon = pos.coords.longitude
-          mapInstance.current?.setView([lat, lon], 15)
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 5000 }
-      )
-    }
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(mapInstance.current)
 
-    setTimeout(() => {
-      mapInstance.current?.invalidateSize()
-    }, 100)
+      const addMarker = async (lat, lon) => {
+        if (!mapInstance.current) return
 
-    return () => {
-      mapInstance.current?.remove()
-      mapInstance.current = null
-      markersRef.current = []
+        const marker = L.marker([lat, lon], { draggable: true }).addTo(mapInstance.current)
+        marker.on('dragend', async (e) => {
+          const pos = e.target.getLatLng()
+          await handleReverseGeocode(pos.lat, pos.lng, marker)
+        })
+        markersRef.current.push(marker)
+        await handleReverseGeocode(lat, lon, marker)
+      }
+
+      const handleReverseGeocode = async (lat, lon, marker) => {
+        setLoadingAddress(true)
+        try {
+          const addr = await reverseGeocode(lat, lon)
+          if (!addr) {
+            console.warn('Could not get address for location')
+            if (marker && mapInstance.current) {
+              marker.bindPopup('Unknown location').openPopup()
+            }
+          } else if (onLocationPick) {
+            onLocationPick({ lat, lon, address: addr })
+          }
+          if (marker && addr && mapInstance.current) {
+            const popupContent = typeof addr === 'object' 
+              ? Object.values(addr).filter(Boolean).join(', ')
+              : String(addr)
+            marker.bindPopup(popupContent).openPopup()
+          }
+        } catch (err) {
+          console.error('Error reverse geocoding:', err)
+          if (marker && mapInstance.current) {
+            marker.bindPopup('Error getting address').openPopup()
+          }
+        } finally {
+          setLoadingAddress(false)
+        }
+      }
+
+      mapInstance.current.on('click', async (e) => {
+        await addMarker(e.latlng.lat, e.latlng.lng)
+      })
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude
+            const lon = pos.coords.longitude
+            if (mapInstance.current) {
+              mapInstance.current.setView([lat, lon], 15)
+            }
+          },
+          (err) => console.warn('Geolocation error:', err),
+          { enableHighAccuracy: true, timeout: 5000 }
+        )
+      }
+
+      // Trigger map resize after a brief delay
+      const resizeTimer = setTimeout(() => {
+        if (mapInstance.current) {
+          mapInstance.current.invalidateSize()
+        }
+      }, 100)
+
+      return () => {
+        clearTimeout(resizeTimer)
+        if (mapInstance.current) {
+          mapInstance.current.remove()
+          mapInstance.current = null
+        }
+        markersRef.current = []
+      }
+    } catch (error) {
+      console.error('Map initialization error:', error)
+      return () => {}
     }
   }, [onLocationPick])
 
