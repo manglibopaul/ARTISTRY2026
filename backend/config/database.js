@@ -255,19 +255,30 @@ const connectDB = async () => {
 
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ force: false });
-    await ensureUsersDeletedAtColumn();
-    await ensureReviewsImageUrlColumn();
-    await ensureReviewsOrderIdColumn();
-    await ensureProductsSizesColumn();
-    await ensureProductsColorColumns();
-    await ensureOrdersCompletedAtColumn();
-    await ensureOrdersGcashReceiptColumn();
-    await ensureSellersPaymentSettingsColumn();
-    await ensureProductsDimensionsColumns();
-    await ensureProductsArMetadataColumns();
-    // pickupMaps support removed; no runtime schema-ensure needed
-    console.log('✅ Database synchronized successfully');
+
+    // Avoid running potentially expensive schema-ensure operations on every
+    // production startup (these can noticeably delay cold starts). Allow
+    // enabling them explicitly with `RUN_SCHEMA_ON_STARTUP=true` when needed
+    // (e.g. during deploys or maintenance).
+    const shouldRunSchemaChecks = process.env.NODE_ENV !== 'production' || process.env.RUN_SCHEMA_ON_STARTUP === 'true';
+
+    if (shouldRunSchemaChecks) {
+      await sequelize.sync({ force: false });
+      await ensureUsersDeletedAtColumn();
+      await ensureReviewsImageUrlColumn();
+      await ensureReviewsOrderIdColumn();
+      await ensureProductsSizesColumn();
+      await ensureProductsColorColumns();
+      await ensureOrdersCompletedAtColumn();
+      await ensureOrdersGcashReceiptColumn();
+      await ensureSellersPaymentSettingsColumn();
+      await ensureProductsDimensionsColumns();
+      await ensureProductsArMetadataColumns();
+      // pickupMaps support removed; no runtime schema-ensure needed
+      console.log('✅ Database synchronized successfully');
+    } else {
+      console.log('ℹ️ Skipping runtime schema checks (production start)');
+    }
 
     dbConnected = true;
     const dialect = sequelize.getDialect();

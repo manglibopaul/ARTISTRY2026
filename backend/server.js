@@ -139,18 +139,21 @@ app.listen(PORT, HOST, async () => {
   if (publicUrl) {
     console.log(`🌐 Public URL: ${publicUrl}`);
   }
-
-  // Warm up database connections on startup
-  console.log('⚙️ Warming up database connections...');
-  try {
-    // Create initial connections by accessing the pool
-    for (let i = 0; i < 2; i++) {
-      await keepAlive();
+  // Schedule database warm-up in background so server responds quickly on
+  // cold starts. This avoids blocking the listen callback and improves
+  // perceived startup time for the first visitor. Errors are logged but do
+  // not block startup.
+  console.log('⚙️ Scheduling database warm-up (non-blocking)...');
+  (async () => {
+    try {
+      for (let i = 0; i < 2; i++) {
+        await keepAlive();
+      }
+      console.log('✅ Database connections warmed up');
+    } catch (err) {
+      console.error('Failed to warm up database:', err.message);
     }
-    console.log('✅ Database connections warmed up');
-  } catch (err) {
-    console.error('Failed to warm up database:', err.message);
-  }
+  })();
 
   // Keep-alive pings every 4 minutes to maintain connection pool
   setInterval(() => {
