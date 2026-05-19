@@ -49,7 +49,6 @@ const Hero = () => {
               <p className='w-10 md:w-12 h-[2px] bg-[#414141]'></p>
               <p className='font-medium text-sm md:text-base uppercase tracking-wide'>Our Bestsellers</p>
             </div>
-
             <h1 className='prata-regular text-4xl sm:text-5xl lg:text-6xl leading-tight font-bold'>Handmade. Local. Beautiful.</h1>
 
             <p className='text-base sm:text-lg text-gray-600'>Discover unique creations from talented artists — curated pieces you won't find anywhere else.</p>
