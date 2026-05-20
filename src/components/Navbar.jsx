@@ -207,7 +207,7 @@ const Navbar = () => {
 
         <button onClick={() => setCartOpen(true)} aria-label='Cart' className='relative w-8 h-8 flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100'>
           <img src={assets.cart_icon} className='w-4 h-4' alt='Cart' loading='lazy' />
-          <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px]'>{getCartCount()}</p>
+          <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px] leading-none'>{getCartCount()}</p>
         </button>
 
         <Link to='/chat' className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100' aria-label='Chat'>
@@ -222,7 +222,7 @@ const Navbar = () => {
               <path strokeLinecap='round' strokeLinejoin='round' d='M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0' />
             </svg>
             {unreadNotifications > 0 && (
-              <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 text-center flex items-center justify-center bg-red-600 text-white rounded-full text-[10px] sm:text-[8px]'>
+              <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 flex items-center justify-center bg-red-600 text-white rounded-full text-[10px] sm:text-[8px] leading-none'>
                 {unreadNotifications > 99 ? '99+' : unreadNotifications}
               </p>
             )}
@@ -231,8 +231,8 @@ const Navbar = () => {
 
         {customerSessionReady && customerSessionValid ? (
           <>
-            <button type='button' onClick={handleCustomerProfileClick} className='hidden sm:flex relative w-10 h-10 items-center justify-center p-2 rounded-md hover:bg-gray-100' aria-label='Profile'>
-              <svg className='w-5 h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+            <button type='button' onClick={handleCustomerProfileClick} className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100' aria-label='Profile'>
+              <svg className='w-4 h-4 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
               </svg>
             </button>
@@ -240,18 +240,17 @@ const Navbar = () => {
           </>
         ) : isSellerRoute && sellerSessionReady && sellerSessionValid ? (
           <>
-            <Link to='/seller/profile' className='hidden sm:flex relative w-10 h-10 items-center justify-center p-2 rounded-md hover:bg-gray-100' aria-label='Seller Profile'>
-              <svg className='w-5 h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+            <Link to='/seller/profile' className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100' aria-label='Seller Profile'>
+              <svg className='w-4 h-4 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
               </svg>
             </Link>
           </>
         ) : (
-          <Link to='/login' className='hidden sm:flex relative w-10 h-10 items-center justify-center p-2 rounded-md hover:bg-gray-100 text-sm text-gray-700 hover:text-black' aria-label='Login'>
-            <svg className='w-5 h-5 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
+          <Link to='/login' className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100 text-sm text-gray-700 hover:text-black' aria-label='Login'>
+            <svg className='w-4 h-4 text-gray-700' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' d='M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z' />
             </svg>
-            <span className='hidden sm:inline ml-1'>Login</span>
           </Link>
         )}
 
