@@ -176,7 +176,7 @@ const ArtisanProfile = () => {
               </div>
 
               {/* Chat Button */}
-              <div className='w-full mt-4 flex flex-col gap-2'>
+              <div className='mt-4 flex flex-col gap-2 w-28 sm:w-40'>
                 <button
                   onClick={() => {
                     const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
