@@ -124,8 +124,8 @@ const ArtisanProfile = () => {
       <div className='bg-white border-b border-gray-200 py-8 sm:py-16'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex flex-col sm:flex-row gap-6 sm:gap-12 items-center sm:items-start'>
-            {/* Avatar & CTAs */}
-            <div className='flex-shrink-0 flex flex-col items-center sm:items-start'>
+            {/* Avatar Only */}
+            <div className='flex-shrink-0'>
               <div className='relative'>
                 {avatarUrl ? (
                   <img
@@ -175,7 +175,8 @@ const ArtisanProfile = () => {
                 )}
               </div>
 
-              <div className='w-full mt-4 flex flex-col gap-2'>
+              {/* Mobile Buttons */}
+              <div className='w-full mt-4 flex sm:hidden flex-col gap-2'>
                 <button
                   onClick={() => {
                     const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
@@ -213,27 +214,27 @@ const ArtisanProfile = () => {
                     </div>
                   )}
 
-                  <div className='flex flex-wrap gap-4 text-sm text-gray-600'>
+                  <div className='flex flex-wrap gap-6 text-sm text-gray-600'>
                     <div className='flex items-center gap-2'>
                       <span className='font-bold text-gray-900'>{sellerProducts.length}</span>
                       <span>Products</span>
                     </div>
                     {seller.address && (
                       <div className='flex items-center gap-2'>
-                        <span>📍</span>
+                        <span className='text-base'>📍</span>
                         <span>{seller.address}</span>
                       </div>
                     )}
                     {seller.phone && (
                       <div className='flex items-center gap-2'>
-                        <span>📞</span>
+                        <span className='text-base'>📞</span>
                         <span>{seller.phone}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className='hidden sm:flex flex-col items-end text-sm text-gray-500'>
+                <div className='hidden sm:flex flex-col items-end justify-start text-sm text-gray-500'>
                   {seller.reviewsAverage || seller.reviewsCount ? (
                     <div className='text-right'>
                       <div className='flex items-center gap-2 justify-end'>
@@ -246,6 +247,29 @@ const ArtisanProfile = () => {
                     <div className='text-xs text-gray-400'>No reviews yet</div>
                   )}
                 </div>
+              </div>
+              
+              {/* Chat & View Shop Buttons - Right Side */}
+              <div className='hidden sm:flex gap-3 mt-6 pt-6 border-t border-gray-200'>
+                <button
+                  onClick={() => {
+                    const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
+                    if (sellerSlug) {
+                      navigate(`/chat/${encodeURIComponent(sellerSlug)}`)
+                    } else {
+                      navigate('/chat')
+                    }
+                  }}
+                  className='flex-1 bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition transform hover:-translate-y-0.5 text-sm'
+                >
+                  Chat with Artist
+                </button>
+                <button
+                  onClick={() => document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                  className='flex-1 bg-white border border-gray-300 text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:shadow-sm transition text-sm'
+                >
+                  View Shop
+                </button>
               </div>
 
               {pickupLocations.length > 0 && (
@@ -307,14 +331,14 @@ const ArtisanProfile = () => {
           </div>
 
           {/* Products Grid - Full Width */}
-          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4'>
-            <p className='text-sm text-gray-600'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
+            <p className='text-sm text-gray-600 whitespace-nowrap'>
               Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
             </p>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className='w-full sm:w-56 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black'
+              className='w-full sm:w-56 border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black'
             >
               <option value='all'>All Products</option>
               {categoryOptions.map(cat => (

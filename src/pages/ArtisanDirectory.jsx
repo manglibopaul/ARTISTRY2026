@@ -133,13 +133,13 @@ const ArtisanDirectory = () => {
               <div className='flex flex-col sm:flex-row gap-2'>
                 <button
                   onClick={() => navigate('/seller/login?mode=signup')}
-                  className='hero-cta px-5 py-2.5 rounded-full text-sm font-semibold btn-primary transition'
+                  className='px-5 py-2.5 rounded-full text-sm font-semibold bg-white text-black hover:bg-gray-100 transition shadow-sm'
                 >
                   Artist Sign Up
                 </button>
                 <button
                   onClick={() => navigate('/seller/login')}
-                  className='px-5 py-2.5 rounded-full border border-white/20 text-sm font-semibold text-white hover:bg-white/6 transition'
+                  className='px-5 py-2.5 rounded-full border border-white text-sm font-semibold text-white hover:bg-white/10 transition'
                 >
                   Artist Sign In
                 </button>
@@ -238,7 +238,7 @@ const ArtisanDirectory = () => {
                     {/* Craft Type Badge */}
                     {seller.artisanType && (
                       <div className='mb-4'>
-                        <span className='inline-block badge-primary text-xs px-3 py-1.5 rounded-full font-semibold shadow-sm'>
+                        <span className='inline-block badge-primary text-xs px-4 py-1.5 rounded-full font-semibold shadow-sm'>
                           {seller.artisanType}
                         </span>
                       </div>
