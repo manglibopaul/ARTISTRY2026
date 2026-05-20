@@ -33,13 +33,13 @@ const FeaturedCollections = () => {
                     </p>
                 </div>
 
-                <div className='flex items-center gap-2 sm:gap-3'>
+                <div className='flex items-center gap-2 sm:gap-3 -mx-2 sm:mx-0'>
                     {/* Left Arrow */}
                     <button
                         type='button'
                         onClick={() => scrollByAmount(-1)}
                         aria-label='Scroll left'
-                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10'
+                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10 mx-2 sm:mx-0'
                     >
                         <svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
                             <path d='M12.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.414 10l4.293 4.293a1 1 0 010 1.414z' />
@@ -79,7 +79,7 @@ const FeaturedCollections = () => {
                         type='button'
                         onClick={() => scrollByAmount(1)}
                         aria-label='Scroll right'
-                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10'
+                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10 mx-2 sm:mx-0'
                     >
                         <svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
                             <path d='M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z' />

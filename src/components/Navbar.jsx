@@ -207,7 +207,7 @@ const Navbar = () => {
 
         <button onClick={() => setCartOpen(true)} aria-label='Cart' className='relative w-8 h-8 flex items-center justify-center p-1.5 rounded-md hover:bg-gray-100'>
           <img src={assets.cart_icon} className='w-4 h-4' alt='Cart' loading='lazy' />
-          <p className='absolute right-[-6px] bottom-[-6px] w-5 h-5 sm:w-4 sm:h-4 flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px] leading-none'>{getCartCount()}</p>
+          <p className='absolute right-[-8px] top-[-4px] w-5 h-5 sm:w-4 sm:h-4 flex items-center justify-center bg-black text-white rounded-full text-[10px] sm:text-[8px] leading-none'>{getCartCount()}</p>
         </button>
 
         <Link to='/chat' className='hidden sm:flex relative w-8 h-8 items-center justify-center p-1.5 rounded-md hover:bg-gray-100' aria-label='Chat'>
