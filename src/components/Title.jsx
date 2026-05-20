@@ -12,7 +12,7 @@ const Title = ({text1, text2, size = 'md'}) => {
     <div className='flex flex-col items-center mb-6'>
       <div className='flex items-center gap-6'>
         <div className='text-center'>
-          <p className={`${s.label} tracking-wider uppercase text-gray-500 mb-1`}>{text1}</p>
+          <p className={`${s.label} tracking-wider uppercase text-gray-500 mb-2`}>{text1}</p>
           <p className={`${s.title} font-serif font-extrabold text-gray-900 leading-tight`}>{text2}</p>
         </div>
         <div className={`hidden sm:block flex-1 ${s.rule}`}>
