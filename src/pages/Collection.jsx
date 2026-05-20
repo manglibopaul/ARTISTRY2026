@@ -78,17 +78,16 @@ const Collection = () => {
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
         <div className='flex flex-col gap-6 sm:gap-10'>
           <div className='flex flex-col gap-3 text-sm text-gray-700'>
-            <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
-              <span className='font-semibold text-gray-900 hidden sm:inline'>Filter:</span>
-            </div>
+            <div className='flex items-center gap-4 flex-wrap lg:flex-nowrap'>
+              <span className='font-semibold text-gray-900'>Filter:</span>
 
-            <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
-              <div className='flex items-center gap-2 flex-1 min-w-[140px] sm:flex-none'>
+              {/* Availability Filter */}
+              <div className='flex items-center gap-2'>
                 <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Availability</span>
                 <select
                   value={availabilityFilter}
                   onChange={(e) => setAvailabilityFilter(e.target.value)}
-                  className='border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black flex-1 sm:flex-none text-sm'
+                  className='border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 >
                   <option value='all'>All</option>
                   <option value='in-stock'>In stock</option>
@@ -96,14 +95,15 @@ const Collection = () => {
                 </select>
               </div>
 
-              <div className='flex items-center gap-2 flex-1 min-w-[200px] sm:flex-none'>
+              {/* Price Filter */}
+              <div className='flex items-center gap-2'>
                 <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Price</span>
                 <input
                   type='number'
                   placeholder='Min'
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className='w-24 sm:w-20 border border-gray-300 px-2 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                  className='w-28 border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 />
                 <span className='text-gray-400'>-</span>
                 <input
@@ -111,7 +111,7 @@ const Collection = () => {
                   placeholder='Max'
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className='w-24 sm:w-20 border border-gray-300 px-2 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                  className='w-28 border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 />
                 {(minPrice !== '' || maxPrice !== '') && (
                   <button
@@ -127,12 +127,13 @@ const Collection = () => {
                 )}
               </div>
 
-              <div className='flex items-center gap-2 flex-1 min-w-[160px] sm:flex-none'>
-                <span className='text-gray-600 text-xs sm:text-sm'>Sort by:</span>
+              {/* Sort Filter */}
+              <div className='flex items-center gap-2'>
+                <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Sort by:</span>
                 <select
                   onChange={(e) => setSortType(e.target.value)}
                   value={sortType}
-                  className='flex-1 sm:flex-none border border-gray-300 px-2 sm:px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                  className='border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 >
                   <option value='featured'>Featured</option>
                   <option value='price-asc'>Price: Low to High</option>
