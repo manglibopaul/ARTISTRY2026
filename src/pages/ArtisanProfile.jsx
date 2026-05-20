@@ -175,8 +175,8 @@ const ArtisanProfile = () => {
                 )}
               </div>
 
-              {/* Mobile Buttons */}
-              <div className='w-full mt-4 flex sm:hidden flex-col gap-2'>
+              {/* Chat Button */}
+              <div className='w-full mt-4 flex flex-col gap-2'>
                 <button
                   onClick={() => {
                     const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
@@ -243,22 +243,6 @@ const ArtisanProfile = () => {
                 </div>
               </div>
               
-              {/* Chat Button - Right Side */}
-              <div className='hidden sm:block mt-6 pt-6 border-t border-gray-200'>
-                <button
-                  onClick={() => {
-                    const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
-                    if (sellerSlug) {
-                      navigate(`/chat/${encodeURIComponent(sellerSlug)}`)
-                    } else {
-                      navigate('/chat')
-                    }
-                  }}
-                  className='w-full bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition transform hover:-translate-y-0.5 text-sm'
-                >
-                  Chat with Artist
-                </button>
-              </div>
 
               {pickupLocations.length > 0 && (
                 <div className='mt-4 pt-4 border-t border-gray-100'>
