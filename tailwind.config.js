@@ -8,6 +8,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
+        serif: ['Prata', 'serif'],
       },
       colors: {
         primary: 'var(--color-primary)',
