@@ -931,7 +931,7 @@ const Product = () => {
       {/* ---------- Reviews (moved into Description tab) ---------- */}
       <div className='mt-20'>
         <div className='flex'>
-          <b className='border px-5 py-3 text-sm'>Reviews</b>
+          <b className='border border-b-0 px-5 py-3 text-sm'>Reviews</b>
         </div>
         <div ref={reviewsRef} className={`${reviewsInView ? 'enter-to' : 'enter-from'} flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500`}>
           <div className='mb-4'>
