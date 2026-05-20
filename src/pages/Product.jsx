@@ -731,7 +731,7 @@ const Product = () => {
                 )}
               </div>
             </div>
-          <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
+          <p className='mt-5 mb-6 text-gray-500 md:w-4/5'>{productData.description}</p>
 
           {/* ------- COLOR + QUANTITY + ADD TO CART ------- */}
           <div className='my-6 sm:my-8 space-y-4'>
@@ -788,7 +788,7 @@ const Product = () => {
               {/* ⭐ View AR button */}
               <button 
                 onClick={()=>setShowAR(true)} 
-                className={`border border-black px-5 py-2.5 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
+                className={`border border-black px-5 py-3 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 h-11 flex items-center justify-center ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
                 disabled={!productData.modelUrl}
               >
                 View AR
@@ -818,7 +818,7 @@ const Product = () => {
                     setQuantity(parsed);
                     setQuantityInput(String(parsed));
                   }}
-                  className='w-24 sm:w-20 px-3 py-3 border rounded text-sm min-h-[44px]'
+                  className='w-24 sm:w-20 px-3 py-3 border border-gray-300 rounded-md text-sm h-11 font-medium bg-white focus:outline-none focus:ring-2 focus:ring-black'
                   aria-label='Quantity'
                 />
                 <button 
@@ -838,7 +838,7 @@ const Product = () => {
                     // show temporary added feedback
                     try { setShowAdded(true); setTimeout(()=>setShowAdded(false), 900); } catch(e){}
                   }} 
-                  className={`bg-black text-white px-6 py-3 text-sm rounded-md active:opacity-90 shadow-md hover:shadow-lg flex-1 sm:flex-none ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`bg-black text-white px-6 py-3 text-sm rounded-md h-11 flex items-center justify-center font-semibold shadow-md hover:shadow-lg transition active:opacity-90 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={productData.stock <= 0}
                 >
                   {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
@@ -863,7 +863,7 @@ const Product = () => {
                     // navigate to checkout / place order
                     try { navigate('/place-order'); } catch (e) {}
                   }}
-                  className={`bg-amber-500 text-black px-6 py-3 text-sm rounded-md active:opacity-90 shadow-md hover:shadow-lg ml-2 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`bg-amber-500 text-black px-6 py-3 text-sm rounded-md h-11 flex items-center justify-center font-semibold shadow-md hover:shadow-lg transition active:opacity-90 sm:ml-2 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={productData.stock <= 0}
                 >
                   BUY NOW
