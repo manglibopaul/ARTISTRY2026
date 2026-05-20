@@ -190,12 +190,6 @@ const ArtisanProfile = () => {
                 >
                   Chat with Artist
                 </button>
-                <button
-                  onClick={() => document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' })}
-                  className='w-full bg-white border border-gray-300 text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:shadow-sm transition text-sm'
-                >
-                  View Shop
-                </button>
               </div>
             </div>
 
@@ -249,8 +243,8 @@ const ArtisanProfile = () => {
                 </div>
               </div>
               
-              {/* Chat & View Shop Buttons - Right Side */}
-              <div className='hidden sm:flex gap-3 mt-6 pt-6 border-t border-gray-200'>
+              {/* Chat Button - Right Side */}
+              <div className='hidden sm:block mt-6 pt-6 border-t border-gray-200'>
                 <button
                   onClick={() => {
                     const sellerSlug = toArtisanSlug(seller?.storeName || seller?.name || '')
@@ -260,15 +254,9 @@ const ArtisanProfile = () => {
                       navigate('/chat')
                     }
                   }}
-                  className='flex-1 bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition transform hover:-translate-y-0.5 text-sm'
+                  className='w-full bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition transform hover:-translate-y-0.5 text-sm'
                 >
                   Chat with Artist
-                </button>
-                <button
-                  onClick={() => document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' })}
-                  className='flex-1 bg-white border border-gray-300 text-gray-900 px-5 py-2.5 rounded-lg font-medium hover:shadow-sm transition text-sm'
-                >
-                  View Shop
                 </button>
               </div>
 
