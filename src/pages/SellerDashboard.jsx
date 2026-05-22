@@ -59,6 +59,8 @@ const SellerDashboard = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    materials: '',
+    sizeChart: [],
     price: '',
     category: 'Flowers',
     subCategory: '',
@@ -1306,6 +1308,80 @@ const SellerDashboard = () => {
                 rows='4'
                 required
               />
+
+              <textarea
+                name='materials'
+                placeholder='Materials (e.g., Cotton, Wool, Polyester, etc.)'
+                value={formData.materials}
+                onChange={handleChange}
+                className='col-span-1 md:col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                rows='3'
+              />
+
+              <div className='col-span-1 md:col-span-2'>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>Size Chart</label>
+                <div className='space-y-2 mb-3'>
+                  {formData.sizeChart.map((row, index) => (
+                    <div key={index} className='flex gap-2'>
+                      <input
+                        type='text'
+                        placeholder='Size (e.g., S, M, L)'
+                        value={row.size || ''}
+                        onChange={(e) => {
+                          const newChart = [...formData.sizeChart];
+                          newChart[index].size = e.target.value;
+                          setFormData({...formData, sizeChart: newChart});
+                        }}
+                        className='flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                      />
+                      <input
+                        type='text'
+                        placeholder='Chest'
+                        value={row.chest || ''}
+                        onChange={(e) => {
+                          const newChart = [...formData.sizeChart];
+                          newChart[index].chest = e.target.value;
+                          setFormData({...formData, sizeChart: newChart});
+                        }}
+                        className='flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                      />
+                      <input
+                        type='text'
+                        placeholder='Length'
+                        value={row.length || ''}
+                        onChange={(e) => {
+                          const newChart = [...formData.sizeChart];
+                          newChart[index].length = e.target.value;
+                          setFormData({...formData, sizeChart: newChart});
+                        }}
+                        className='flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
+                      />
+                      <button
+                        type='button'
+                        onClick={() => {
+                          const newChart = formData.sizeChart.filter((_, i) => i !== index);
+                          setFormData({...formData, sizeChart: newChart});
+                        }}
+                        className='px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600'
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      sizeChart: [...formData.sizeChart, {size: '', chest: '', length: ''}]
+                    });
+                  }}
+                  className='px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800'
+                >
+                  Add Size Row
+                </button>
+              </div>
 
               <div className='col-span-1 md:col-span-2'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>

@@ -332,6 +332,26 @@ export const createProduct = async (req, res) => {
       productData.sizes = [req.body.size].filter(Boolean);
     }
 
+    // Handle materials (string)
+    if (req.body.materials && typeof req.body.materials === 'string') {
+      productData.materials = req.body.materials.trim();
+    }
+
+    // Handle sizeChart (JSON array with size, chest, length)
+    if (req.body.sizeChart) {
+      let sizeChart = req.body.sizeChart;
+      if (typeof sizeChart === 'string') {
+        try {
+          sizeChart = JSON.parse(sizeChart);
+        } catch {
+          sizeChart = [];
+        }
+      }
+      if (Array.isArray(sizeChart)) {
+        productData.sizeChart = sizeChart.filter(row => row.size && row.chest && row.length);
+      }
+    }
+
     if (typeof req.body.sizeDimensions !== 'undefined') {
       const sizeDimensions = normalizeSizeDimensions(req.body.sizeDimensions);
       if (Object.keys(sizeDimensions).length > 0) {
@@ -467,6 +487,26 @@ export const updateProduct = async (req, res) => {
       }
     } else if (req.body.size && !req.body.sizes) {
       updateData.sizes = [req.body.size].filter(Boolean);
+    }
+
+    // Handle materials (string)
+    if (req.body.materials && typeof req.body.materials === 'string') {
+      updateData.materials = req.body.materials.trim();
+    }
+
+    // Handle sizeChart (JSON array with size, chest, length)
+    if (req.body.sizeChart) {
+      let sizeChart = req.body.sizeChart;
+      if (typeof sizeChart === 'string') {
+        try {
+          sizeChart = JSON.parse(sizeChart);
+        } catch {
+          sizeChart = [];
+        }
+      }
+      if (Array.isArray(sizeChart)) {
+        updateData.sizeChart = sizeChart.filter(row => row.size && row.chest && row.length);
+      }
     }
 
     if (typeof req.body.sizeDimensions !== 'undefined') {

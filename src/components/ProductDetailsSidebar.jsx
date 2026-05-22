@@ -138,29 +138,30 @@ export default function ProductDetailsSidebar({
           </button>
           {expandedAccordion === 'sizeChart' && (
             <div className="pb-4 text-sm text-gray-600">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="py-2 px-2">Size</th>
-                      <th className="py-2 px-2">Chest</th>
-                      <th className="py-2 px-2">Length</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-2 px-2">XS</td>
-                      <td className="py-2 px-2">32"</td>
-                      <td className="py-2 px-2">28"</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-2 px-2">S</td>
-                      <td className="py-2 px-2">34"</td>
-                      <td className="py-2 px-2">29"</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              {product.sizeChart && product.sizeChart.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="py-2 px-2">Size</th>
+                        <th className="py-2 px-2">Chest</th>
+                        <th className="py-2 px-2">Length</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.sizeChart.map((row, index) => (
+                        <tr key={index} className="border-b border-gray-100">
+                          <td className="py-2 px-2">{row.size}</td>
+                          <td className="py-2 px-2">{row.chest}</td>
+                          <td className="py-2 px-2">{row.length}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-500">Size chart information not available</p>
+              )}
             </div>
           )}
         </div>

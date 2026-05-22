@@ -127,6 +127,16 @@ const Product = sequelize.define('Product', {
     allowNull: true,
     comment: 'Bounding box dimensions for collision detection',
   },
+  materials: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Materials description for the product',
+  },
+  sizeChart: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Size chart with size, chest, length measurements',
+  },
 
 }, {
   timestamps: true,
