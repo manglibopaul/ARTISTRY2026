@@ -59,7 +59,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
     <div className='text-gray cursor-pointer block h-full group'>
       <Link to={productHref} state={productState} className='block w-full text-left'>
         <div className='bg-white p-3 pb-10 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
-          <div className='overflow-hidden w-full aspect-square bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
+          <div className='overflow-hidden w-full aspect-video sm:aspect-square bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
             <img
               className='w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-500 ease-out rounded-md'
               src={imageUrl}
