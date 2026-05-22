@@ -35,7 +35,7 @@ export default function ProductMediaColumn({ productData, apiUrl }) {
     <div className="w-full md:w-1/2 flex flex-col gap-4">
       {/* Main Image Container */}
       <div className="w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-        <div className="w-full aspect-square bg-gray-50 flex items-center justify-center">
+        <div className="w-full aspect-video md:aspect-square bg-gray-50 flex items-center justify-center">
           <img
             loading="eager"
             decoding="async"
