@@ -19,8 +19,8 @@ export default function ProductMediaColumn({ productData, apiUrl }) {
 
   if (!productData || !productData.image || productData.image.length === 0) {
     return (
-      <div className="w-full md:w-1/2 flex flex-col gap-4">
-        <div className="w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="w-full md:w-1/2 px-4 md:px-0 flex flex-col gap-4">
+        <div className="w-full aspect-video md:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
           <span className="text-gray-400">No image available</span>
         </div>
       </div>
@@ -32,14 +32,14 @@ export default function ProductMediaColumn({ productData, apiUrl }) {
   const supportingImages = images.slice(1, 5); // Show up to 4 supporting images
 
   return (
-    <div className="w-full md:w-1/2 flex flex-col gap-4">
+    <div className="w-full md:w-1/2 px-4 md:px-0 flex flex-col gap-4">
       {/* Main Image Container */}
       <div className="w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
         <div className="w-full aspect-video md:aspect-square bg-gray-50 flex items-center justify-center">
           <img
             loading="eager"
             decoding="async"
-            className="w-full h-full object-contain"
+            className="w-full h-auto object-contain"
             src={mainImage}
             alt="Product main view"
           />
