@@ -18,9 +18,6 @@ export default function ProductDetailsSidebar({
   };
 
   const originalPrice = product.originalPrice || product.price * 1.25;
-  const discountPercent = Math.round(
-    ((originalPrice - product.price) / originalPrice) * 100
-  );
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -32,20 +29,13 @@ export default function ProductDetailsSidebar({
       </div>
 
       {/* Price Section */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-semibold text-gray-900">
-            ₱{product.price.toLocaleString()}
-          </span>
-          <span className="text-lg text-gray-400 line-through">
-            ₱{originalPrice.toLocaleString()}
-          </span>
-        </div>
-        {discountPercent > 0 && (
-          <span className="text-sm font-medium text-red-600">
-            -{discountPercent}%
-          </span>
-        )}
+      <div className="flex items-baseline gap-3">
+        <span className="text-3xl font-semibold text-gray-900">
+          ₱{product.price.toLocaleString()}
+        </span>
+        <span className="text-lg text-gray-400 line-through">
+          ₱{originalPrice.toLocaleString()}
+        </span>
       </div>
 
       {/* Quantity Selector */}
