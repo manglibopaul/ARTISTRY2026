@@ -659,9 +659,9 @@ const Product = () => {
   if (!productData) return <div className='py-20 text-center'>Product not found.</div>
 
   return (
-    <div className='border-t-2 pt-4 sm:pt-10 px-2 sm:px-0 transition-opacity ease-in duration-500 opacity-100'>
+    <div className='border-t-2 pt-4 md:pt-10 px-3 md:px-4 transition-opacity ease-in duration-500 opacity-100'>
 
-      <div className='flex gap-4 sm:gap-12 flex-col sm:flex-row'>
+      <div className='flex flex-col md:flex-row gap-6 md:gap-12 w-full'>
 
         {/* -------------------------product images----------------- */}
         <React.Suspense fallback={<div className='w-full md:w-1/2 py-20 text-center'>Loading images...</div>}>
@@ -669,7 +669,7 @@ const Product = () => {
         </React.Suspense>
 
         {/* ---------- Product info ---------- */}
-        <div className='flex-1'>
+        <div className='w-full md:flex-1'>
           <React.Suspense fallback={<div className='py-20 text-center'>Loading product details...</div>}>
             <ProductDetailsSidebar
               product={productData}
