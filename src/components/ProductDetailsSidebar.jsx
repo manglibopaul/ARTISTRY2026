@@ -128,31 +128,6 @@ export default function ProductDetailsSidebar({
           )}
         </div>
 
-        {/* Fit Accordion */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => toggleAccordion('fit')}
-            className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">Fit</span>
-            <svg
-              className={`w-5 h-5 text-gray-600 transition-transform ${
-                expandedAccordion === 'fit' ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </button>
-          {expandedAccordion === 'fit' && (
-            <div className="pb-4 text-sm text-gray-600">
-              <p>{product.fit || 'True to size. See size chart for detailed measurements.'}</p>
-            </div>
-          )}
-        </div>
-
         {/* Size Chart Accordion */}
         <div className="border-b border-gray-200">
           <button
