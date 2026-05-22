@@ -41,9 +41,6 @@ export default function ProductDetailsSidebar({
             ₱{originalPrice.toLocaleString()}
           </span>
         </div>
-        <span className="inline-block bg-black text-white text-xs font-medium px-3 py-1 rounded-full">
-          Sale
-        </span>
         {discountPercent > 0 && (
           <span className="text-sm font-medium text-red-600">
             -{discountPercent}%

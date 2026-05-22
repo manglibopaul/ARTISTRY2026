@@ -6,6 +6,7 @@ import { ShopContext } from '../context/ShopContext';
 const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
 const ProductChat = React.lazy(() => import('../components/ProductChat'))
 const ProductDetailsSidebar = React.lazy(() => import('../components/ProductDetailsSidebar'))
+const ProductMediaColumn = React.lazy(() => import('../components/ProductMediaColumn'))
 import { getArtisanPath } from '../utils/artisanUrl'
 import { getProductPath } from '../utils/productUrl'
 
@@ -663,57 +664,9 @@ const Product = () => {
       <div className='flex gap-4 sm:gap-12 flex-col sm:flex-row'>
 
         {/* -------------------------product images----------------- */}
-        <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-          <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-start sm:justify-normal sm:w-1/4 w-full gap-3 pb-2 sm:pb-0 sm:sticky sm:top-28'>
-            {productData.image && productData.image.map((item,index)=>{
-              const imgUrl = getImageUrl(item);
-              const isActive = image === imgUrl;
-              return (
-                <img 
-                  onClick={()=>{
-                    setImage(imgUrl);
-                    setCurrentImageIndex(index);
-                  }} 
-                  loading='lazy' decoding='async' 
-                  src={imgUrl} 
-                  key={index} 
-                  className={`thumbnail-img w-20 sm:w-full aspect-square object-cover sm:mb-3 flex-shrink-0 cursor-pointer rounded transition transform hover:scale-105 duration-200 min-h-[48px] sm:min-h-[60px] ${isActive ? 'thumbnail-active' : 'border border-gray-200'}`}
-                  alt={`Product view ${index + 1}`}
-                />
-              )
-            })}
-          </div>
-          <div className='w-full sm:w-3/4 relative'>
-              <div className='w-full h-[420px] sm:h-[520px] md:h-[640px] bg-white rounded overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 product-image-frame'>
-                <img loading={currentImageIndex===0?"eager":"lazy"} fetchpriority={currentImageIndex===0?"high":"low"} decoding='async' className='max-w-full max-h-full w-auto h-full object-contain transition-transform duration-500 hover:scale-105' src={image} alt="" />
-              </div>
-              {productData.image && productData.image.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className='absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all z-10'
-                    aria-label='Previous image'
-                  >
-                    <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className='absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all z-10'
-                    aria-label='Next image'
-                  >
-                    <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-                    </svg>
-                  </button>
-                  <div className='absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm'>
-                    {currentImageIndex + 1} / {productData.image.length}
-                  </div>
-                </>
-              )}
-          </div>
-        </div>
+        <React.Suspense fallback={<div className='w-full md:w-1/2 py-20 text-center'>Loading images...</div>}>
+          <ProductMediaColumn productData={productData} apiUrl={apiUrl} />
+        </React.Suspense>
 
         {/* ---------- Product info ---------- */}
         <div className='flex-1'>
