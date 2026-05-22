@@ -6,6 +6,7 @@ const NewsletterBox = () => {
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -29,18 +30,42 @@ const NewsletterBox = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (firstName && email) {
-      // Store the signup intent
-      localStorage.setItem('signupEmail', email)
-      localStorage.setItem('signupName', firstName)
-      setIsSubmitted(true)
-      
-      // Redirect to login/register page after a brief moment
-      setTimeout(() => {
-        handleClose()
-        navigate('/login')
-      }, 1500)
+    setError('')
+    
+    if (!firstName.trim()) {
+      setError('Please enter your first name')
+      return
     }
+    
+    if (!email.trim()) {
+      setError('Please enter your email')
+      return
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    
+    // Store the signup intent
+    localStorage.setItem('signupEmail', email)
+    localStorage.setItem('signupName', firstName)
+    setIsSubmitted(true)
+    
+    // Redirect to login/register page after a brief moment
+    setTimeout(() => {
+      handleClose()
+      navigate('/login')
+    }, 1500)
+  }
+
+  const handlePrivacyClick = () => {
+    window.open('/privacy-policy', '_blank')
+  }
+
+  const handleTermsClick = () => {
+    window.open('/terms-of-service', '_blank')
   }
 
   if (!showPopup) return null
@@ -65,6 +90,12 @@ const NewsletterBox = () => {
               Get exclusive deals and updates on your first order.
             </p>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <input
@@ -72,7 +103,7 @@ const NewsletterBox = () => {
                   placeholder="First name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -83,22 +114,36 @@ const NewsletterBox = () => {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                   required
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition-colors font-medium"
+                className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 active:bg-gray-900 transition-all font-medium shadow-md hover:shadow-lg"
               >
                 Submit
               </button>
 
-              <p className="text-xs text-center text-gray-500">
+              <p className="text-xs text-center text-gray-500 leading-relaxed">
                 By signing up, you agree to receive marketing emails. View our{' '}
-                <span className="underline cursor-pointer">privacy policy</span> and{' '}
-                <span className="underline cursor-pointer">terms of service</span> for more info.
+                <button
+                  type="button"
+                  onClick={handlePrivacyClick}
+                  className="underline text-gray-700 hover:text-gray-900 cursor-pointer transition-colors font-medium"
+                >
+                  privacy policy
+                </button>
+                {' '}and{' '}
+                <button
+                  type="button"
+                  onClick={handleTermsClick}
+                  className="underline text-gray-700 hover:text-gray-900 cursor-pointer transition-colors font-medium"
+                >
+                  terms of service
+                </button>
+                {' '}for more info.
               </p>
             </form>
           </div>
