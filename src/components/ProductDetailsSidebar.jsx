@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
 
 export default function ProductDetailsSidebar({
   product,
@@ -114,12 +113,16 @@ export default function ProductDetailsSidebar({
             className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
           >
             <span className="font-medium text-gray-900">Materials</span>
-            <ChevronDown
-              size={18}
-              className={`text-gray-600 transition-transform ${
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${
                 expandedAccordion === 'materials' ? 'rotate-180' : ''
               }`}
-            />
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </button>
           {expandedAccordion === 'materials' && (
             <div className="pb-4 text-sm text-gray-600">
@@ -135,12 +138,16 @@ export default function ProductDetailsSidebar({
             className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
           >
             <span className="font-medium text-gray-900">Fit</span>
-            <ChevronDown
-              size={18}
-              className={`text-gray-600 transition-transform ${
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${
                 expandedAccordion === 'fit' ? 'rotate-180' : ''
               }`}
-            />
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </button>
           {expandedAccordion === 'fit' && (
             <div className="pb-4 text-sm text-gray-600">
@@ -156,12 +163,16 @@ export default function ProductDetailsSidebar({
             className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
           >
             <span className="font-medium text-gray-900">Size Chart</span>
-            <ChevronDown
-              size={18}
-              className={`text-gray-600 transition-transform ${
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${
                 expandedAccordion === 'sizeChart' ? 'rotate-180' : ''
               }`}
-            />
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </button>
           {expandedAccordion === 'sizeChart' && (
             <div className="pb-4 text-sm text-gray-600">
@@ -199,12 +210,16 @@ export default function ProductDetailsSidebar({
             className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
           >
             <span className="font-medium text-gray-900">Description</span>
-            <ChevronDown
-              size={18}
-              className={`text-gray-600 transition-transform ${
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${
                 expandedAccordion === 'description' ? 'rotate-180' : ''
               }`}
-            />
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </button>
           {expandedAccordion === 'description' && (
             <div className="pb-4 text-sm text-gray-600 leading-relaxed">
