@@ -250,35 +250,46 @@ const ensureProductsArMetadataColumns = async () => {
   }
 };
 
+const ensureProductsMaterialsAndSizeChartColumns = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Products');
+  
+  if (!table.materials) {
+    await qi.addColumn('Products', 'materials', {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    });
+  }
+  if (!table.sizeChart) {
+    await qi.addColumn('Products', 'sizeChart', {
+      type: Sequelize.JSON,
+      defaultValue: [],
+    });
+  }
+};
+
 const connectDB = async () => {
   if (dbConnected) return;
 
   try {
     await sequelize.authenticate();
 
-    // Avoid running potentially expensive schema-ensure operations on every
-    // production startup (these can noticeably delay cold starts). Allow
-    // enabling them explicitly with `RUN_SCHEMA_ON_STARTUP=true` when needed
-    // (e.g. during deploys or maintenance).
-    const shouldRunSchemaChecks = process.env.NODE_ENV !== 'production' || process.env.RUN_SCHEMA_ON_STARTUP === 'true';
-
-    if (shouldRunSchemaChecks) {
-      await sequelize.sync({ force: false });
-      await ensureUsersDeletedAtColumn();
-      await ensureReviewsImageUrlColumn();
-      await ensureReviewsOrderIdColumn();
-      await ensureProductsSizesColumn();
-      await ensureProductsColorColumns();
-      await ensureOrdersCompletedAtColumn();
-      await ensureOrdersGcashReceiptColumn();
-      await ensureSellersPaymentSettingsColumn();
-      await ensureProductsDimensionsColumns();
-      await ensureProductsArMetadataColumns();
-      // pickupMaps support removed; no runtime schema-ensure needed
-      console.log('✅ Database synchronized successfully');
-    } else {
-      console.log('ℹ️ Skipping runtime schema checks (production start)');
-    }
+    // Always run schema-ensure operations to keep database schema up-to-date
+    // This ensures new columns are added even on production deployments
+    await sequelize.sync({ force: false });
+    await ensureUsersDeletedAtColumn();
+    await ensureReviewsImageUrlColumn();
+    await ensureReviewsOrderIdColumn();
+    await ensureProductsSizesColumn();
+    await ensureProductsColorColumns();
+    await ensureOrdersCompletedAtColumn();
+    await ensureOrdersGcashReceiptColumn();
+    await ensureSellersPaymentSettingsColumn();
+    await ensureProductsDimensionsColumns();
+    await ensureProductsArMetadataColumns();
+    await ensureProductsMaterialsAndSizeChartColumns();
+    // pickupMaps support removed; no runtime schema-ensure needed
+    console.log('✅ Database synchronized successfully');
 
     dbConnected = true;
     const dialect = sequelize.getDialect();
