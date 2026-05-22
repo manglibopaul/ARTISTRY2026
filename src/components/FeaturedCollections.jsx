@@ -50,12 +50,12 @@ const FeaturedCollections = () => {
                     <div className='flex-1 relative'>
                         <div
                             ref={scrollerRef}
-                            className='flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 sm:pb-6 pl-2 sm:pl-6 lg:pl-0 pr-2 sm:pr-6 lg:pr-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+                            className='flex gap-2 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 sm:pb-6 pl-1 sm:pl-6 lg:pl-0 pr-1 sm:pr-6 lg:pr-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
                         >
                             {featuredProducts.map((item, index) => (
                                 <div
                                     key={index}
-                                    className='snap-center shrink-0 w-[75%] sm:w-[60%] md:w-[44%] lg:w-[34%] px-1 sm:px-3'
+                                    className='snap-center shrink-0 w-[60%] sm:w-[60%] md:w-[44%] lg:w-[34%] px-0.5 sm:px-3'
                                 >
                                     <div className='p-2'>
                                         <ProductItem
