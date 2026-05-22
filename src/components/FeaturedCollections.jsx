@@ -24,8 +24,8 @@ const FeaturedCollections = () => {
     };
 
     return (
-        <div className='py-12 sm:py-16 bg-white'>
-            <div className='max-w-6xl xl:max-w-[1400px] mx-auto px-4 sm:px-6'>
+        <div className='py-12 sm:py-16 bg-white w-full max-w-full overflow-x-hidden'>
+            <div className='w-full max-w-6xl xl:max-w-[1400px] mx-auto px-4 sm:px-6'>
                 <div className='text-center py-6 sm:py-8'>
                     <Title size='xl' text1={'FEATURED'} text2={'PRODUCTS'} />
                     <p className='w-full sm:w-3/4 lg:w-2/3 m-auto sm:text-base md:text-lg text-gray-600 mt-3'>
@@ -33,13 +33,13 @@ const FeaturedCollections = () => {
                     </p>
                 </div>
 
-                <div className='flex items-center gap-2 sm:gap-3 -mx-2 sm:mx-0'>
+                <div className='flex items-center gap-1 sm:gap-3 w-full overflow-x-hidden'>
                     {/* Left Arrow */}
                     <button
                         type='button'
                         onClick={() => scrollByAmount(-1)}
                         aria-label='Scroll left'
-                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10 mx-2 sm:mx-0'
+                        className='flex items-center justify-center flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10'
                     >
                         <svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
                             <path d='M12.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.414 10l4.293 4.293a1 1 0 010 1.414z' />
@@ -47,17 +47,17 @@ const FeaturedCollections = () => {
                     </button>
 
                     {/* Carousel Container */}
-                    <div className='flex-1 relative'>
+                    <div className='flex-1 relative w-full min-w-0 overflow-hidden'>
                         <div
                             ref={scrollerRef}
-                            className='flex gap-2 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 sm:pb-6 pl-1 sm:pl-6 lg:pl-0 pr-1 sm:pr-6 lg:pr-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+                            className='flex gap-2 sm:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 sm:pb-6 px-2 sm:px-4 lg:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
                         >
                             {featuredProducts.map((item, index) => (
                                 <div
                                     key={index}
-                                    className='snap-center shrink-0 w-[60%] sm:w-[60%] md:w-[44%] lg:w-[34%] px-0.5 sm:px-3'
+                                    className='snap-center shrink-0 w-[55%] sm:w-[60%] md:w-[44%] lg:w-[34%] max-w-full'
                                 >
-                                    <div className='p-2'>
+                                    <div className='w-full max-w-full p-0'>
                                         <ProductItem
                                             id={item._id || item.id}
                                             image={item.image}
@@ -79,7 +79,7 @@ const FeaturedCollections = () => {
                         type='button'
                         onClick={() => scrollByAmount(1)}
                         aria-label='Scroll right'
-                        className='flex items-center justify-center flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10 mx-2 sm:mx-0'
+                        className='flex items-center justify-center flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition z-10'
                     >
                         <svg className='w-4 h-4' viewBox='0 0 20 20' fill='currentColor'>
                             <path d='M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z' />

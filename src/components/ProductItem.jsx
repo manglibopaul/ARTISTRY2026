@@ -56,12 +56,12 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
   // quick view removed
 
   return (
-    <div className='text-gray cursor-pointer block h-full group'>
-      <Link to={productHref} state={productState} className='block w-full text-left'>
-        <div className='bg-white p-3 pb-10 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
-          <div className='overflow-hidden w-full aspect-video sm:aspect-square bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
+    <div className='w-full max-w-full text-gray cursor-pointer block h-full group'>
+      <Link to={productHref} state={productState} className='block w-full max-w-full text-left'>
+        <div className='w-full max-w-full bg-white p-2 sm:p-3 pb-10 shadow-md hover:shadow-xl transition-transform duration-300 ease-out transform group-hover:-translate-y-2 rounded-lg overflow-hidden'>
+          <div className='overflow-hidden w-full max-w-full aspect-video sm:aspect-square bg-gray-100 flex items-center justify-center relative rounded-md border border-gray-100'>
             <img
-              className='w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-500 ease-out rounded-md'
+              className='w-full h-auto object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-500 ease-out rounded-md'
               src={imageUrl}
               alt={name}
               loading='lazy'
