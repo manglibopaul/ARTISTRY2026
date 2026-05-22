@@ -55,7 +55,7 @@ const FeaturedCollections = () => {
                             {featuredProducts.map((item, index) => (
                                 <div
                                     key={index}
-                                    className='snap-center shrink-0 w-[55%] sm:w-[60%] md:w-[44%] lg:w-[34%] max-w-full'
+                                    className='snap-center shrink-0 w-full sm:w-[90%] md:w-[48%] lg:w-[32%] max-w-full'
                                 >
                                     <div className='w-full max-w-full p-0'>
                                         <ProductItem
