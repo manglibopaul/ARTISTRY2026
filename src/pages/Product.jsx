@@ -5,6 +5,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 const RelatedProducts = React.lazy(() => import('../components/RelatedProducts'));
 const ProductChat = React.lazy(() => import('../components/ProductChat'))
+const ProductDetailsSidebar = React.lazy(() => import('../components/ProductDetailsSidebar'))
 import { getArtisanPath } from '../utils/artisanUrl'
 import { getProductPath } from '../utils/productUrl'
 
@@ -716,167 +717,88 @@ const Product = () => {
 
         {/* ---------- Product info ---------- */}
         <div className='flex-1'>
-          <h1 className='product-title mt-2'>{productData.name}</h1>
-            <div className='mt-4 sm:mt-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6'>
-              <p className='product-price'>{currency}{productData.price}</p>
-              <div className='text-xs sm:text-sm text-gray-600'>
-                {avgRating ? (
-                  <>
-                    <span className='font-medium'>{avgRating}</span>
-                    <span className='ml-1'>/ 5</span>
-                    <span className='ml-2 text-gray-500'>({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
-                  </>
-                ) : (
-                  <span className='text-gray-500'>No reviews yet</span>
-                )}
+          <React.Suspense fallback={<div className='py-20 text-center'>Loading product details...</div>}>
+            <ProductDetailsSidebar
+              product={productData}
+              onARClick={() => setShowAR(true)}
+              onAddToCart={(qty) => {
+                const availableColors = getAvailableColors(productData);
+                const availableSizes = getAvailableSizes(productData);
+                addToCart(
+                  productData._id || productData.id,
+                  qty,
+                  availableColors.length ? cartColor : null,
+                  availableSizes.length ? selectedSize : null,
+                );
+                try { setShowAdded(true); setTimeout(()=>setShowAdded(false), 900); } catch(e){}
+              }}
+              onBuyNow={async (qty) => {
+                if (productData.stock <= 0) return;
+                const availableColors = getAvailableColors(productData);
+                const availableSizes = getAvailableSizes(productData);
+                try {
+                  await addToCart(
+                    productData._id || productData.id,
+                    qty,
+                    availableColors.length ? cartColor : null,
+                    availableSizes.length ? selectedSize : null,
+                  );
+                } catch (e) {}
+                try { navigate('/place-order'); } catch (e) {}
+              }}
+            />
+          </React.Suspense>
+
+          <hr className='mt-6 sm:mt-8' />
+
+          {/* Color Selection (seller-defined) */}
+          {getAvailableColors(productData).length > 0 && (
+            <div className='mt-6'>
+              <p className='text-sm font-medium mb-3'>Choose Color:</p>
+              <div className='flex flex-wrap gap-2'>
+                {getAvailableColors(productData).map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setCartColor(color)}
+                    className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium transition-all ${
+                      cartColor === color
+                        ? 'ring-2 ring-offset-2 ring-black scale-105'
+                        : 'hover:scale-105'
+                    }`}
+                    style={{
+                      border: '1px solid #ccc'
+                    }}
+                  >
+                    {color}
+                  </button>
+                ))}
               </div>
             </div>
-          <p className='mt-5 mb-6 text-gray-500 md:w-4/5'>{productData.description}</p>
+          )}
 
-          {/* ------- COLOR + QUANTITY + ADD TO CART ------- */}
-          <div className='my-6 sm:my-8 space-y-4'>
-            {/* Color Selection (seller-defined) */}
-            {getAvailableColors(productData).length > 0 && (
-              <div>
-                <p className='text-sm font-medium mb-2'>Choose Color:</p>
-                <div className='flex flex-wrap gap-2'>
-                  {getAvailableColors(productData).map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setCartColor(color)}
-                      className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium transition-all ${
-                        cartColor === color
-                          ? 'ring-2 ring-offset-2 ring-black scale-105'
-                          : 'hover:scale-105'
-                      }`}
-                      style={{
-                        border: '1px solid #ccc'
-                      }}
-                    >
-                      {color}
-                    </button>
-                  ))}
-                </div>
+          {/* Size Selection */}
+          {getAvailableSizes(productData).length > 0 && (
+            <div className='mt-6'>
+              <p className='text-sm font-medium mb-3'>Available Sizes:</p>
+              <div className='flex flex-wrap gap-2'>
+                {getAvailableSizes(productData).map((size) => (
+                  <button
+                    key={size}
+                    type='button'
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
+                  >
+                    {size}
+                  </button>
+                ))}
               </div>
-            )}
-
-            {getAvailableSizes(productData).length > 0 && (
-              <div>
-                <p className='text-sm font-medium mb-2'>Available Sizes:</p>
-                <div className='flex flex-wrap gap-2'>
-                  {getAvailableSizes(productData).map((size) => (
-                    <button
-                      key={size}
-                      type='button'
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-                {selectedDimensions && (
-                  <p className='text-xs text-gray-600 mt-2'>
-                    Dimensions {selectedSize ? `for ${selectedSize}` : ''}: {selectedDimensions.width.toFixed(1)} x {selectedDimensions.height.toFixed(1)} x {selectedDimensions.depth.toFixed(1)} cm
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Quantity + Add to Cart + AR Button */}
-            <div className='flex flex-col sm:flex-row gap-3'>
-              {/* ⭐ View AR button */}
-              <button 
-                onClick={()=>setShowAR(true)} 
-                className={`border border-black px-5 py-3 text-sm w-full sm:w-auto rounded-md bg-gradient-to-r from-pink-500 to-yellow-400 text-white font-semibold shadow-md transition transform hover:-translate-y-0.5 h-11 flex items-center justify-center ${productData.modelUrl ? 'hover:from-pink-600 hover:to-yellow-500' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!productData.modelUrl}
-              >
-                View AR
-              </button>
-
-              <div className='flex items-center gap-2 w-full sm:w-auto relative'>
-                <input
-                  type='number'
-                  min={1}
-                  value={quantityInput}
-                  onChange={(e) => {
-                    const next = e.target.value;
-                    setQuantityInput(next);
-                    if (next === '') return;
-                    const parsed = Number(next);
-                    if (Number.isFinite(parsed) && parsed >= 1) {
-                      setQuantity(Math.floor(parsed));
-                    }
-                  }}
-                  onBlur={() => {
-                    if (quantityInput === '' || Number(quantityInput) < 1) {
-                      setQuantity(1);
-                      setQuantityInput('1');
-                      return;
-                    }
-                    const parsed = Math.floor(Number(quantityInput));
-                    setQuantity(parsed);
-                    setQuantityInput(String(parsed));
-                  }}
-                  className='w-24 sm:w-20 px-3 py-3 border border-gray-300 rounded-md text-sm h-11 font-medium bg-white focus:outline-none focus:ring-2 focus:ring-black'
-                  aria-label='Quantity'
-                />
-                <button 
-                  onClick={(e) => {
-                    if (productData.stock <= 0) return;
-                    const btnRect = e.currentTarget.getBoundingClientRect();
-                    // dispatch fly event with start coords and image
-                    window.dispatchEvent(new CustomEvent('cart:add', { detail: { image, start: { left: btnRect.left, top: btnRect.top, width: btnRect.width, height: btnRect.height } } }));
-                    const availableColors = getAvailableColors(productData);
-                    const availableSizes = getAvailableSizes(productData);
-                    addToCart(
-                      productData._id || productData.id,
-                      quantity,
-                      availableColors.length ? cartColor : null,
-                      availableSizes.length ? selectedSize : null,
-                    );
-                    // show temporary added feedback
-                    try { setShowAdded(true); setTimeout(()=>setShowAdded(false), 900); } catch(e){}
-                  }} 
-                  className={`bg-black text-white px-6 py-3 text-sm rounded-md h-11 flex items-center justify-center font-semibold shadow-md hover:shadow-lg transition active:opacity-90 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={productData.stock <= 0}
-                >
-                  {productData.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
-                </button>
-                <button
-                  onClick={async () => {
-                    if (productData.stock <= 0) return;
-                    try {
-                      // ensure only this item is in cart for buy-now
-                      await clearCart();
-                    } catch (e) {}
-                    const availableColors = getAvailableColors(productData);
-                    const availableSizes = getAvailableSizes(productData);
-                    try {
-                      await addToCart(
-                        productData._id || productData.id,
-                        quantity,
-                        availableColors.length ? cartColor : null,
-                        availableSizes.length ? selectedSize : null,
-                      );
-                    } catch (e) {}
-                    // navigate to checkout / place order
-                    try { navigate('/place-order'); } catch (e) {}
-                  }}
-                  className={`bg-amber-500 text-black px-6 py-3 text-sm rounded-md h-11 flex items-center justify-center font-semibold shadow-md hover:shadow-lg transition active:opacity-90 sm:ml-2 ${productData.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={productData.stock <= 0}
-                >
-                  BUY NOW
-                </button>
-                {/* added feedback badge */}
-                <div aria-hidden={!showAdded} className={`absolute -top-3 right-0 transform translate-x-1/2 transition-all duration-300 ${showAdded ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
-                  <div className='bg-black text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md'>Added ✓</div>
-                </div>
-              </div>
+              {selectedDimensions && (
+                <p className='text-xs text-gray-600 mt-2'>
+                  Dimensions {selectedSize ? `for ${selectedSize}` : ''}: {selectedDimensions.width.toFixed(1)} x {selectedDimensions.height.toFixed(1)} x {selectedDimensions.depth.toFixed(1)} cm
+                </p>
+              )}
             </div>
-          </div>
-
-          <hr className='mt-6 sm:mt-8 sm:w-4/5' />
+          )}
 
           {/* -------- Seller Info -------- */}
           {sellerData && (
