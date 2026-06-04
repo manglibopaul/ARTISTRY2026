@@ -908,13 +908,14 @@ const SellerDashboard = () => {
       category: product.category,
       subCategory: product.subCategory || '',
       colors: Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || ''),
-        sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || product.size || ''),
+      sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.sizes || product.size || ''),
       colorChangeable: !!product.colorChangeable,
       colorPartNames: product.colorPartNames && typeof product.colorPartNames === 'object' ? JSON.stringify(product.colorPartNames) : (product.colorPartNames || ''),
       stock: product.stock,
       width: product.width || '',
       height: product.height || '',
       depth: product.depth || '',
+      sizeChart: Array.isArray(product.sizeChart) ? product.sizeChart : [],
       sizeDimensions: product?.arMetadata?.sizeDimensions ? JSON.stringify(product.arMetadata.sizeDimensions) : '',
       image: product.image || [],
       model: null,
@@ -956,12 +957,13 @@ const SellerDashboard = () => {
       category: 'Flowers',
       subCategory: '',
       colors: '',
-        sizes: '',
+      sizes: '',
       colorChangeable: false,
       stock: '',
       width: '',
       height: '',
       depth: '',
+      sizeChart: [],
       sizeDimensions: '',
       image: [],
       model: null,
@@ -1321,14 +1323,15 @@ const SellerDashboard = () => {
               <div className='col-span-1 md:col-span-2'>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>Size Chart</label>
                 <div className='space-y-2 mb-3'>
-                  {formData.sizeChart.map((row, index) => (
+                  {(Array.isArray(formData.sizeChart) ? formData.sizeChart : []).map((row, index) => (
                     <div key={index} className='flex gap-2'>
                       <input
                         type='text'
                         placeholder='Size (e.g., S, M, L)'
                         value={row.size || ''}
                         onChange={(e) => {
-                          const newChart = [...formData.sizeChart];
+                          const currentSizeChart = Array.isArray(formData.sizeChart) ? formData.sizeChart : [];
+                          const newChart = [...currentSizeChart];
                           newChart[index].size = e.target.value;
                           setFormData({...formData, sizeChart: newChart});
                         }}
@@ -1339,7 +1342,8 @@ const SellerDashboard = () => {
                         placeholder='Chest'
                         value={row.chest || ''}
                         onChange={(e) => {
-                          const newChart = [...formData.sizeChart];
+                          const currentSizeChart = Array.isArray(formData.sizeChart) ? formData.sizeChart : [];
+                          const newChart = [...currentSizeChart];
                           newChart[index].chest = e.target.value;
                           setFormData({...formData, sizeChart: newChart});
                         }}
@@ -1350,7 +1354,8 @@ const SellerDashboard = () => {
                         placeholder='Length'
                         value={row.length || ''}
                         onChange={(e) => {
-                          const newChart = [...formData.sizeChart];
+                          const currentSizeChart = Array.isArray(formData.sizeChart) ? formData.sizeChart : [];
+                          const newChart = [...currentSizeChart];
                           newChart[index].length = e.target.value;
                           setFormData({...formData, sizeChart: newChart});
                         }}
@@ -1359,7 +1364,8 @@ const SellerDashboard = () => {
                       <button
                         type='button'
                         onClick={() => {
-                          const newChart = formData.sizeChart.filter((_, i) => i !== index);
+                          const currentSizeChart = Array.isArray(formData.sizeChart) ? formData.sizeChart : [];
+                          const newChart = currentSizeChart.filter((_, i) => i !== index);
                           setFormData({...formData, sizeChart: newChart});
                         }}
                         className='px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600'
@@ -1374,7 +1380,7 @@ const SellerDashboard = () => {
                   onClick={() => {
                     setFormData({
                       ...formData,
-                      sizeChart: [...formData.sizeChart, {size: '', chest: '', length: ''}]
+                      sizeChart: [...(Array.isArray(formData.sizeChart) ? formData.sizeChart : []), {size: '', chest: '', length: ''}]
                     });
                   }}
                   className='px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800'
