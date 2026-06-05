@@ -545,8 +545,6 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-    // Disable camera controls to prevent zoom and pan - view at true scale only
-    viewer.setAttribute('disable-zoom', '');
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -600,6 +598,35 @@ const Product = () => {
     viewer.addEventListener('enter-vr', handleEnterXR);
     viewer.addEventListener('exit-vr', handleExitXR);
 
+    // Prevent zoom gestures on model-viewer
+    const preventZoom = (e) => {
+      // Prevent pinch-to-zoom (2+ touch points)
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const preventWheel = (e) => {
+      // Prevent mouse wheel zoom (Ctrl+scroll)
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    const preventDoubleTab = (e) => {
+      // Prevent double-tap zoom
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+      if (e.detail > 1) {
+        e.preventDefault();
+      }
+    };
+
+    viewer.addEventListener('touchmove', preventZoom, { passive: false });
+    viewer.addEventListener('wheel', preventWheel, { passive: false });
+    viewer.addEventListener('dblclick', preventDoubleTab, { passive: false });
+
     modelViewerRef.current.appendChild(viewer);
     
     return () => {
@@ -607,6 +634,9 @@ const Product = () => {
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
+      try { viewer.removeEventListener('touchmove', preventZoom); } catch (e) {}
+      try { viewer.removeEventListener('wheel', preventWheel); } catch (e) {}
+      try { viewer.removeEventListener('dblclick', preventDoubleTab); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
