@@ -584,12 +584,12 @@ const SellerProfile = () => {
               </>
             ) : (
               <ul className='list-disc pl-5 mt-2'>
-                {seller?.pickupLocations?.length > 0 ? (
-                  seller.pickupLocations.map((loc, idx) => (
+                {(Array.isArray(seller?.pickupLocations) ? seller.pickupLocations : []).length > 0 ? (
+                  (Array.isArray(seller?.pickupLocations) ? seller.pickupLocations : []).map((loc, idx) => (
                     <li key={idx} className='text-sm text-gray-700'>{loc}</li>
                   ))
                 ) : (
-                  <li className='text-sm text-gray-500'>No pickup locations uploaded yet.</li>
+                  <li className='text-sm text-gray-500'>No pickup locations added yet.</li>
                 )}
               </ul>
             )}
