@@ -237,7 +237,11 @@ const SellerDashboard = () => {
       const response = await axios.get(`${apiUrl}/api/products/seller/my-products`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      const list = Array.isArray(response.data) ? response.data : [];
+      const list = Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
       setProducts(list)
     } catch (error) {
       console.error('Error fetching products:', error)
