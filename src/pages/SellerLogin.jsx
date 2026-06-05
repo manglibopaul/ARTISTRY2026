@@ -108,6 +108,30 @@ const SellerLogin = () => {
     }
   }
 
+  const validatePhoneNumber = (phone) => {
+    const cleaned = String(phone || '').trim().replace(/[\s().-]/g, '')
+    if (!cleaned) return false
+
+    // Valid formats: 09XXXXXXXXXX (11 digits), 9XXXXXXXXX (10 digits), +63... (12+ digits)
+    const digitsOnly = cleaned.replace(/\D/g, '')
+    if (!digitsOnly) return false
+
+    if (cleaned.startsWith('+')) {
+      return digitsOnly.length >= 10
+    }
+    if (cleaned.startsWith('09') && cleaned.length === 11) {
+      return true
+    }
+    if (cleaned.startsWith('9') && cleaned.length === 10) {
+      return true
+    }
+    if (cleaned.startsWith('63') && cleaned.length >= 12) {
+      return true
+    }
+
+    return false
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!isLogin && !acceptedTerms) {
@@ -116,6 +140,10 @@ const SellerLogin = () => {
     }
     if (!isLogin && !String(formData.otp || '').trim()) {
       setError('OTP is required to complete sign up.')
+      return
+    }
+    if (!isLogin && !validatePhoneNumber(formData.phone)) {
+      setError('Please enter a valid phone number (e.g., 09XX XXX XXXX or +63X XXXX XXXX).')
       return
     }
     setLoading(true)
