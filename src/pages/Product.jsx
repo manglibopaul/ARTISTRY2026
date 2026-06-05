@@ -45,6 +45,7 @@ const Product = () => {
   const [showAdded, setShowAdded] = useState(false);
   const [detectedParts, setDetectedParts] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
+  const [hasUserSelectedParts, setHasUserSelectedParts] = useState(false);
   const [showPartsList, setShowPartsList] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
   const reviewsRef = useRef(null);
@@ -93,7 +94,9 @@ const Product = () => {
         ? productData.colorableParts
         : arr.filter(n => !/eye|pupil|button|stitch|seam|tongue/i.test(n));
       setDetectedParts(arr);
-      setSelectedParts(defaultSelected);
+      if (!hasUserSelectedParts) {
+        setSelectedParts(defaultSelected);
+      }
     } catch (err) {
       console.error('detectModelParts error', err);
       setDetectedParts([]);
@@ -1193,8 +1196,8 @@ const Product = () => {
                           <div className="flex items-center justify-between mb-2">
                             <div className="font-medium">Detected model parts</div>
                             <div className="flex gap-2">
-                              <button onClick={() => setSelectedParts(detectedParts.slice())} className="px-2 py-1 text-xs border rounded">Select all</button>
-                              <button onClick={() => setSelectedParts([])} className="px-2 py-1 text-xs border rounded">Clear</button>
+                              <button onClick={() => { setSelectedParts(detectedParts.slice()); setHasUserSelectedParts(true); }} className="px-2 py-1 text-xs border rounded">Select all</button>
+                              <button onClick={() => { setSelectedParts([]); setHasUserSelectedParts(true); }} className="px-2 py-1 text-xs border rounded">Clear</button>
                             </div>
                           </div>
                           {detectedParts.length === 0 ? (
@@ -1203,6 +1206,7 @@ const Product = () => {
                             detectedParts.map((p) => (
                               <label key={p} className="flex items-center gap-2 mb-1">
                                 <input type="checkbox" checked={selectedParts.includes(p)} onChange={(e) => {
+                                  setHasUserSelectedParts(true);
                                   if (e.target.checked) setSelectedParts(prev => Array.from(new Set([...prev, p])));
                                   else setSelectedParts(prev => prev.filter(x => x !== p));
                                 }} />
