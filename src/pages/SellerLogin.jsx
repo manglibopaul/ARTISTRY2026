@@ -157,15 +157,10 @@ const SellerLogin = () => {
       let dataToSend = formData
       let config = { timeout: 30000 }
       if (!isLogin) {
-        const sellerAddressText = normalizeLocationText(formData.address)
-        const filteredPickupLocations = formData.pickupLocations.filter((location) => (
-          normalizeLocationText(location) && normalizeLocationText(location) !== sellerAddressText
-        ))
-
         dataToSend = new FormData()
         Object.entries(formData).forEach(([key, value]) => {
           if (key === 'pickupLocations') {
-            dataToSend.append('pickupLocations', JSON.stringify(filteredPickupLocations))
+            dataToSend.append('pickupLocations', JSON.stringify(formData.pickupLocations))
           } else if (key === 'proofOfArtisan' && value) {
             dataToSend.append('proofOfArtisan', value)
           } else {
