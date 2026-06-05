@@ -575,6 +575,16 @@ const Product = () => {
     const handleLoad = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
+      
+      // Lock camera to current position (true scale)
+      try {
+        const orbit = viewer.getCameraOrbit();
+        viewer.setAttribute('min-camera-orbit', `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`);
+      } catch (e) {
+        console.log('Failed to lock camera orbit:', e);
+      }
+      
       // detect model parts for debugging / selective recolor
       try {
         detectModelParts(viewer);
@@ -586,14 +596,36 @@ const Product = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
-    // When entering AR/VR (WebXR) - camera controls are already disabled for true scale viewing
+    
+    // When entering AR/VR (WebXR) - enforce true scale by resetting camera
+    let cameraResetInterval = null;
     const handleEnterXR = () => {
       try {
         setArInSession(true);
+        // Get the current camera position at true scale
+        const orbit = viewer.getCameraOrbit();
+        const trueScale = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
+        
+        // Continuously reset camera to prevent zoom
+        cameraResetInterval = setInterval(() => {
+          try {
+            const currentOrbit = viewer.getCameraOrbit();
+            // Only reset if radius changed significantly (indicating zoom attempt)
+            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.01) {
+              viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
+            }
+          } catch (e) {
+            // ignore errors
+          }
+        }, 50); // Reset every 50ms to catch zoom attempts
       } catch (e) {}
     };
     const handleExitXR = () => {
       try {
+        if (cameraResetInterval) {
+          clearInterval(cameraResetInterval);
+          cameraResetInterval = null;
+        }
         setArInSession(false);
       } catch (e) {}
     };
@@ -696,6 +728,7 @@ const Product = () => {
     modelViewerRef.current.appendChild(viewer);
     
     return () => {
+      try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
