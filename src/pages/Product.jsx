@@ -111,29 +111,49 @@ const Product = () => {
     const r = parseInt(hex.substring(0, 2), 16) / 255;
     const g = parseInt(hex.substring(2, 4), 16) / 255;
     const b = parseInt(hex.substring(4, 6), 16) / 255;
-    
-    try {
-      if (viewer.model && viewer.model.materials) {
-        // Determine allowed parts: prefer explicit selectedParts set by the user in the modal
-        const userSelected = Array.isArray(selectedParts) && selectedParts.length > 0
-          ? selectedParts.map(s => String(s).toLowerCase())
-          : null;
-        // If user has made explicit selections in the parts list, use those. Otherwise use product config.
-        const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts) && productData.colorableParts.length > 0) ? productData.colorableParts.map(s => String(s).toLowerCase()) : null);
-        const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
 
+    const explicitSelection = Array.isArray(selectedParts);
+    const explicitSelectionLower = explicitSelection ? selectedParts.map(s => String(s).toLowerCase()).filter(Boolean) : null;
+    const explicitSelectionEmpty = explicitSelection && selectedParts.length === 0 && detectedParts.length > 0;
+    if (explicitSelectionEmpty) return;
+
+    const whitelist = explicitSelectionLower && explicitSelectionLower.length > 0
+      ? explicitSelectionLower
+      : ((productData && Array.isArray(productData.colorableParts) && productData.colorableParts.length > 0)
+        ? productData.colorableParts.map(s => String(s).toLowerCase())
+        : null);
+    const blacklist = (productData && Array.isArray(productData.colorExclusions))
+      ? productData.colorExclusions.map(s => String(s).toLowerCase())
+      : [];
+
+    const matchesWhiteList = (name) => {
+      if (!whitelist || whitelist.length === 0) return true;
+      if (!name) return false;
+      return whitelist.some(w => name === w || name.includes(w));
+    };
+
+    const matchesNodeOrMaterial = (nodeName, materialNames) => {
+      if (!whitelist || whitelist.length === 0) return true;
+      if (matchesWhiteList(nodeName)) return true;
+      if (!materialNames) return false;
+      if (typeof materialNames === 'string') {
+        return matchesWhiteList(materialNames);
+      }
+      if (Array.isArray(materialNames)) {
+        return materialNames.some(name => matchesWhiteList(name));
+      }
+      return false;
+    };
+
+    const shouldUsePrimaryMaterialLoop = !explicitSelectionLower || explicitSelectionLower.length === 0;
+
+    try {
+      if (shouldUsePrimaryMaterialLoop && viewer.model && viewer.model.materials) {
         viewer.model.materials.forEach((material) => {
           try {
             const mName = (material.name || material._name || '').toString().toLowerCase();
-            // Skip if explicitly excluded
             if (blacklist.length && blacklist.some(ex => mName === ex || mName.includes(ex))) return;
-            // If whitelist provided (non-empty), only apply when material name matches exactly or contains one of the whitelist items
-            if (whitelist && whitelist.length > 0) {
-              const matches = whitelist.some(w => mName === w || mName.includes(w));
-              if (!matches) return;
-            }
-            // Only apply color if: (1) no whitelist/no parts detected, OR (2) material is in whitelist
-            // This prevents coloring everything when the user hasn't made a selection yet
+            if (!matchesWhiteList(mName)) return;
 
             if (material.pbrMetallicRoughness && typeof material.pbrMetallicRoughness.setBaseColorFactor === 'function') {
               material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
@@ -144,35 +164,50 @@ const Product = () => {
         });
       }
     } catch (e) {
-      // Primary API failed — log and continue to fallback strategies
       console.log('Primary material API failed:', e);
     }
 
-    // Fallback strategy: traverse underlying scene/meshes and try common material APIs
     try {
-      // Recompute whitelist and blacklist for fallback strategy
-      const userSelected = Array.isArray(selectedParts) && selectedParts.length > 0
-        ? selectedParts.map(s => String(s).toLowerCase())
-        : null;
-      const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts) && productData.colorableParts.length > 0) ? productData.colorableParts.map(s => String(s).toLowerCase()) : null);
-      const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
-      
       const sceneRoot = (viewer.model && (viewer.model.scene || viewer.model)) || null;
       if (sceneRoot && typeof sceneRoot.traverse === 'function') {
         sceneRoot.traverse((node) => {
           try {
             if (!node || !node.material) return;
+
+            const nodeName = (node.name || '').toString().toLowerCase();
             const mats = Array.isArray(node.material) ? node.material : [node.material];
-            mats.forEach((mat) => {
+            const materialNames = mats.map(mat => (mat && (mat.name || mat._name) ? String(mat.name || mat._name).toLowerCase() : ''));
+
+            if (!matchesNodeOrMaterial(nodeName, materialNames)) {
+              return;
+            }
+
+            const cloneMaterial = (material) => {
+              if (!material) return material;
+              try {
+                if (Array.isArray(material)) {
+                  return material.map(m => (m && typeof m.clone === 'function') ? m.clone() : m);
+                }
+                if (typeof material.clone === 'function') {
+                  return material.clone();
+                }
+              } catch (_) {}
+              return material;
+            };
+
+            if (Array.isArray(node.material)) {
+              node.material = cloneMaterial(node.material);
+            } else {
+              node.material = cloneMaterial(node.material);
+            }
+
+            const updatedMats = Array.isArray(node.material) ? node.material : [node.material];
+            updatedMats.forEach((mat) => {
               if (!mat) return;
-              // Apply whitelist/blacklist filtering
               const mName = (mat.name || mat._name || '').toString().toLowerCase();
               if (blacklist.length && blacklist.some(ex => mName === ex || mName.includes(ex))) return;
-              if (whitelist && whitelist.length > 0) {
-                const matches = whitelist.some(w => mName === w || mName.includes(w));
-                if (!matches) return;
-              }
-              
+              if (!matchesNodeOrMaterial(nodeName, mName)) return;
+
               try {
                 if (mat.pbrMetallicRoughness && typeof mat.pbrMetallicRoughness.setBaseColorFactor === 'function') {
                   mat.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
