@@ -576,12 +576,17 @@ const Product = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
       
-      // Lock camera radius to current distance (true scale) but allow rotation
+      // Get initial camera position for true scale locking
+      let trueScaleRadius = null;
       try {
         const orbit = viewer.getCameraOrbit();
-        // Use "auto" for angles to allow full rotation, lock only the radius
-        viewer.setAttribute('min-camera-orbit', `auto auto ${orbit.radius}m`);
-        viewer.setAttribute('max-camera-orbit', `auto auto ${orbit.radius}m`);
+        trueScaleRadius = orbit.radius;
+        
+        // Lock camera to exact radius (true scale) while allowing full 360° rotation
+        // Format: min-camera-orbit="<phi>rad <theta>rad <radius>m"
+        // Full rotation: phi 0 to 6.28rad (full circle), theta 0 to 3.14rad (full hemisphere)
+        viewer.setAttribute('min-camera-orbit', `0rad 0rad ${orbit.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `6.28rad 3.14rad ${orbit.radius}m`);
       } catch (e) {
         console.log('Failed to lock camera orbit:', e);
       }
@@ -598,7 +603,7 @@ const Product = () => {
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
     
-    // When entering AR/VR (WebXR) - enforce true scale by resetting camera
+    // When entering AR/VR (WebXR) - enforce true scale by aggressively resetting camera
     let cameraResetInterval = null;
     const handleEnterXR = () => {
       try {
@@ -607,18 +612,19 @@ const Product = () => {
         const orbit = viewer.getCameraOrbit();
         const trueScale = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
         
-        // Continuously reset camera to prevent zoom
+        // Aggressively reset camera radius to prevent ANY zoom attempt
         cameraResetInterval = setInterval(() => {
           try {
             const currentOrbit = viewer.getCameraOrbit();
-            // Only reset if radius changed significantly (indicating zoom attempt)
-            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.01) {
-              viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
+            // Much stricter check - reset if radius differs by even 0.001m
+            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.001) {
+              // Force reset with exact radius
+              viewer.setCameraOrbit(currentOrbit.theta, currentOrbit.phi, trueScale.radius);
             }
           } catch (e) {
             // ignore errors
           }
-        }, 50); // Reset every 50ms to catch zoom attempts
+        }, 16); // Reset every 16ms (60fps) to catch zoom attempts immediately
       } catch (e) {}
     };
     const handleExitXR = () => {
