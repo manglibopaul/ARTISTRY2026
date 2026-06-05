@@ -576,11 +576,12 @@ const Product = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
       
-      // Lock camera to current position (true scale)
+      // Lock camera radius to current distance (true scale) but allow rotation
       try {
         const orbit = viewer.getCameraOrbit();
-        viewer.setAttribute('min-camera-orbit', `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`);
-        viewer.setAttribute('max-camera-orbit', `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`);
+        // Use "auto" for angles to allow full rotation, lock only the radius
+        viewer.setAttribute('min-camera-orbit', `auto auto ${orbit.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `auto auto ${orbit.radius}m`);
       } catch (e) {
         console.log('Failed to lock camera orbit:', e);
       }
