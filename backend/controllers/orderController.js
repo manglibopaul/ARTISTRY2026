@@ -734,15 +734,26 @@ export const updateOrderStatus = async (req, res) => {
 // Get all orders (admin)
 export const getAllOrders = async (req, res) => {
   try {
-    let orders;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 50);
+    const offset = (page - 1) * limit;
+
+    let result;
     try {
-      orders = await Order.findAll();
+      result = await Order.findAndCountAll({ limit, offset, order: [['createdAt', 'DESC']] });
     } catch (err) {
       if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
-        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] } });
+        result = await Order.findAndCountAll({ attributes: { exclude: ['gcashReceipt'] }, limit, offset, order: [['createdAt', 'DESC']] });
       } else throw err;
     }
-    res.json(orders);
+
+    res.json({
+      total: result.count,
+      page,
+      limit,
+      totalPages: Math.ceil(result.count / limit),
+      data: result.rows,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -752,15 +763,17 @@ export const getAllOrders = async (req, res) => {
 export const getSellerOrders = async (req, res) => {
   try {
     const sellerId = req.seller.id;
+    const limit = 500; // Limit to prevent memory issues from fetching thousands of orders
+
     let orders;
     try {
-      orders = await Order.findAll({ order: [['createdAt', 'DESC']] });
+      orders = await Order.findAll({ order: [['createdAt', 'DESC']], limit });
     } catch (err) {
       // Defensive fallback: if the DB schema in production is missing the `gcashReceipt`
       // column, retry the query excluding that attribute to avoid a hard 500.
       if (String(err.message || '').includes('gcashReceipt') || String(err.message || '').includes('does not exist')) {
         console.warn('getSellerOrders: retrying without gcashReceipt attribute due to DB schema mismatch');
-        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] }, order: [['createdAt', 'DESC']] });
+        orders = await Order.findAll({ attributes: { exclude: ['gcashReceipt'] }, order: [['createdAt', 'DESC']], limit });
       } else {
         throw err;
       }

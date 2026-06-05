@@ -65,8 +65,23 @@ export const useCoupon = async (code) => {
 // Get all coupons
 export const getAllCoupons = async (req, res) => {
   try {
-    const coupons = await Coupon.findAll({ order: [['createdAt', 'DESC']] });
-    res.json(coupons);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 50);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Coupon.findAndCountAll({ 
+      limit, 
+      offset, 
+      order: [['createdAt', 'DESC']] 
+    });
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      data: rows,
+    });
   } catch {
     res.status(500).json({ message: 'Failed to load coupons' });
   }

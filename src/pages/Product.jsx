@@ -545,7 +545,7 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-    viewer.setAttribute('camera-controls', '');
+    // Disable camera controls to prevent zoom and pan - view at true scale only
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -559,6 +559,8 @@ const Product = () => {
     viewer.setAttribute('scale-to-fit', 'true');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
+    viewer.style.touchAction = 'none';
+    viewer.style.pointerEvents = 'none';
 
     if (resolvedIosModelUrl) {
       viewer.setAttribute('ios-src', resolvedIosModelUrl);
@@ -579,16 +581,14 @@ const Product = () => {
       setArLoading(false);
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
-    // When entering AR/VR (WebXR) disable camera controls to prevent pinch-zoom in real world
+    // When entering AR/VR (WebXR) - camera controls are already disabled for true scale viewing
     const handleEnterXR = () => {
       try {
-        viewer.removeAttribute('camera-controls');
         setArInSession(true);
       } catch (e) {}
     };
     const handleExitXR = () => {
       try {
-        viewer.setAttribute('camera-controls', '');
         setArInSession(false);
       } catch (e) {}
     };

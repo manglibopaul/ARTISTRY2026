@@ -194,20 +194,20 @@ export const getProductByName = async (req, res) => {
       return res.json(normalizeProductPayload(productById));
     }
 
-    const wantedSlug = toProductSlug(decodedName);
-    const products = await Product.findAll({
+    // Query by name directly instead of fetching all products
+    const product = await Product.findOne({
+      where: { name: decodedName },
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
       }],
     });
-    const match = products.find((p) => toProductSlug(p.name) === wantedSlug);
 
-    if (!match) {
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    return res.json(normalizeProductPayload(match));
+    return res.json(normalizeProductPayload(product));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -217,14 +217,28 @@ export const getProductByName = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    const products = await Product.findAll({
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 24);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Product.findAndCountAll({
       where: { category },
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
       }],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
-    res.json(products.map(normalizeProductPayload));
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      data: rows.map(normalizeProductPayload),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -234,14 +248,28 @@ export const getProductsByCategory = async (req, res) => {
 export const getSellerProducts = async (req, res) => {
   try {
     const sellerId = req.seller.id;
-    const products = await Product.findAll({
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 24);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Product.findAndCountAll({
       where: { sellerId },
       include: [{
         model: Seller,
         attributes: ['id', 'name', 'storeName', 'artisanType', 'avatar'],
       }],
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
-    res.json(products.map(normalizeProductPayload));
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      data: rows.map(normalizeProductPayload),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -620,15 +648,33 @@ export const deleteProduct = async (req, res) => {
 export const searchProducts = async (req, res) => {
   try {
     const { query } = req.query;
-    const products = await Product.findAll({
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 24);
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Product.findAndCountAll({
       where: {
         [Op.or]: [
           { name: { [Op.like]: `%${query}%` } },
           { description: { [Op.like]: `%${query}%` } },
         ],
       },
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
     });
-    res.json(products.map(normalizeProductPayload));
+
+    res.json({
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      data: rows.map(normalizeProductPayload),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

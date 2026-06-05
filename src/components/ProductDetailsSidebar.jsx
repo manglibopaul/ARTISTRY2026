@@ -113,54 +113,6 @@ export default function ProductDetailsSidebar({
           )}
         </div>
 
-        {/* Size Chart Accordion */}
-        <div className="border-b border-gray-200">
-          <button
-            onClick={() => toggleAccordion('sizeChart')}
-            className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">Size Chart</span>
-            <svg
-              className={`w-5 h-5 text-gray-600 transition-transform ${
-                expandedAccordion === 'sizeChart' ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </button>
-          {expandedAccordion === 'sizeChart' && (
-            <div className="pb-4 text-sm text-gray-600">
-              {product.sizeChart && product.sizeChart.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="py-2 px-2">Size</th>
-                        <th className="py-2 px-2">Chest</th>
-                        <th className="py-2 px-2">Length</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {product.sizeChart.map((row, index) => (
-                        <tr key={index} className="border-b border-gray-100">
-                          <td className="py-2 px-2">{row.size}</td>
-                          <td className="py-2 px-2">{row.chest}</td>
-                          <td className="py-2 px-2">{row.length}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-gray-500">Size chart information not available</p>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Description Accordion */}
         <div className="border-b border-gray-200">
           <button
