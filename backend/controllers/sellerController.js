@@ -264,11 +264,6 @@ export const registerSeller = async (req, res) => {
       return res.status(400).json({ message: otpValidation.message });
     }
 
-    const phoneOtpValidation = validateSellerPhoneSignupOtp(normalizedPhone, phoneOtp);
-    if (!phoneOtpValidation.valid) {
-      return res.status(400).json({ message: phoneOtpValidation.message });
-    }
-
     let proofOfArtisan = null;
     const portfolioImages = [];
     if (req.files) {
@@ -316,7 +311,6 @@ export const registerSeller = async (req, res) => {
     }
 
     sellerSignupOtpStore.delete(normalizedEmail);
-    sellerSignupPhoneOtpStore.delete(normalizedPhone);
 
     const token = generateSellerToken(seller.id);
 
