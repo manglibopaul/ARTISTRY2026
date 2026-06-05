@@ -280,8 +280,15 @@ export const createProduct = async (req, res) => {
   try {
     console.log('CREATE PRODUCT: req.files:', req.files);
     console.log('CREATE PRODUCT: req.body:', req.body);
-    const sellerId = req.seller?.id; // From auth middleware
-    const productData = { ...req.body, sellerId: sellerId || null };
+    console.log('CREATE PRODUCT: req.seller:', req.seller);
+    
+    if (!req.seller || !req.seller.id) {
+      console.error('CREATE PRODUCT: req.seller is missing or invalid:', req.seller);
+      return res.status(401).json({ message: 'Seller authentication failed' });
+    }
+    
+    const sellerId = req.seller.id;
+    const productData = { ...req.body, sellerId };
     delete productData.sizeDimensions;
 
     // Handle colors (comma-separated string or JSON array)
@@ -395,43 +402,70 @@ export const createProduct = async (req, res) => {
 
     // Handle file uploads
     if (req.files) {
-      const modelFile = req.files.find(f => f.fieldname === 'model');
-      const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
+      try {
+        const modelFile = req.files.find(f => f.fieldname === 'model');
+        const iosModelFile = req.files.find(f => f.fieldname === 'iosModel');
 
-      // No file size validation for model uploads
+        // No file size validation for model uploads
 
-      // Handle multiple images
-      const imageFiles = req.files.filter(f => f.fieldname === 'image');
-      if (imageFiles.length > 0) {
-        const uploadedImages = await Promise.all(
-          imageFiles.map((f) => uploadImage(f, 'artistry/products'))
-        );
-        productData.image = uploadedImages.filter(Boolean).map((f) => ({
-          url: f.url,
-          filename: f.filename,
-        }));
-      }
+        // Handle multiple images
+        const imageFiles = req.files.filter(f => f.fieldname === 'image');
+        if (imageFiles.length > 0) {
+          try {
+            const uploadedImages = await Promise.all(
+              imageFiles.map((f) => uploadImage(f, 'artistry/products'))
+            );
+            productData.image = uploadedImages.filter(Boolean).map((f) => ({
+              url: f.url,
+              filename: f.filename,
+            }));
+          } catch (imgErr) {
+            console.error('Image upload error:', imgErr);
+            return res.status(400).json({ message: `Image upload failed: ${imgErr.message}` });
+          }
+        }
 
-      // Handle model file (GLB)
-      if (modelFile) {
-        console.log('Uploading GLB model file:', modelFile.originalname);
-        const uploadedModel = await uploadModel(modelFile, 'artistry/models');
-        console.log('Uploaded model result:', uploadedModel);
-        productData.modelUrl = uploadedModel?.url || null;
-        console.log('Set productData.modelUrl:', productData.modelUrl);
-      }
+        // Handle model file (GLB)
+        if (modelFile) {
+          try {
+            console.log('Uploading GLB model file:', modelFile.originalname);
+            const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+            if (!uploadedModel) {
+              return res.status(400).json({ message: 'Failed to upload 3D model. Please check file format.' });
+            }
+            console.log('Uploaded model result:', uploadedModel);
+            productData.modelUrl = uploadedModel.url || null;
+            console.log('Set productData.modelUrl:', productData.modelUrl);
+          } catch (modelErr) {
+            console.error('Model upload error:', modelErr);
+            return res.status(400).json({ message: `Model upload failed: ${modelErr.message}` });
+          }
+        }
 
-      // Handle iOS model file (USDZ)
-      if (iosModelFile) {
-        const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
-        productData.iosModel = uploadedIosModel?.url || null;
+        // Handle iOS model file (USDZ)
+        if (iosModelFile) {
+          try {
+            const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
+            if (!uploadedIosModel) {
+              return res.status(400).json({ message: 'Failed to upload iOS model. Please check file format.' });
+            }
+            productData.iosModel = uploadedIosModel.url || null;
+          } catch (iosErr) {
+            console.error('iOS model upload error:', iosErr);
+            return res.status(400).json({ message: `iOS model upload failed: ${iosErr.message}` });
+          }
+        }
+      } catch (fileErr) {
+        console.error('File handling error:', fileErr);
+        return res.status(400).json({ message: `File handling error: ${fileErr.message}` });
       }
     }
 
     const newProduct = await Product.create(productData);
     res.status(201).json(normalizeProductPayload(newProduct));
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('CREATE PRODUCT ERROR:', error);
+    res.status(400).json({ message: error.message || 'Failed to create product' });
   }
 };
 
