@@ -30,7 +30,13 @@ export const verifySeller = async (req, res, next) => {
 // Require seller account verification for sensitive seller actions
 export const requireVerifiedSeller = async (req, res, next) => {
   try {
-    if (!req.seller?.id) {
+    if (!req.seller) {
+      console.warn('requireVerifiedSeller: req.seller is not defined');
+      return res.status(401).json({ message: 'Unauthorized seller session' });
+    }
+
+    if (!req.seller.id) {
+      console.warn('requireVerifiedSeller: req.seller.id is missing');
       return res.status(401).json({ message: 'Unauthorized seller session' });
     }
 
@@ -39,7 +45,8 @@ export const requireVerifiedSeller = async (req, res, next) => {
     }
 
     next();
-  } catch {
+  } catch (err) {
+    console.error('requireVerifiedSeller middleware error:', err);
     return res.status(500).json({ message: 'Failed to verify seller status' });
   }
 };
