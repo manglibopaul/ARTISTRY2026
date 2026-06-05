@@ -112,10 +112,9 @@ const Product = () => {
     const g = parseInt(hex.substring(2, 4), 16) / 255;
     const b = parseInt(hex.substring(4, 6), 16) / 255;
 
-    const explicitSelection = Array.isArray(selectedParts);
-    const explicitSelectionLower = explicitSelection ? selectedParts.map(s => String(s).toLowerCase()).filter(Boolean) : null;
-    const explicitSelectionEmpty = explicitSelection && selectedParts.length === 0 && detectedParts.length > 0;
-    if (explicitSelectionEmpty) return;
+    const explicitSelectionLower = Array.isArray(selectedParts)
+      ? selectedParts.map(s => String(s).toLowerCase()).filter(Boolean)
+      : null;
 
     const whitelist = explicitSelectionLower && explicitSelectionLower.length > 0
       ? explicitSelectionLower
@@ -145,10 +144,8 @@ const Product = () => {
       return false;
     };
 
-    const shouldUsePrimaryMaterialLoop = !explicitSelectionLower || explicitSelectionLower.length === 0;
-
     try {
-      if (shouldUsePrimaryMaterialLoop && viewer.model && viewer.model.materials) {
+      if (viewer.model && viewer.model.materials) {
         viewer.model.materials.forEach((material) => {
           try {
             const mName = (material.name || material._name || '').toString().toLowerCase();
