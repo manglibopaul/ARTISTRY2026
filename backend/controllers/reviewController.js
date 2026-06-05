@@ -52,12 +52,15 @@ export const editReview = async (req, res) => {
       if (isMissingMessageColumnError(err)) {
         console.warn('Fallback triggered: saving review without `message` column', { reviewId, userId, error: err.message });
         try {
-          // Remove message from dataValues and save allowed fields only
-          const savedData = { ...review.dataValues };
-          delete savedData.message;
-          const fields = Object.keys(savedData);
-          await review.save({ fields });
-          // Refresh review from DB to return canonical data
+          const updatedFields = {};
+          if (rating !== undefined) updatedFields.rating = rating;
+          if (title !== undefined) updatedFields.title = title;
+          if (comment !== undefined) updatedFields.comment = comment;
+          if (message !== undefined) {
+            // If the message column is missing, skip saving it entirely.
+          }
+          updatedFields.images = images;
+          await Review.update(updatedFields, { where: { id: reviewId } });
           const refreshed = await Review.findByPk(reviewId);
           return res.json({ message: 'Review updated (without message)', review: refreshed });
         } catch (err2) {
@@ -212,7 +215,7 @@ export const getReviewsForSeller = async (req, res) => {
     const products = await Product.findAll({ where: { sellerId } });
     const productIds = products.map(p => p.id);
 
-    if (!productIds.length) return res.json([]);
+    if (!productIds.length) return res.json({ message: 'Reviews loaded', reviews: [] });
 
     const reviews = await Review.findAll({ where: { productId: productIds }, order: [['createdAt', 'DESC']] });
     res.json({ message: 'Reviews loaded', reviews });
