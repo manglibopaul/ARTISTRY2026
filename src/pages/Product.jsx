@@ -545,8 +545,10 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-    // Enable camera controls for rotation, zoom prevention is handled by event listeners
+    // Enable camera controls for rotation, but lock zoom distance
     viewer.setAttribute('camera-controls', '');
+    viewer.setAttribute('min-camera-orbit', 'auto auto 100%');
+    viewer.setAttribute('max-camera-orbit', 'auto auto 100%');
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
