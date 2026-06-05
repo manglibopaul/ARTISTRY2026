@@ -235,7 +235,7 @@ const normalizePaymentSettings = (raw) => {
 // Register seller
 export const registerSeller = async (req, res) => {
   try {
-    const { name, email, password, storeName, artisanType, phone, address, otp, phoneOtp } = req.body;
+    const { name, email, password, storeName, artisanType, phone, address, otp } = req.body;
     const normalizedEmail = normalizeEmail(email);
     const normalizedPhone = normalizePhoneNumber(phone);
     const pickupLocations = normalizePickupLocations(req.body.pickupLocations);
@@ -246,10 +246,6 @@ export const registerSeller = async (req, res) => {
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required for sign up.' });
-    }
-
-    if (!phoneOtp) {
-      return res.status(400).json({ message: 'Phone OTP is required for sign up.' });
     }
 
     // Check both active and soft-deleted sellers to avoid unique-constraint 500s.
