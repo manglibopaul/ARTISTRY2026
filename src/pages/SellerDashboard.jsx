@@ -274,8 +274,12 @@ const SellerDashboard = () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/reviews/seller`, { headers: { Authorization: `Bearer ${token}` } })
-      const list = res.data.reviews || res.data;
-      setSellerReviews(list || [])
+      const list = Array.isArray(res.data.reviews)
+        ? res.data.reviews
+        : Array.isArray(res.data)
+          ? res.data
+          : [];
+      setSellerReviews(list)
     } catch (err) {
       console.error('fetchSellerReviews', err)
       if (err.response?.status === 401) {
@@ -1796,13 +1800,13 @@ const SellerDashboard = () => {
           <div className='bg-white rounded-lg shadow-lg p-6'>
             <h2 className='text-2xl font-bold mb-4'>Product Reviews</h2>
 
-            {loading && !sellerReviews.length ? (
+            {loading && (!Array.isArray(sellerReviews) || sellerReviews.length === 0) ? (
               <div className='text-sm text-gray-500'>Loading reviews...</div>
-            ) : sellerReviews.length === 0 ? (
+            ) : (!Array.isArray(sellerReviews) || sellerReviews.length === 0) ? (
               <div className='text-sm text-gray-500'>No reviews yet for your products.</div>
             ) : (
               <div className='space-y-4'>
-                {sellerReviews.map((r) => (
+                {(Array.isArray(sellerReviews) ? sellerReviews : []).map((r) => (
                   <div key={r.id} className='p-4 border rounded bg-gray-50'>
                     <div className='flex items-start justify-between'>
                       <div>

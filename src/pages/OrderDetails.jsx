@@ -263,7 +263,11 @@ const OrderDetails = () => {
                 const rRes = await fetch(`${apiBase}/api/reviews/product/${prodId}`);
                 if (rRes.ok) {
                   rdata = await parseJsonSafe(rRes);
-                  const list = rdata.reviews || rdata;
+                  const list = Array.isArray(rdata.reviews)
+                    ? rdata.reviews
+                    : Array.isArray(rdata)
+                      ? rdata
+                      : [];
                   items[i] = { ...items[i], reviews: list };
                   const hasUserReview = userId
                     ? list.some(r => Number(r.userId) === Number(userId) && Number(r.orderId) === Number(data.id))

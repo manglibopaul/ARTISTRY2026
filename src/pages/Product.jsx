@@ -30,6 +30,7 @@ const Product = () => {
   const [showAR, setShowAR] = useState(false);
   const modelViewerRef = useRef(null);
   const [reviews, setReviews] = useState([]);
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
   const [avgRating, setAvgRating] = useState(null);
   const [, setCurrentUser] = useState(null);
   const [arLoading, setArLoading] = useState(true);
@@ -338,8 +339,12 @@ const Product = () => {
             .then(res => res.ok ? res.json() : null)
             .then(data => {
               if (data) {
-                const list = data.reviews || data
-                setReviews(list || [])
+                const list = Array.isArray(data.reviews)
+                  ? data.reviews
+                  : Array.isArray(data)
+                    ? data
+                    : [];
+                setReviews(list)
                 if (list && list.length) {
                   const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
                   setAvgRating(avg)
@@ -384,8 +389,12 @@ const Product = () => {
                 .then(res => res.ok ? res.json() : null)
                 .then(data => {
                   if (data) {
-                    const list = data.reviews || data
-                    setReviews(list || [])
+                    const list = Array.isArray(data.reviews)
+                      ? data.reviews
+                      : Array.isArray(data)
+                        ? data
+                        : [];
+                    setReviews(list)
                     if (list && list.length) {
                       const avg = (list.reduce((s, r) => s + (Number(r.rating) || 0), 0) / list.length).toFixed(1)
                       setAvgRating(avg)
@@ -1000,7 +1009,7 @@ const Product = () => {
               <div className='text-sm text-gray-700'>
                 <span className='font-medium'>{avgRating}</span>
                 <span className='ml-1'>/ 5</span>
-                <span className='ml-2 text-gray-500'>({reviews.length} review{reviews.length !== 1 ? 's' : ''})</span>
+                <span className='ml-2 text-gray-500'>({safeReviews.length} review{safeReviews.length !== 1 ? 's' : ''})</span>
               </div>
             ) : (
               <div className='text-sm text-gray-500'>No reviews yet.</div>
@@ -1008,7 +1017,7 @@ const Product = () => {
           </div>
 
           <div className='space-y-4'>
-            {reviews.map((r, i) => (
+            {safeReviews.map((r, i) => (
               <div key={i} className='p-3 border rounded bg-gray-50'>
                 <div className='flex items-center justify-between'>
                   <div className='text-sm font-medium'>{r.userName || 'Customer'}</div>
