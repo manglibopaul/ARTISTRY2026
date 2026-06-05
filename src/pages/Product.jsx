@@ -602,69 +602,96 @@ const Product = () => {
     viewer.addEventListener('enter-vr', handleEnterXR);
     viewer.addEventListener('exit-vr', handleExitXR);
 
-    // Prevent zoom gestures on model-viewer
-    const preventZoom = (e) => {
-      // Prevent pinch-to-zoom (2+ touch points)
+    // Robust pinch-to-zoom prevention
+    let lastDistance = 0;
+
+    const getDistance = (touches) => {
+      if (touches.length < 2) return 0;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    const preventPinchZoom = (e) => {
       if (e.touches && e.touches.length > 1) {
         e.preventDefault();
+        e.stopPropagation();
+        
+        const currentDistance = getDistance(e.touches);
+        if (lastDistance > 0) {
+          // Block the zoom by preventing default behavior
+          e.preventDefault();
+        }
+        lastDistance = currentDistance;
       }
     };
 
+    const resetPinchZoom = (e) => {
+      lastDistance = 0;
+    };
+
     const preventWheel = (e) => {
-      // Prevent mouse wheel zoom (Ctrl+scroll)
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
+      // Prevent mouse wheel zoom (Ctrl+scroll or just scroll wheel zoom)
+      if ((e.ctrlKey || e.metaKey) || Math.abs(e.deltaY) > 0) {
+        // Only prevent if it looks like zoom (Ctrl+scroll or large deltaY)
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+        }
       }
     };
 
     const preventDoubleTab = (e) => {
-      // Prevent double-tap zoom
-      if (e.touches && e.touches.length > 1) {
-        e.preventDefault();
-      }
+      // Prevent double-tap zoom on touch devices
       if (e.detail > 1) {
         e.preventDefault();
       }
     };
 
-    // Lock camera to true scale in AR mode
-    const lockARCamera = () => {
-      try {
-        // Disable pinch zoom in AR by intercepting pointer events
-        const handlePointerDown = (e) => {
-          if (e.touches && e.touches.length > 1) {
-            e.preventDefault();
-          }
-        };
-        const handlePointerMove = (e) => {
-          if (e.touches && e.touches.length > 1) {
-            e.preventDefault();
-          }
-        };
-        const handlePointerUp = (e) => {
-          if (e.touches && e.touches.length > 1) {
-            e.preventDefault();
-          }
-        };
-
-        document.addEventListener('pointerdown', handlePointerDown, { passive: false });
-        document.addEventListener('pointermove', handlePointerMove, { passive: false });
-        document.addEventListener('pointerup', handlePointerUp, { passive: false });
-        
-        return () => {
-          document.removeEventListener('pointerdown', handlePointerDown);
-          document.removeEventListener('pointermove', handlePointerMove);
-          document.removeEventListener('pointerup', handlePointerUp);
-        };
-      } catch (e) {
-        console.log('AR camera lock setup failed:', e);
+    // Aggressive touch interception for AR mode
+    const arModeZoomPrevention = {
+      touches: [],
+      startListener: (e) => {
+        arModeZoomPrevention.touches = Array.from(e.touches);
+        if (e.touches.length > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      moveListener: (e) => {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Cancel any momentum scrolling
+          return false;
+        }
+      },
+      endListener: (e) => {
+        arModeZoomPrevention.touches = [];
       }
     };
 
-    viewer.addEventListener('touchmove', preventZoom, { passive: false });
+    // Apply event listeners with passive: false to allow preventDefault
+    viewer.addEventListener('touchstart', preventPinchZoom, { passive: false });
+    viewer.addEventListener('touchmove', preventPinchZoom, { passive: false });
+    viewer.addEventListener('touchend', resetPinchZoom, { passive: false });
     viewer.addEventListener('wheel', preventWheel, { passive: false });
     viewer.addEventListener('dblclick', preventDoubleTab, { passive: false });
-    viewer.addEventListener('enter-vr', lockARCamera);
+
+    // Additional document-level handlers for AR mode
+    const startARZoomPrevention = () => {
+      document.addEventListener('touchstart', arModeZoomPrevention.startListener, { passive: false });
+      document.addEventListener('touchmove', arModeZoomPrevention.moveListener, { passive: false });
+      document.addEventListener('touchend', arModeZoomPrevention.endListener, { passive: false });
+    };
+
+    const stopARZoomPrevention = () => {
+      document.removeEventListener('touchstart', arModeZoomPrevention.startListener);
+      document.removeEventListener('touchmove', arModeZoomPrevention.moveListener);
+      document.removeEventListener('touchend', arModeZoomPrevention.endListener);
+    };
+
+    viewer.addEventListener('enter-vr', startARZoomPrevention);
+    viewer.addEventListener('exit-vr', stopARZoomPrevention);
 
     modelViewerRef.current.appendChild(viewer);
     
@@ -673,10 +700,14 @@ const Product = () => {
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', handleExitXR); } catch (e) {}
-      try { viewer.removeEventListener('touchmove', preventZoom); } catch (e) {}
+      try { viewer.removeEventListener('touchstart', preventPinchZoom); } catch (e) {}
+      try { viewer.removeEventListener('touchmove', preventPinchZoom); } catch (e) {}
+      try { viewer.removeEventListener('touchend', resetPinchZoom); } catch (e) {}
       try { viewer.removeEventListener('wheel', preventWheel); } catch (e) {}
       try { viewer.removeEventListener('dblclick', preventDoubleTab); } catch (e) {}
-      try { viewer.removeEventListener('enter-vr', lockARCamera); } catch (e) {}
+      try { viewer.removeEventListener('enter-vr', startARZoomPrevention); } catch (e) {}
+      try { viewer.removeEventListener('exit-vr', stopARZoomPrevention); } catch (e) {}
+      try { stopARZoomPrevention(); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
