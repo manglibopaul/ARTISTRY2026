@@ -545,6 +545,8 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
+    // Enable camera controls for rotation, zoom prevention is handled by event listeners
+    viewer.setAttribute('camera-controls', '');
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -623,9 +625,44 @@ const Product = () => {
       }
     };
 
+    // Lock camera to true scale in AR mode
+    const lockARCamera = () => {
+      try {
+        // Disable pinch zoom in AR by intercepting pointer events
+        const handlePointerDown = (e) => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        };
+        const handlePointerMove = (e) => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        };
+        const handlePointerUp = (e) => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown, { passive: false });
+        document.addEventListener('pointermove', handlePointerMove, { passive: false });
+        document.addEventListener('pointerup', handlePointerUp, { passive: false });
+        
+        return () => {
+          document.removeEventListener('pointerdown', handlePointerDown);
+          document.removeEventListener('pointermove', handlePointerMove);
+          document.removeEventListener('pointerup', handlePointerUp);
+        };
+      } catch (e) {
+        console.log('AR camera lock setup failed:', e);
+      }
+    };
+
     viewer.addEventListener('touchmove', preventZoom, { passive: false });
     viewer.addEventListener('wheel', preventWheel, { passive: false });
     viewer.addEventListener('dblclick', preventDoubleTab, { passive: false });
+    viewer.addEventListener('enter-vr', lockARCamera);
 
     modelViewerRef.current.appendChild(viewer);
     
@@ -637,6 +674,7 @@ const Product = () => {
       try { viewer.removeEventListener('touchmove', preventZoom); } catch (e) {}
       try { viewer.removeEventListener('wheel', preventWheel); } catch (e) {}
       try { viewer.removeEventListener('dblclick', preventDoubleTab); } catch (e) {}
+      try { viewer.removeEventListener('enter-vr', lockARCamera); } catch (e) {}
     };
   }, [showAR, productData, selectedColor, resolvedModelUrl, resolvedIosModelUrl, image]);
 
