@@ -546,6 +546,7 @@ const Product = () => {
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     // Disable camera controls to prevent zoom and pan - view at true scale only
+    viewer.setAttribute('disable-zoom', '');
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -559,8 +560,10 @@ const Product = () => {
     viewer.setAttribute('scale-to-fit', 'true');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
-    viewer.style.touchAction = 'none';
-    viewer.style.pointerEvents = 'none';
+    viewer.style.touchAction = 'manipulation';
+    viewer.style.userSelect = 'none';
+    viewer.style.webkitUserSelect = 'none';
+    viewer.style.webkitTouchCallout = 'none';
 
     if (resolvedIosModelUrl) {
       viewer.setAttribute('ios-src', resolvedIosModelUrl);
@@ -862,8 +865,8 @@ const Product = () => {
 
       {/* ---------- AR POPUP MODAL ---------- */}
       {showAR && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4">
-          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4" style={{ touchAction: 'manipulation' }}>
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto" style={{ touchAction: 'manipulation' }}>
 
             <button 
               className="absolute top-1 right-2 sm:top-2 sm:right-3 text-xl hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10"
@@ -880,8 +883,8 @@ const Product = () => {
               </div>
             ) : (
               <>
-                <div className="relative overflow-hidden">
-                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5" }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
+                <div className="relative overflow-hidden" style={{ touchAction: 'manipulation' }}>
+                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'manipulation' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
                   {/* Dimension toggle - small top-right toggle to avoid overlap */}
                   <button
