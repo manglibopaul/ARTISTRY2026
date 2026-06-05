@@ -48,6 +48,8 @@ const Product = () => {
   const [showDimensions, setShowDimensions] = useState(false);
   const reviewsRef = useRef(null);
   const [reviewsInView, setReviewsInView] = useState(true);
+  const [showZoomMessage, setShowZoomMessage] = useState(false);
+  const zoomMessageTimeoutRef = useRef(null);
 
   const normalizeToHex = useCallback((color) => {
     if (!color || typeof window === 'undefined') return null;
@@ -666,6 +668,13 @@ const Product = () => {
         e.preventDefault();
         e.stopPropagation();
         
+        // Show zoom message when attempting pinch zoom in AR mode
+        if (arInSession) {
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        }
+        
         const currentDistance = getDistance(e.touches);
         if (lastDistance > 0) {
           // Block the zoom by preventing default behavior
@@ -685,6 +694,13 @@ const Product = () => {
         // Only prevent if it looks like zoom (Ctrl+scroll or large deltaY)
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
+          
+          // Show zoom message when attempting keyboard zoom
+          if (arInSession) {
+            setShowZoomMessage(true);
+            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          }
         }
       }
     };
@@ -693,6 +709,13 @@ const Product = () => {
       // Prevent double-tap zoom on touch devices
       if (e.detail > 1) {
         e.preventDefault();
+        
+        // Show zoom message when attempting double-tap zoom
+        if (arInSession) {
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        }
       }
     };
 
@@ -704,12 +727,20 @@ const Product = () => {
         if (e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
+          // Show zoom message
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
         }
       },
       moveListener: (e) => {
         if (e.touches && e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
+          // Show zoom message
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
           // Cancel any momentum scrolling
           return false;
         }
@@ -746,6 +777,7 @@ const Product = () => {
     
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
+      try { if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current); } catch (e) {}
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', handleEnterXR); } catch (e) {}
@@ -1037,6 +1069,16 @@ const Product = () => {
                 <div className="relative overflow-hidden" style={{ touchAction: 'manipulation' }}>
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'manipulation' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
+                  
+                  {/* Zoom prevention message */}
+                  {showZoomMessage && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded pointer-events-none z-40 animate-pulse">
+                      <div className="bg-white px-6 py-4 rounded-lg shadow-lg text-center">
+                        <p className="text-gray-800 font-medium">Object can only be viewed in true scale</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Dimension toggle - small top-right toggle to avoid overlap */}
                   <button
                     onClick={() => setShowDimensions(v => !v)}
