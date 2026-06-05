@@ -118,16 +118,22 @@ const Product = () => {
         const userSelected = Array.isArray(selectedParts) && selectedParts.length > 0
           ? selectedParts.map(s => String(s).toLowerCase())
           : null;
-        const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts)) ? productData.colorableParts.map(s => String(s).toLowerCase()) : []);
+        // If user has made explicit selections in the parts list, use those. Otherwise use product config.
+        const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts) && productData.colorableParts.length > 0) ? productData.colorableParts.map(s => String(s).toLowerCase()) : null);
         const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
 
         viewer.model.materials.forEach((material) => {
           try {
             const mName = (material.name || material._name || '').toString().toLowerCase();
             // Skip if explicitly excluded
-            if (blacklist.length && blacklist.some(ex => mName.includes(ex))) return;
-            // If whitelist provided (non-empty), only apply when material name matches one of the whitelist items
-            if (whitelist && whitelist.length && !whitelist.some(w => mName.includes(w))) return;
+            if (blacklist.length && blacklist.some(ex => mName === ex || mName.includes(ex))) return;
+            // If whitelist provided (non-empty), only apply when material name matches exactly or contains one of the whitelist items
+            if (whitelist && whitelist.length > 0) {
+              const matches = whitelist.some(w => mName === w || mName.includes(w));
+              if (!matches) return;
+            }
+            // Only apply color if: (1) no whitelist/no parts detected, OR (2) material is in whitelist
+            // This prevents coloring everything when the user hasn't made a selection yet
 
             if (material.pbrMetallicRoughness && typeof material.pbrMetallicRoughness.setBaseColorFactor === 'function') {
               material.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
@@ -144,6 +150,13 @@ const Product = () => {
 
     // Fallback strategy: traverse underlying scene/meshes and try common material APIs
     try {
+      // Recompute whitelist and blacklist for fallback strategy
+      const userSelected = Array.isArray(selectedParts) && selectedParts.length > 0
+        ? selectedParts.map(s => String(s).toLowerCase())
+        : null;
+      const whitelist = userSelected || ((productData && Array.isArray(productData.colorableParts) && productData.colorableParts.length > 0) ? productData.colorableParts.map(s => String(s).toLowerCase()) : null);
+      const blacklist = (productData && Array.isArray(productData.colorExclusions)) ? productData.colorExclusions.map(s => String(s).toLowerCase()) : [];
+      
       const sceneRoot = (viewer.model && (viewer.model.scene || viewer.model)) || null;
       if (sceneRoot && typeof sceneRoot.traverse === 'function') {
         sceneRoot.traverse((node) => {
@@ -152,6 +165,14 @@ const Product = () => {
             const mats = Array.isArray(node.material) ? node.material : [node.material];
             mats.forEach((mat) => {
               if (!mat) return;
+              // Apply whitelist/blacklist filtering
+              const mName = (mat.name || mat._name || '').toString().toLowerCase();
+              if (blacklist.length && blacklist.some(ex => mName === ex || mName.includes(ex))) return;
+              if (whitelist && whitelist.length > 0) {
+                const matches = whitelist.some(w => mName === w || mName.includes(w));
+                if (!matches) return;
+              }
+              
               try {
                 if (mat.pbrMetallicRoughness && typeof mat.pbrMetallicRoughness.setBaseColorFactor === 'function') {
                   mat.pbrMetallicRoughness.setBaseColorFactor([r, g, b, 1.0]);
