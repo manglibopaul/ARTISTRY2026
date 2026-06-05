@@ -603,23 +603,31 @@ const Product = () => {
       setArError('Failed to load 3D model. Check the model URL and network access.');
     };
     
-    // When entering AR/VR (WebXR) - enforce true scale by aggressively resetting camera
+    // When entering AR/VR (WebXR) - disable all camera controls for true 1:1 scale
     let cameraResetInterval = null;
     const handleEnterXR = () => {
       try {
         setArInSession(true);
+        
+        // Disable camera controls entirely in AR mode - no zoom, no pan
+        viewer.removeAttribute('camera-controls');
+        
         // Get the current camera position at true scale
         const orbit = viewer.getCameraOrbit();
         const trueScale = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
         
-        // Aggressively reset camera radius to prevent ANY zoom attempt
+        // Lock camera to true scale position - no interaction allowed
+        viewer.setAttribute('min-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
+        
+        // Aggressively reset camera radius to prevent ANY zoom attempt (failsafe)
         cameraResetInterval = setInterval(() => {
           try {
             const currentOrbit = viewer.getCameraOrbit();
-            // Much stricter check - reset if radius differs by even 0.001m
-            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.001) {
-              // Force reset with exact radius
-              viewer.setCameraOrbit(currentOrbit.theta, currentOrbit.phi, trueScale.radius);
+            // Much stricter check - reset if radius differs by even 0.0001m
+            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.0001) {
+              // Force reset with exact radius and angles
+              viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
             }
           } catch (e) {
             // ignore errors
@@ -633,6 +641,8 @@ const Product = () => {
           clearInterval(cameraResetInterval);
           cameraResetInterval = null;
         }
+        // Re-enable camera controls when exiting AR mode
+        viewer.setAttribute('camera-controls', '');
         setArInSession(false);
       } catch (e) {}
     };
