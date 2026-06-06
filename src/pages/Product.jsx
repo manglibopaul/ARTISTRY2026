@@ -629,7 +629,7 @@ const Product = () => {
     viewer.setAttribute('scale-to-fit', 'true');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
-    viewer.style.touchAction = 'manipulation';
+    viewer.style.touchAction = 'none';
     viewer.style.userSelect = 'none';
     viewer.style.webkitUserSelect = 'none';
     viewer.style.webkitTouchCallout = 'none';
@@ -766,6 +766,18 @@ const Product = () => {
       }
     };
 
+    // Document-level wheel prevention for AR mode (capture phase)
+    const handleDocumentWheel = (e) => {
+      if (arInSession) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        setShowZoomMessage(true);
+        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+      }
+    };
+
     const preventDoubleTab = (e) => {
       // Prevent double-tap zoom on touch devices
       if (e.detail > 1) {
@@ -815,20 +827,23 @@ const Product = () => {
     viewer.addEventListener('touchstart', preventPinchZoom, { passive: false });
     viewer.addEventListener('touchmove', preventPinchZoom, { passive: false });
     viewer.addEventListener('touchend', resetPinchZoom, { passive: false });
-    viewer.addEventListener('wheel', preventWheel, { passive: false });
     viewer.addEventListener('dblclick', preventDoubleTab, { passive: false });
+    // Note: wheel listener is now at document level in capture phase (added in startARZoomPrevention)
 
     // Additional document-level handlers for AR mode
     const startARZoomPrevention = () => {
       document.addEventListener('touchstart', arModeZoomPrevention.startListener, { passive: false });
       document.addEventListener('touchmove', arModeZoomPrevention.moveListener, { passive: false });
       document.addEventListener('touchend', arModeZoomPrevention.endListener, { passive: false });
+      // Add wheel listener in capture phase to intercept before model-viewer sees it
+      document.addEventListener('wheel', handleDocumentWheel, { passive: false, capture: true });
     };
 
     const stopARZoomPrevention = () => {
       document.removeEventListener('touchstart', arModeZoomPrevention.startListener);
       document.removeEventListener('touchmove', arModeZoomPrevention.moveListener);
       document.removeEventListener('touchend', arModeZoomPrevention.endListener);
+      document.removeEventListener('wheel', handleDocumentWheel, { capture: true });
     };
 
     viewer.addEventListener('enter-vr', startARZoomPrevention);
@@ -846,8 +861,8 @@ const Product = () => {
       try { viewer.removeEventListener('touchstart', preventPinchZoom); } catch (e) {}
       try { viewer.removeEventListener('touchmove', preventPinchZoom); } catch (e) {}
       try { viewer.removeEventListener('touchend', resetPinchZoom); } catch (e) {}
-      try { viewer.removeEventListener('wheel', preventWheel); } catch (e) {}
       try { viewer.removeEventListener('dblclick', preventDoubleTab); } catch (e) {}
+      try { document.removeEventListener('wheel', handleDocumentWheel, { capture: true }); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', startARZoomPrevention); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', stopARZoomPrevention); } catch (e) {}
       try { stopARZoomPrevention(); } catch (e) {}
