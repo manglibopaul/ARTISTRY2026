@@ -674,6 +674,9 @@ const Product = () => {
     // When entering AR/VR (WebXR) - disable all camera controls for true 1:1 scale
     let cameraResetInterval = null;
     let webxrGesturePreventionInterval = null;
+    let webxrRAF = null;
+    let lockedCameraTransform = null;
+    
     const handleEnterXR = () => {
       try {
         setArInSession(true);
@@ -688,6 +691,7 @@ const Product = () => {
         // Get the current camera position at true scale
         const orbit = viewer.getCameraOrbit();
         const trueScale = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
+        lockedCameraTransform = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
         
         // Lock camera to EXACT true scale position - completely locked
         viewer.setAttribute('min-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
@@ -718,6 +722,20 @@ const Product = () => {
             viewer.setAttribute('max-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
           } catch (e) {}
         }, 5); // Every 5ms
+        
+        // Use requestAnimationFrame to lock camera at WebXR frame level
+        const lockCameraInXR = () => {
+          try {
+            const currentOrbit = viewer.getCameraOrbit();
+            if (Math.abs(currentOrbit.radius - lockedCameraTransform.radius) > 0.00001 ||
+                Math.abs(currentOrbit.theta - lockedCameraTransform.theta) > 0.00001 ||
+                Math.abs(currentOrbit.phi - lockedCameraTransform.phi) > 0.00001) {
+              viewer.setCameraOrbit(lockedCameraTransform.theta, lockedCameraTransform.phi, lockedCameraTransform.radius);
+            }
+          } catch (e) {}
+          webxrRAF = requestAnimationFrame(lockCameraInXR);
+        };
+        webxrRAF = requestAnimationFrame(lockCameraInXR);
       } catch (e) {}
     };
     const handleExitXR = () => {
@@ -729,6 +747,10 @@ const Product = () => {
         if (webxrGesturePreventionInterval) {
           clearInterval(webxrGesturePreventionInterval);
           webxrGesturePreventionInterval = null;
+        }
+        if (webxrRAF) {
+          cancelAnimationFrame(webxrRAF);
+          webxrRAF = null;
         }
         // Remove WebXR marker
         viewer.removeAttribute('data-in-webxr');
@@ -968,6 +990,7 @@ const Product = () => {
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
       try { if (webxrGesturePreventionInterval) clearInterval(webxrGesturePreventionInterval); } catch (e) {}
+      try { if (webxrRAF) cancelAnimationFrame(webxrRAF); } catch (e) {}
       try { if (zoomResetInterval) clearInterval(zoomResetInterval); } catch (e) {}
       try { if (zoomResetRAF) cancelAnimationFrame(zoomResetRAF); } catch (e) {}
       try { if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current); } catch (e) {}
