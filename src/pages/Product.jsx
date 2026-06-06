@@ -754,19 +754,15 @@ const Product = () => {
     };
 
     const preventWheel = (e) => {
-      // Prevent mouse wheel zoom (Ctrl+scroll or just scroll wheel zoom)
-      if ((e.ctrlKey || e.metaKey) || Math.abs(e.deltaY) > 0) {
-        // Only prevent if it looks like zoom (Ctrl+scroll or large deltaY)
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault();
-          
-          // Show zoom message when attempting keyboard zoom
-          if (arInSession) {
-            setShowZoomMessage(true);
-            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
-          }
-        }
+      // Completely prevent all scroll wheel zoom in AR mode
+      if (arInSession) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show zoom message when attempting scroll zoom
+        setShowZoomMessage(true);
+        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
       }
     };
 
@@ -1114,7 +1110,7 @@ const Product = () => {
       {/* ---------- AR POPUP MODAL ---------- */}
       {showAR && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4" style={{ touchAction: 'manipulation' }}>
-          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto" style={{ touchAction: 'manipulation' }}>
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto" style={{ touchAction: 'none' }}>
 
             <button 
               className="absolute top-1 right-2 sm:top-2 sm:right-3 text-xl hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10"
@@ -1131,8 +1127,8 @@ const Product = () => {
               </div>
             ) : (
               <>
-                <div className="relative overflow-hidden" style={{ touchAction: 'manipulation' }}>
-                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'manipulation' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
+                <div className="relative overflow-hidden" style={{ touchAction: 'none' }}>
+                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'none' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
                   
                   {/* Zoom prevention message */}
