@@ -708,10 +708,7 @@ const Product = () => {
             if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.00001) {
               // Force reset with exact radius and angles
               viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
-              // Show zoom message when zoom is detected
-              setShowZoomMessage(true);
-              if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-              zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+              // No message needed in WebXR mode - just silently lock
             }
           } catch (e) {
             // ignore errors
@@ -755,10 +752,12 @@ const Product = () => {
           if (Math.abs(orbit.radius - lastLockedRadius) > 0.00001) {
             viewer.setCameraOrbit(orbit.theta, orbit.phi, lastLockedRadius);
             
-            // Show zoom prevention message
-            setShowZoomMessage(true);
-            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+            // Only show message in preview mode, NOT in actual WebXR/AR session
+            if (!arInSession) {
+              setShowZoomMessage(true);
+              if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+              zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+            }
           }
         } catch (e) {
           // ignore errors
@@ -789,8 +788,8 @@ const Product = () => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Show zoom message when attempting pinch zoom in AR mode
-        if (arInSession) {
+        // Show zoom message only in preview mode, NOT in actual WebXR
+        if (!arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -829,9 +828,12 @@ const Product = () => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        setShowZoomMessage(true);
-        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        // Only show message if NOT in actual WebXR mode (preview mode only)
+        if (!arInSession) {
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        }
         
         return false;
       }
@@ -842,8 +844,8 @@ const Product = () => {
       if (e.detail > 1) {
         e.preventDefault();
         
-        // Show zoom message when attempting double-tap zoom
-        if (arInSession) {
+        // Show zoom message only in preview mode, NOT in actual WebXR
+        if (!arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -859,20 +861,24 @@ const Product = () => {
         if (e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
-          // Show zoom message
-          setShowZoomMessage(true);
-          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          // Only show zoom message in preview mode, NOT in WebXR
+          if (!arInSession) {
+            setShowZoomMessage(true);
+            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          }
         }
       },
       moveListener: (e) => {
         if (e.touches && e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
-          // Show zoom message
-          setShowZoomMessage(true);
-          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          // Only show zoom message in preview mode, NOT in WebXR
+          if (!arInSession) {
+            setShowZoomMessage(true);
+            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          }
           // Cancel any momentum scrolling
           return false;
         }
@@ -940,9 +946,12 @@ const Product = () => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        setShowZoomMessage(true);
-        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        // Only show message in preview modal, NOT during WebXR
+        if (!arInSession) {
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        }
         
         return false;
       }
@@ -958,9 +967,13 @@ const Product = () => {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        setShowZoomMessage(true);
-        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        
+        // Only show message if NOT in WebXR
+        if (!arInSession) {
+          setShowZoomMessage(true);
+          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        }
       }, { passive: false, capture: true });
     }
 
@@ -968,7 +981,7 @@ const Product = () => {
       document.removeEventListener('wheel', preventARModalZoom, { capture: true });
       document.removeEventListener('wheel', preventARModalZoom, { capture: false });
     };
-  }, [showAR]);
+  }, [showAR, arInSession]);
 
   useEffect(() => {
     if (selectedColor && modelViewerElementRef.current) {
