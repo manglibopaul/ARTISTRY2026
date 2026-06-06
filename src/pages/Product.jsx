@@ -627,6 +627,8 @@ const Product = () => {
     viewer.setAttribute('shadow-intensity', '1');
     viewer.setAttribute('environment-image', 'neutral');
     viewer.setAttribute('scale-to-fit', 'true');
+    // NEVER enable camera controls - disable from the start
+    viewer.removeAttribute('camera-controls');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
     viewer.style.touchAction = 'none';
@@ -649,11 +651,10 @@ const Product = () => {
         const orbit = viewer.getCameraOrbit();
         trueScaleRadius = orbit.radius;
         
-        // Lock camera to exact radius (true scale) while allowing full 360° rotation
+        // LOCK camera to EXACT radius - no zoom allowed at all
         // Format: min-camera-orbit="<phi>rad <theta>rad <radius>m"
-        // Full rotation: phi 0 to 6.28rad (full circle), theta 0 to 3.14rad (full hemisphere)
         viewer.setAttribute('min-camera-orbit', `0rad 0rad ${orbit.radius}m`);
-        viewer.setAttribute('max-camera-orbit', `6.28rad 3.14rad ${orbit.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `0rad 0rad ${orbit.radius}m`);
       } catch (e) {
         console.log('Failed to lock camera orbit:', e);
       }
@@ -905,11 +906,25 @@ const Product = () => {
       }
     };
 
-    // Attach wheel listener during AR modal
+    // Attach wheel listener during AR modal in capture and bubble phases
     document.addEventListener('wheel', preventARModalZoom, { passive: false, capture: true });
+    document.addEventListener('wheel', preventARModalZoom, { passive: false, capture: false });
+    
+    // Also intercept on model-viewer directly
+    if (modelViewerRef.current?.firstChild) {
+      modelViewerRef.current.firstChild.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        setShowZoomMessage(true);
+        if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+        zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+      }, { passive: false, capture: true });
+    }
 
     return () => {
       document.removeEventListener('wheel', preventARModalZoom, { capture: true });
+      document.removeEventListener('wheel', preventARModalZoom, { capture: false });
     };
   }, [showAR]);
 
