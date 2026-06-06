@@ -651,10 +651,12 @@ const Product = () => {
         const orbit = viewer.getCameraOrbit();
         trueScaleRadius = orbit.radius;
         
-        // LOCK camera to EXACT radius - no zoom allowed at all
+        // Lock RADIUS only - allow full rotation but NO ZOOM
         // Format: min-camera-orbit="<phi>rad <theta>rad <radius>m"
+        // phi: 0 to 6.28 (full circle), theta: 0 to 3.14 (full hemisphere)
+        // radius: locked to exact value - PREVENTS ALL ZOOM
         viewer.setAttribute('min-camera-orbit', `0rad 0rad ${orbit.radius}m`);
-        viewer.setAttribute('max-camera-orbit', `0rad 0rad ${orbit.radius}m`);
+        viewer.setAttribute('max-camera-orbit', `6.28rad 3.14rad ${orbit.radius}m`);
       } catch (e) {
         console.log('Failed to lock camera orbit:', e);
       }
@@ -732,6 +734,45 @@ const Product = () => {
     viewer.addEventListener('error', handleError);
     viewer.addEventListener('enter-vr', handleEnterXR);
     viewer.addEventListener('exit-vr', handleExitXR);
+
+    // Continuous zoom prevention - always running to catch any zoom attempts
+    let zoomResetInterval = null;
+    let lastLockedRadius = null;
+    
+    const startContinuousZoomPrevention = () => {
+      if (zoomResetInterval) return; // Already running
+      
+      zoomResetInterval = setInterval(() => {
+        try {
+          const orbit = viewer.getCameraOrbit();
+          
+          // Store the locked radius on first run
+          if (lastLockedRadius === null) {
+            lastLockedRadius = orbit.radius;
+          }
+          
+          // If radius changed even SLIGHTLY - reset it immediately
+          if (Math.abs(orbit.radius - lastLockedRadius) > 0.00001) {
+            viewer.setCameraOrbit(orbit.theta, orbit.phi, lastLockedRadius);
+            
+            // Show zoom prevention message
+            setShowZoomMessage(true);
+            if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+            zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+          }
+        } catch (e) {
+          // ignore errors
+        }
+      }, 5); // Check every 5ms - ultra frequent to catch zoom immediately
+    };
+
+    // Start prevention immediately after model loads
+    handleLoad();
+    
+    // Start continuous zoom prevention
+    setTimeout(() => {
+      startContinuousZoomPrevention();
+    }, 100);
 
     // Robust pinch-to-zoom prevention
     let lastDistance = 0;
@@ -871,6 +912,7 @@ const Product = () => {
     
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
+      try { if (zoomResetInterval) clearInterval(zoomResetInterval); } catch (e) {}
       try { if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current); } catch (e) {}
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
