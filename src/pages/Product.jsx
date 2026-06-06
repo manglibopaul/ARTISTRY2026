@@ -612,10 +612,7 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-    // Enable camera controls for rotation, but lock zoom distance
-    viewer.setAttribute('camera-controls', '');
-    viewer.setAttribute('min-camera-orbit', 'auto auto 100%');
-    viewer.setAttribute('max-camera-orbit', 'auto auto 100%');
+    // DO NOT enable camera-controls - disable zoom completely from start
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -627,8 +624,6 @@ const Product = () => {
     viewer.setAttribute('shadow-intensity', '1');
     viewer.setAttribute('environment-image', 'neutral');
     viewer.setAttribute('scale-to-fit', 'true');
-    // NEVER enable camera controls - disable from the start
-    viewer.removeAttribute('camera-controls');
     viewer.style.width = '100%';
     viewer.style.height = '100%';
     viewer.style.touchAction = 'none';
@@ -644,6 +639,9 @@ const Product = () => {
     const handleLoad = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
+      
+      // CRITICAL: Ensure camera-controls is NEVER enabled
+      viewer.removeAttribute('camera-controls');
       
       // Get initial camera position for true scale locking
       let trueScaleRadius = null;
@@ -722,8 +720,8 @@ const Product = () => {
           clearInterval(cameraResetInterval);
           cameraResetInterval = null;
         }
-        // Re-enable camera controls when exiting AR mode
-        viewer.setAttribute('camera-controls', '');
+        // NEVER re-enable camera controls - keep zoom disabled
+        viewer.removeAttribute('camera-controls');
         setArInSession(false);
       } catch (e) {}
     };
@@ -734,11 +732,13 @@ const Product = () => {
 
     // Continuous zoom prevention - always running to catch any zoom attempts
     let zoomResetInterval = null;
+    let zoomResetRAF = null;
     let lastLockedRadius = null;
     
     const startContinuousZoomPrevention = () => {
       if (zoomResetInterval) return; // Already running
       
+      // Use BOTH setInterval AND requestAnimationFrame for maximum coverage
       zoomResetInterval = setInterval(() => {
         try {
           const orbit = viewer.getCameraOrbit();
@@ -762,7 +762,25 @@ const Product = () => {
         } catch (e) {
           // ignore errors
         }
-      }, 5); // Check every 5ms - ultra frequent to catch zoom immediately
+      }, 3); // Check every 3ms - ultra frequent to catch zoom immediately
+      
+      // Also use requestAnimationFrame for even smoother detection
+      const runRAF = () => {
+        try {
+          const orbit = viewer.getCameraOrbit();
+          
+          if (lastLockedRadius === null) {
+            lastLockedRadius = orbit.radius;
+          }
+          
+          if (Math.abs(orbit.radius - lastLockedRadius) > 0.00001) {
+            viewer.setCameraOrbit(orbit.theta, orbit.phi, lastLockedRadius);
+          }
+        } catch (e) {}
+        
+        zoomResetRAF = requestAnimationFrame(runRAF);
+      };
+      zoomResetRAF = requestAnimationFrame(runRAF);
     };
 
     // Start prevention immediately after model loads
@@ -919,6 +937,7 @@ const Product = () => {
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
       try { if (zoomResetInterval) clearInterval(zoomResetInterval); } catch (e) {}
+      try { if (zoomResetRAF) cancelAnimationFrame(zoomResetRAF); } catch (e) {}
       try { if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current); } catch (e) {}
       try { viewer.removeEventListener('load', handleLoad); } catch (e) {}
       try { viewer.removeEventListener('error', handleError); } catch (e) {}
