@@ -678,28 +678,42 @@ const Product = () => {
         
         // Disable camera controls entirely in AR mode - no zoom, no pan
         viewer.removeAttribute('camera-controls');
+        // Disable all scroll based zoom
+        viewer.removeAttribute('enable-zoom');
         
         // Get the current camera position at true scale
         const orbit = viewer.getCameraOrbit();
         const trueScale = { theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
         
-        // Lock camera to true scale position - no interaction allowed
+        // Lock camera to EXACT true scale position - completely locked
         viewer.setAttribute('min-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
         viewer.setAttribute('max-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
         
-        // Aggressively reset camera radius to prevent ANY zoom attempt (failsafe)
+        // Prevent any scroll/zoom by disabling pointer events temporarily
+        modelViewerRef.current.style.pointerEvents = 'none';
+        setTimeout(() => {
+          if (modelViewerRef.current) {
+            modelViewerRef.current.style.pointerEvents = 'auto';
+          }
+        }, 100);
+        
+        // Aggressively reset camera radius EVERY frame to prevent ANY zoom attempt
         cameraResetInterval = setInterval(() => {
           try {
             const currentOrbit = viewer.getCameraOrbit();
-            // Much stricter check - reset if radius differs by even 0.0001m
-            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.0001) {
+            // STRICT check - reset if radius differs at all
+            if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.00001) {
               // Force reset with exact radius and angles
               viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
+              // Show zoom message when zoom is detected
+              setShowZoomMessage(true);
+              if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
+              zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
             }
           } catch (e) {
             // ignore errors
           }
-        }, 16); // Reset every 16ms (60fps) to catch zoom attempts immediately
+        }, 8); // Reset every 8ms (125fps) for ultra-aggressive prevention
       } catch (e) {}
     };
     const handleExitXR = () => {
@@ -766,15 +780,18 @@ const Product = () => {
       }
     };
 
-    // Document-level wheel prevention for AR mode (capture phase)
+    // Document-level wheel prevention for AR mode (capture phase) - MUST prevent default
     const handleDocumentWheel = (e) => {
-      if (arInSession) {
+      if (arInSession || modelViewerRef.current?.contains(e.target)) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         
         setShowZoomMessage(true);
         if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
         zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
+        
+        return false;
       }
     };
 
