@@ -673,6 +673,7 @@ const Product = () => {
     
     // When entering AR/VR (WebXR) - disable all camera controls for true 1:1 scale
     let cameraResetInterval = null;
+    let webxrGesturePreventionInterval = null;
     const handleEnterXR = () => {
       try {
         setArInSession(true);
@@ -681,6 +682,8 @@ const Product = () => {
         viewer.removeAttribute('camera-controls');
         // Disable all scroll based zoom
         viewer.removeAttribute('enable-zoom');
+        // Disable interaction prompt completely
+        viewer.setAttribute('interaction-prompt', 'none');
         
         // Get the current camera position at true scale
         const orbit = viewer.getCameraOrbit();
@@ -706,6 +709,15 @@ const Product = () => {
             // ignore errors
           }
         }, 2); // Check every 2ms - maximum frequency to catch any zoom
+        
+        // ULTRA-AGGRESSIVE: Continuous min-max orbit enforcement
+        webxrGesturePreventionInterval = setInterval(() => {
+          try {
+            // Re-enforce the exact locked values every frame
+            viewer.setAttribute('min-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
+            viewer.setAttribute('max-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
+          } catch (e) {}
+        }, 5); // Every 5ms
       } catch (e) {}
     };
     const handleExitXR = () => {
@@ -714,8 +726,14 @@ const Product = () => {
           clearInterval(cameraResetInterval);
           cameraResetInterval = null;
         }
+        if (webxrGesturePreventionInterval) {
+          clearInterval(webxrGesturePreventionInterval);
+          webxrGesturePreventionInterval = null;
+        }
         // Remove WebXR marker
         viewer.removeAttribute('data-in-webxr');
+        // Restore interaction prompt when exiting AR
+        viewer.setAttribute('interaction-prompt', 'auto');
         // NEVER re-enable camera controls - keep zoom disabled
         viewer.removeAttribute('camera-controls');
         setArInSession(false);
@@ -867,6 +885,14 @@ const Product = () => {
       }
     };
 
+    // Pointer event prevention for WebXR mode (catches pinch on pointer devices)
+    const preventPointerZoom = (e) => {
+      if (arInSession && e.pointerType === 'touch') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
     // Aggressive touch interception for AR mode
     const arModeZoomPrevention = {
       touches: [],
@@ -907,6 +933,9 @@ const Product = () => {
     viewer.addEventListener('touchmove', preventPinchZoom, { passive: false });
     viewer.addEventListener('touchend', resetPinchZoom, { passive: false });
     viewer.addEventListener('dblclick', preventDoubleTab, { passive: false });
+    viewer.addEventListener('pointerdown', preventPointerZoom, { passive: false });
+    viewer.addEventListener('pointermove', preventPointerZoom, { passive: false });
+    viewer.addEventListener('pointerup', preventPointerZoom, { passive: false });
     // Note: wheel listener is now at document level in capture phase (added in startARZoomPrevention)
 
     // Additional document-level handlers for AR mode
@@ -914,6 +943,9 @@ const Product = () => {
       document.addEventListener('touchstart', arModeZoomPrevention.startListener, { passive: false });
       document.addEventListener('touchmove', arModeZoomPrevention.moveListener, { passive: false });
       document.addEventListener('touchend', arModeZoomPrevention.endListener, { passive: false });
+      document.addEventListener('pointerdown', preventPointerZoom, { passive: false });
+      document.addEventListener('pointermove', preventPointerZoom, { passive: false });
+      document.addEventListener('pointerup', preventPointerZoom, { passive: false });
       // Add wheel listener in capture phase to intercept before model-viewer sees it
       document.addEventListener('wheel', handleDocumentWheel, { passive: false, capture: true });
     };
@@ -922,6 +954,9 @@ const Product = () => {
       document.removeEventListener('touchstart', arModeZoomPrevention.startListener);
       document.removeEventListener('touchmove', arModeZoomPrevention.moveListener);
       document.removeEventListener('touchend', arModeZoomPrevention.endListener);
+      document.removeEventListener('pointerdown', preventPointerZoom);
+      document.removeEventListener('pointermove', preventPointerZoom);
+      document.removeEventListener('pointerup', preventPointerZoom);
       document.removeEventListener('wheel', handleDocumentWheel, { capture: true });
     };
 
@@ -932,6 +967,7 @@ const Product = () => {
     
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
+      try { if (webxrGesturePreventionInterval) clearInterval(webxrGesturePreventionInterval); } catch (e) {}
       try { if (zoomResetInterval) clearInterval(zoomResetInterval); } catch (e) {}
       try { if (zoomResetRAF) cancelAnimationFrame(zoomResetRAF); } catch (e) {}
       try { if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current); } catch (e) {}
@@ -943,6 +979,9 @@ const Product = () => {
       try { viewer.removeEventListener('touchmove', preventPinchZoom); } catch (e) {}
       try { viewer.removeEventListener('touchend', resetPinchZoom); } catch (e) {}
       try { viewer.removeEventListener('dblclick', preventDoubleTab); } catch (e) {}
+      try { viewer.removeEventListener('pointerdown', preventPointerZoom); } catch (e) {}
+      try { viewer.removeEventListener('pointermove', preventPointerZoom); } catch (e) {}
+      try { viewer.removeEventListener('pointerup', preventPointerZoom); } catch (e) {}
       try { document.removeEventListener('wheel', handleDocumentWheel, { capture: true }); } catch (e) {}
       try { viewer.removeEventListener('enter-vr', startARZoomPrevention); } catch (e) {}
       try { viewer.removeEventListener('exit-vr', stopARZoomPrevention); } catch (e) {}
