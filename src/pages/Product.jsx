@@ -690,13 +690,8 @@ const Product = () => {
         viewer.setAttribute('min-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
         viewer.setAttribute('max-camera-orbit', `${trueScale.theta}rad ${trueScale.phi}rad ${trueScale.radius}m`);
         
-        // Prevent any scroll/zoom by disabling pointer events temporarily
-        modelViewerRef.current.style.pointerEvents = 'none';
-        setTimeout(() => {
-          if (modelViewerRef.current) {
-            modelViewerRef.current.style.pointerEvents = 'auto';
-          }
-        }, 100);
+        // Mark that we're in WebXR mode
+        viewer.setAttribute('data-in-webxr', 'true');
         
         // Aggressively reset camera radius EVERY frame to prevent ANY zoom attempt
         cameraResetInterval = setInterval(() => {
@@ -704,14 +699,13 @@ const Product = () => {
             const currentOrbit = viewer.getCameraOrbit();
             // STRICT check - reset if radius differs at all
             if (Math.abs(currentOrbit.radius - trueScale.radius) > 0.00001) {
-              // Force reset with exact radius and angles
+              // Force reset with exact radius and angles - BOTH angles AND radius
               viewer.setCameraOrbit(trueScale.theta, trueScale.phi, trueScale.radius);
-              // No message needed in WebXR mode - just silently lock
             }
           } catch (e) {
             // ignore errors
           }
-        }, 8); // Reset every 8ms (125fps) for ultra-aggressive prevention
+        }, 2); // Check every 2ms - maximum frequency to catch any zoom
       } catch (e) {}
     };
     const handleExitXR = () => {
@@ -720,6 +714,8 @@ const Product = () => {
           clearInterval(cameraResetInterval);
           cameraResetInterval = null;
         }
+        // Remove WebXR marker
+        viewer.removeAttribute('data-in-webxr');
         // NEVER re-enable camera controls - keep zoom disabled
         viewer.removeAttribute('camera-controls');
         setArInSession(false);
