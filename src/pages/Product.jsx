@@ -612,6 +612,9 @@ const Product = () => {
     viewer.setAttribute('src', resolvedModelUrl);
     viewer.setAttribute('ar', '');
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
+    viewer.setAttribute('ar-scale', 'fixed');
+    viewer.setAttribute('disable-zoom', '');
+    viewer.setAttribute('disable-rotate', '');
     // DO NOT enable camera-controls - disable zoom completely from start
     viewer.setAttribute('loading', 'eager');
     if (image) {
