@@ -266,25 +266,56 @@ export const registerSeller = async (req, res) => {
 
     let proofOfArtisan = null;
     const portfolioImages = [];
-    if (req.files) {
-      if (req.files.proofOfArtisan && req.files.proofOfArtisan.length) {
+    const pickupLocationPhotosMap = {}; // { locationIndex: [urls] }
+    
+    if (req.files && Array.isArray(req.files)) {
+      // Organize files by fieldname since upload.any() gives us an array
+      const filesByFieldname = {};
+      for (const file of req.files) {
+        if (!filesByFieldname[file.fieldname]) {
+          filesByFieldname[file.fieldname] = [];
+        }
+        filesByFieldname[file.fieldname].push(file);
+      }
+
+      // Handle proofOfArtisan files
+      if (filesByFieldname.proofOfArtisan && filesByFieldname.proofOfArtisan.length) {
         const uploadedProofs = [];
-        for (const f of req.files.proofOfArtisan) {
+        for (const f of filesByFieldname.proofOfArtisan) {
           const uploaded = await uploadImage(f, 'artistry/seller-proof');
           if (uploaded?.url) uploadedProofs.push(uploaded.url);
         }
         proofOfArtisan = uploadedProofs.length > 1 ? uploadedProofs : (uploadedProofs[0] || null);
       }
-      if (req.files.images && req.files.images.length) {
-        for (const f of req.files.images) {
+
+      // Handle portfolio images
+      if (filesByFieldname.images && filesByFieldname.images.length) {
+        for (const f of filesByFieldname.images) {
           const r = await uploadImage(f, 'artistry/seller-pickup');
           if (r && r.url) portfolioImages.push(r.url);
+        }
+      }
+
+      // Handle pickup location photos - fieldname pattern: pickupLocationPhotos[0], pickupLocationPhotos[1], etc.
+      for (const fieldname in filesByFieldname) {
+        const match = fieldname.match(/^pickupLocationPhotos\\[(\\d+)\\]$/);
+        if (match) {
+          const locIdx = match[1];
+          const uploadedPhotos = [];
+          for (const f of filesByFieldname[fieldname]) {
+            const r = await uploadImage(f, 'artistry/pickup-location');
+            if (r && r.url) uploadedPhotos.push(r.url);
+          }
+          if (uploadedPhotos.length) {
+            pickupLocationPhotosMap[locIdx] = uploadedPhotos;
+          }
         }
       }
     }
 
     if (existingSeller && existingSeller.deletedAt) {
       await existingSeller.restore();
+      const currentShippingSettings = existingSeller.shippingSettings || {};
       await existingSeller.update({
         name,
         password,
@@ -295,6 +326,10 @@ export const registerSeller = async (req, res) => {
         pickupLocations,
         proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
         portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
+        shippingSettings: {
+          ...currentShippingSettings,
+          pickupLocationPhotos: Object.keys(pickupLocationPhotosMap).length ? pickupLocationPhotosMap : (currentShippingSettings.pickupLocationPhotos || {}),
+        },
         isVerified: false,
       });
       seller = existingSeller;
@@ -311,6 +346,17 @@ export const registerSeller = async (req, res) => {
         pickupLocations,
         proofOfArtisan,
         portfolioImages,
+        shippingSettings: Object.keys(pickupLocationPhotosMap).length
+          ? {
+              freeShippingMinimum: 0,
+              shippingRates: [
+                { name: 'Standard Shipping', price: 40, estimatedDays: '5-7 business days' },
+              ],
+              processingTime: '1-3 business days',
+              shipsFrom: '',
+              pickupLocationPhotos: pickupLocationPhotosMap,
+            }
+          : undefined,
       });
     }
 

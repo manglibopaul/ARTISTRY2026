@@ -28,6 +28,7 @@ const SellerLogin = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showSellerAddressPicker, setShowSellerAddressPicker] = useState(false)
   const [showPickupPicker, setShowPickupPicker] = useState(false)
+  const [pickupLocationPhotoInputs, setPickupLocationPhotoInputs] = useState({})
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -38,6 +39,7 @@ const SellerLogin = () => {
     address: '',
     pickupLocations: [],
     proofOfArtisan: [],
+    pickupLocationPhotos: [],
   })
   const [pickupInput, setPickupInput] = useState('')
 
@@ -73,6 +75,21 @@ const SellerLogin = () => {
   }
   const handleRemovePickup = (idx) => {
     setFormData(prev => ({ ...prev, pickupLocations: prev.pickupLocations.filter((_, i) => i !== idx) }))
+    setPickupLocationPhotoInputs(prev => {
+      const newInputs = { ...prev }
+      delete newInputs[idx]
+      return newInputs
+    })
+  }
+
+  const handlePickupLocationPhotoChange = (idx, e) => {
+    const files = e.target.files
+    if (files) {
+      setPickupLocationPhotoInputs(prev => ({
+        ...prev,
+        [idx]: Array.from(files),
+      }))
+    }
   }
 
   const sendSignupOtp = async () => {
@@ -164,8 +181,14 @@ const SellerLogin = () => {
             dataToSend.append('pickupLocations', JSON.stringify(formData.pickupLocations))
           } else if (key === 'proofOfArtisan' && Array.isArray(value) && value.length) {
             value.forEach((file) => dataToSend.append('proofOfArtisan', file))
-          } else {
+          } else if (key !== 'pickupLocationPhotos') {
             dataToSend.append(key, value)
+          }
+        })
+        // Append pickup location photos
+        Object.entries(pickupLocationPhotoInputs).forEach(([locIdx, files]) => {
+          if (Array.isArray(files)) {
+            files.forEach(file => dataToSend.append(`pickupLocationPhotos[${locIdx}]`, file))
           }
         })
         config.headers = { 'Content-Type': 'multipart/form-data' }
@@ -248,8 +271,8 @@ const SellerLogin = () => {
                 rows='3'
               />
               <div>
-                <label className='block text-sm mb-1'>Pickup Locations</label>
-                <div className='flex gap-2 mb-2'>
+                <label className='block text-sm mb-2 font-semibold'>Pickup Locations</label>
+                <div className='flex gap-2 mb-3'>
                   <input
                     type='text'
                     value={pickupInput}
@@ -259,14 +282,27 @@ const SellerLogin = () => {
                   />
                   <button type='button' onClick={handleAddPickup} className='bg-black text-white px-3 py-2 rounded'>Add</button>
                 </div>
-                <ul className='list-disc pl-5'>
+                <div className='space-y-3'>
                   {formData.pickupLocations.map((loc, idx) => (
-                    <li key={idx} className='flex items-center gap-2'>
-                      <span>{loc}</span>
-                      <button type='button' onClick={() => handleRemovePickup(idx)} className='text-red-500 text-xs'>Remove</button>
-                    </li>
+                    <div key={idx} className='p-3 border border-gray-200 rounded-lg bg-gray-50'>
+                      <div className='flex items-center justify-between mb-2'>
+                        <span className='font-medium text-sm'>{loc}</span>
+                        <button type='button' onClick={() => handleRemovePickup(idx)} className='text-red-500 text-xs hover:underline'>Remove</button>
+                      </div>
+                      <label className='block text-xs text-gray-600 mb-1'>Upload photos of this location:</label>
+                      <input
+                        type='file'
+                        multiple
+                        accept='image/*'
+                        onChange={(e) => handlePickupLocationPhotoChange(idx, e)}
+                        className='w-full text-xs px-2 py-1 border border-gray-300 rounded'
+                      />
+                      {pickupLocationPhotoInputs[idx] && pickupLocationPhotoInputs[idx].length > 0 && (
+                        <p className='text-xs text-green-600 mt-1'>{pickupLocationPhotoInputs[idx].length} photo(s) selected</p>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
               <div>
                 <label className='block text-sm mb-1'>Proof of Artist (photo of shop, etc.)</label>
