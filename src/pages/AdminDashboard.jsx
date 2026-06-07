@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
 
 const resolveSellerProofUrls = (rawValue, uploadBaseUrl) => {
-  const values = Array.isArray(rawValue) ? rawValue : [rawValue]
+  if (!rawValue) return []
+  // Handle both array (new format) and string (backward compat)
+  const values = Array.isArray(rawValue) ? rawValue : (typeof rawValue === 'string' ? [rawValue] : [])
   return values
     .map((raw) => String(raw || '').trim())
     .filter(Boolean)
@@ -32,7 +34,7 @@ const resolveSellerProofUrls = (rawValue, uploadBaseUrl) => {
 // Modal to view and verify seller
 function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }) {
   if (!open || !seller) return null;
-  const proofUrls = resolveSellerProofUrls(seller.proofOfArtisanImages?.length ? seller.proofOfArtisanImages : seller.proofOfArtisan, uploadBaseUrl)
+  const proofUrls = resolveSellerProofUrls(seller.proofOfArtisan, uploadBaseUrl)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg p-6 min-w-[340px] max-w-[95vw]">

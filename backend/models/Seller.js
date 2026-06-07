@@ -75,14 +75,10 @@ const Seller = sequelize.define('Seller', {
     comment: 'Array of pickup location strings set by the seller',
   },
   proofOfArtisan: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'URL of uploaded proof of artisan image (shop photo, etc.)',
-  },
-  proofOfArtisanImages: {
     type: DataTypes.JSON,
+    allowNull: true,
     defaultValue: [],
-    comment: 'Array of uploaded proof of artisan image URLs',
+    comment: 'Array of uploaded proof of artisan image URLs or single URL string for backward compatibility',
   },
   resetToken: {
     type: DataTypes.STRING,
