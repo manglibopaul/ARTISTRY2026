@@ -265,11 +265,15 @@ export const registerSeller = async (req, res) => {
     }
 
     let proofOfArtisan = null;
+    const proofOfArtisanImages = [];
     const portfolioImages = [];
     if (req.files) {
-      if (req.files.proofOfArtisan && req.files.proofOfArtisan[0]) {
-        const uploaded = await uploadImage(req.files.proofOfArtisan[0], 'artistry/seller-proof');
-        proofOfArtisan = uploaded?.url || null;
+      if (req.files.proofOfArtisan && req.files.proofOfArtisan.length) {
+        for (const f of req.files.proofOfArtisan) {
+          const uploaded = await uploadImage(f, 'artistry/seller-proof');
+          if (uploaded?.url) proofOfArtisanImages.push(uploaded.url);
+        }
+        proofOfArtisan = proofOfArtisanImages[0] || null;
       }
       if (req.files.images && req.files.images.length) {
         for (const f of req.files.images) {
@@ -290,6 +294,9 @@ export const registerSeller = async (req, res) => {
         address,
         pickupLocations,
         proofOfArtisan: proofOfArtisan || existingSeller.proofOfArtisan,
+        proofOfArtisanImages: Array.isArray(existingSeller.proofOfArtisanImages)
+          ? [...existingSeller.proofOfArtisanImages, ...proofOfArtisanImages]
+          : proofOfArtisanImages,
         portfolioImages: Array.isArray(existingSeller.portfolioImages) ? [...existingSeller.portfolioImages, ...portfolioImages] : portfolioImages,
         isVerified: false,
       });
@@ -306,6 +313,7 @@ export const registerSeller = async (req, res) => {
         address,
         pickupLocations,
         proofOfArtisan,
+        proofOfArtisanImages,
         portfolioImages,
       });
     }
@@ -326,6 +334,7 @@ export const registerSeller = async (req, res) => {
         artisanType: seller.artisanType,
         pickupLocations: normalizePickupLocations(seller.pickupLocations),
         proofOfArtisan: seller.proofOfArtisan,
+        proofOfArtisanImages: Array.isArray(seller.proofOfArtisanImages) ? seller.proofOfArtisanImages : [],
         portfolioImages: Array.isArray(seller.portfolioImages) ? seller.portfolioImages : [],
         pickupLocationPhotos: (seller.shippingSettings && seller.shippingSettings.pickupLocationPhotos) ? seller.shippingSettings.pickupLocationPhotos : {},
       },

@@ -2,33 +2,37 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
 
-const resolveSellerProofUrl = (rawValue, uploadBaseUrl) => {
-  const value = String(rawValue || '').trim();
-  if (!value) return '';
-  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+const resolveSellerProofUrls = (rawValue, uploadBaseUrl) => {
+  const values = Array.isArray(rawValue) ? rawValue : [rawValue]
+  return values
+    .map((raw) => String(raw || '').trim())
+    .filter(Boolean)
+    .map((value) => {
+      if (value.startsWith('http://') || value.startsWith('https://')) return value
 
-  const normalized = value.replace(/\\/g, '/');
-  const marker = '/uploads/';
-  const markerIndex = normalized.lastIndexOf(marker);
+      const normalized = value.replace(/\\/g, '/')
+      const marker = '/uploads/'
+      const markerIndex = normalized.lastIndexOf(marker)
 
-  let relative = '';
-  if (markerIndex >= 0) {
-    relative = normalized.slice(markerIndex);
-  } else if (normalized.startsWith('uploads/')) {
-    relative = `/${normalized}`;
-  } else if (normalized.startsWith('/')) {
-    relative = normalized;
-  } else {
-    relative = `/uploads/images/${normalized}`;
-  }
+      let relative = ''
+      if (markerIndex >= 0) {
+        relative = normalized.slice(markerIndex)
+      } else if (normalized.startsWith('uploads/')) {
+        relative = `/${normalized}`
+      } else if (normalized.startsWith('/')) {
+        relative = normalized
+      } else {
+        relative = `/uploads/images/${normalized}`
+      }
 
-  return uploadBaseUrl ? `${uploadBaseUrl}${relative}` : relative;
-};
+      return uploadBaseUrl ? `${uploadBaseUrl}${relative}` : relative
+    })
+}
 
 // Modal to view and verify seller
 function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }) {
   if (!open || !seller) return null;
-  const proofUrl = resolveSellerProofUrl(seller.proofOfArtisan, uploadBaseUrl);
+  const proofUrls = resolveSellerProofUrls(seller.proofOfArtisanImages?.length ? seller.proofOfArtisanImages : seller.proofOfArtisan, uploadBaseUrl)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded-lg shadow-lg p-6 min-w-[340px] max-w-[95vw]">
@@ -39,8 +43,12 @@ function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }
         <div className="mb-2"><span className="font-semibold">Address:</span> {seller.address || '-'}</div>
         <div className="mb-2"><span className="font-semibold">Pickup Locations:</span> {Array.isArray(seller.pickupLocations) ? seller.pickupLocations.join(', ') : '-'}</div>
         <div className="mb-2"><span className="font-semibold">Proof of Artist (photo of shop, etc.):</span></div>
-        {proofUrl ? (
-          <img src={proofUrl} alt="Proof of Artist" className="mb-4 max-h-48 rounded border" style={{ background: '#eee', objectFit: 'contain' }} />
+        {proofUrls.length ? (
+          <div className="grid gap-3 mb-4">
+            {proofUrls.map((src, index) => (
+              <img key={index} src={src} alt={`Proof ${index + 1}`} className="rounded border max-h-48" style={{ background: '#eee', objectFit: 'contain' }} />
+            ))}
+          </div>
         ) : (
           <div className="mb-4 text-gray-500">No proof image provided.</div>
         )}

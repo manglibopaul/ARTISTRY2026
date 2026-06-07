@@ -38,7 +38,7 @@ const router = express.Router();
 // Public routes
 router.post('/register/send-otp', sendSellerSignupOtp);
 router.post('/register/send-phone-otp', sendSellerSignupPhoneOtp);
-router.post('/register', upload.fields([{ name: 'proofOfArtisan', maxCount: 1 }, { name: 'images', maxCount: 10 }]), registerSeller);
+router.post('/register', upload.fields([{ name: 'proofOfArtisan', maxCount: 5 }, { name: 'images', maxCount: 10 }]), registerSeller);
 router.post('/login', loginSeller);
 router.post('/forgot-password', forgotSellerPassword);
 router.post('/reset-password', resetSellerPassword);

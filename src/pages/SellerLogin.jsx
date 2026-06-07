@@ -37,6 +37,7 @@ const SellerLogin = () => {
     phone: '',
     address: '',
     pickupLocations: [],
+    proofOfArtisan: [],
   })
   const [pickupInput, setPickupInput] = useState('')
 
@@ -57,7 +58,7 @@ const SellerLogin = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target
     if (name === 'proofOfArtisan') {
-      setFormData(prev => ({ ...prev, proofOfArtisan: files[0] }))
+      setFormData(prev => ({ ...prev, proofOfArtisan: files ? Array.from(files) : [] }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
@@ -161,8 +162,8 @@ const SellerLogin = () => {
         Object.entries(formData).forEach(([key, value]) => {
           if (key === 'pickupLocations') {
             dataToSend.append('pickupLocations', JSON.stringify(formData.pickupLocations))
-          } else if (key === 'proofOfArtisan' && value) {
-            dataToSend.append('proofOfArtisan', value)
+          } else if (key === 'proofOfArtisan' && Array.isArray(value) && value.length) {
+            value.forEach((file) => dataToSend.append('proofOfArtisan', file))
           } else {
             dataToSend.append(key, value)
           }
@@ -273,6 +274,7 @@ const SellerLogin = () => {
                   type='file'
                   name='proofOfArtisan'
                   accept='image/*'
+                  multiple
                   onChange={handleChange}
                   className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-black'
                   required

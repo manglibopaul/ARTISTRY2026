@@ -79,6 +79,11 @@ const Seller = sequelize.define('Seller', {
     allowNull: true,
     comment: 'URL of uploaded proof of artisan image (shop photo, etc.)',
   },
+  proofOfArtisanImages: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of uploaded proof of artisan image URLs',
+  },
   resetToken: {
     type: DataTypes.STRING,
     allowNull: true,
