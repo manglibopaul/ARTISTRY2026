@@ -1019,8 +1019,8 @@ const Product = () => {
     if (!showAR) return;
 
     const preventARModalZoom = (e) => {
-      // Prevent all wheel zoom in AR modal
-      if (e.target.closest('[style*="touchAction: none"]') || modelViewerRef.current?.contains(e.target)) {
+      // Only prevent zoom on the model-viewer element itself, allow scrolling elsewhere
+      if (modelViewerRef.current?.firstChild && modelViewerRef.current.firstChild.contains(e.target)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -1039,22 +1039,6 @@ const Product = () => {
     // Attach wheel listener during AR modal in capture and bubble phases
     document.addEventListener('wheel', preventARModalZoom, { passive: false, capture: true });
     document.addEventListener('wheel', preventARModalZoom, { passive: false, capture: false });
-    
-    // Also intercept on model-viewer directly
-    if (modelViewerRef.current?.firstChild) {
-      modelViewerRef.current.firstChild.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        // Only show message if in WebXR
-        if (arInSession) {
-          setShowZoomMessage(true);
-          if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
-          zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
-        }
-      }, { passive: false, capture: true });
-    }
 
     return () => {
       document.removeEventListener('wheel', preventARModalZoom, { capture: true });
