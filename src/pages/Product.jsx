@@ -791,8 +791,8 @@ const Product = () => {
           if (Math.abs(orbit.radius - lastLockedRadius) > 0.00001) {
             viewer.setCameraOrbit(orbit.theta, orbit.phi, lastLockedRadius);
             
-            // Only show message in preview mode, NOT in actual WebXR/AR session
-            if (!arInSession) {
+            // Only show message in actual WebXR/AR session
+            if (arInSession) {
               setShowZoomMessage(true);
               if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
               zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -845,8 +845,8 @@ const Product = () => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Show zoom message only in preview mode, NOT in actual WebXR
-        if (!arInSession) {
+        // Show zoom message only in WebXR mode
+        if (arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -885,8 +885,8 @@ const Product = () => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        // Only show message if NOT in actual WebXR mode (preview mode only)
-        if (!arInSession) {
+        // Only show message if in actual WebXR mode
+        if (arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -901,8 +901,8 @@ const Product = () => {
       if (e.detail > 1) {
         e.preventDefault();
         
-        // Show zoom message only in preview mode, NOT in actual WebXR
-        if (!arInSession) {
+        // Show zoom message only in WebXR mode
+        if (arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -926,8 +926,8 @@ const Product = () => {
         if (e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
-          // Only show zoom message in preview mode, NOT in WebXR
-          if (!arInSession) {
+          // Only show zoom message in WebXR mode
+          if (arInSession) {
             setShowZoomMessage(true);
             if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
             zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -938,8 +938,8 @@ const Product = () => {
         if (e.touches && e.touches.length > 1) {
           e.preventDefault();
           e.stopPropagation();
-          // Only show zoom message in preview mode, NOT in WebXR
-          if (!arInSession) {
+          // Only show zoom message in WebXR mode
+          if (arInSession) {
             setShowZoomMessage(true);
             if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
             zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -1026,8 +1026,8 @@ const Product = () => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        // Only show message in preview modal, NOT during WebXR
-        if (!arInSession) {
+        // Only show message during WebXR
+        if (arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
@@ -1048,8 +1048,8 @@ const Product = () => {
         e.stopPropagation();
         e.stopImmediatePropagation();
         
-        // Only show message if NOT in WebXR
-        if (!arInSession) {
+        // Only show message if in WebXR
+        if (arInSession) {
           setShowZoomMessage(true);
           if (zoomMessageTimeoutRef.current) clearTimeout(zoomMessageTimeoutRef.current);
           zoomMessageTimeoutRef.current = setTimeout(() => setShowZoomMessage(false), 2500);
