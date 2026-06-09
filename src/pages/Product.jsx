@@ -614,8 +614,8 @@ const Product = () => {
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     viewer.setAttribute('ar-scale', 'fixed');
     viewer.setAttribute('disable-zoom', '');
+    viewer.setAttribute('camera-controls', '');
     // Enable rotation in preview mode, but zoom is disabled
-    // DO NOT enable camera-controls - disable zoom completely from start
     viewer.setAttribute('loading', 'eager');
     if (image) {
       viewer.setAttribute('poster', image);
@@ -643,8 +643,7 @@ const Product = () => {
       setArLoading(false);
       modelViewerElementRef.current = viewer;
       
-      // CRITICAL: Ensure camera-controls is NEVER enabled
-      viewer.removeAttribute('camera-controls');
+      // Camera controls enabled for rotation, zoom prevention handles restrictions
       
       // Get initial camera position for true scale locking
       let trueScaleRadius = null;
