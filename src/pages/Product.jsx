@@ -614,7 +614,7 @@ const Product = () => {
     viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
     viewer.setAttribute('ar-scale', 'fixed');
     viewer.setAttribute('disable-zoom', '');
-    viewer.setAttribute('disable-rotate', '');
+    // Enable rotation in preview mode, but zoom is disabled
     // DO NOT enable camera-controls - disable zoom completely from start
     viewer.setAttribute('loading', 'eager');
     if (image) {
