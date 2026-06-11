@@ -79,9 +79,9 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
               </div>
             )}
           </div>
-          <div className='pt-3 pb-4 flex flex-col gap-0.5 text-center'>
-            <p className='text-sm text-gray-800 line-clamp-1 capitalize product-name-font'>{name}</p>
-            <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
+          <div className='pt-3 pb-4 flex flex-col gap-1 text-center'>
+            <p className='text-base sm:text-lg font-semibold text-gray-900 line-clamp-1 capitalize product-name-font tracking-tight'>{name}</p>
+            <p className='text-lg sm:text-xl font-normal text-gray-900'>{currency}{price}</p>
           </div>
         </div>
       </Link>

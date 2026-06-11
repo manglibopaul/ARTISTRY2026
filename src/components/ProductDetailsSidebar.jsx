@@ -31,7 +31,7 @@ export default function ProductDetailsSidebar({
 
       {/* Price Section */}
       <div>
-        <span className="text-3xl font-normal text-gray-900">
+        <span className="text-3xl font-normal text-gray-900 tracking-tight">
           ₱{product.price.toLocaleString()}
         </span>
       </div>
@@ -39,19 +39,18 @@ export default function ProductDetailsSidebar({
       {/* Color Selection */}
       {availableColors.length > 0 && (
         <div className="mt-6">
-          <p className="text-sm font-medium mb-3">Choose Color:</p>
+          <p className="text-sm font-medium mb-3 uppercase tracking-[0.24em] text-slate-700">Color</p>
           <div className="flex flex-wrap gap-2">
             {availableColors.map((color) => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setCartColor(color)}
-                className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium transition-all ${
+                className={`px-4 py-2 sm:px-3 sm:py-2 rounded-full text-sm sm:text-xs font-semibold transition-all ${
                   cartColor === color
-                    ? 'ring-2 ring-offset-2 ring-black scale-105'
-                    : 'hover:scale-105'
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-900 border border-slate-300 hover:border-slate-900 hover:text-slate-900'
                 }`}
-                style={{ border: '1px solid #ccc' }}
               >
                 {color}
               </button>
@@ -90,26 +89,29 @@ export default function ProductDetailsSidebar({
       <div className="flex flex-col gap-3 w-full">
         {/* View AR Button */}
         <button
+          type="button"
           onClick={onARClick}
-          className="w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-rose-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+          className="w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-full hover:from-pink-600 hover:to-rose-600 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           🔍 View AR
         </button>
 
         {/* Add to Cart Button */}
         <button
+          type="button"
           onClick={() => onAddToCart(quantity)}
-          className="w-full px-6 py-3 border-2 border-black bg-white text-black font-semibold rounded-lg hover:bg-black hover:text-white transition-all duration-300"
+          className="w-full px-6 py-3 border-2 border-slate-900 bg-white text-slate-900 font-semibold rounded-full hover:bg-slate-900 hover:text-white transition-all duration-300"
         >
-          ADD TO CART
+          Add to cart
         </button>
 
         {/* Buy Now Button */}
         <button
+          type="button"
           onClick={() => onBuyNow(quantity)}
-          className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors duration-300"
+          className="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 transition-colors duration-300"
         >
-          BUY NOW
+          Buy now
         </button>
       </div>
 
