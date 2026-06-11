@@ -31,7 +31,7 @@ export default function ProductDetailsSidebar({
 
       {/* Price Section */}
       <div>
-        <span className="text-3xl font-semibold text-gray-900">
+        <span className="text-3xl font-normal text-gray-900">
           ₱{product.price.toLocaleString()}
         </span>
       </div>
