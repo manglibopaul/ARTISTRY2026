@@ -1113,6 +1113,9 @@ const Product = () => {
           <React.Suspense fallback={<div className='py-20 text-center'>Loading product details...</div>}>
             <ProductDetailsSidebar
               product={productData}
+              availableColors={availableColors}
+              cartColor={cartColor}
+              setCartColor={setCartColor}
               onARClick={() => setShowAR(true)}
               onAddToCart={(qty) => {
                 const availableColors = getAvailableColors(productData);
@@ -1143,31 +1146,6 @@ const Product = () => {
           </React.Suspense>
 
           <hr className='mt-6 sm:mt-8' />
-
-          {/* Color Selection (seller-defined) */}
-          {getAvailableColors(productData).length > 0 && (
-            <div className='mt-6'>
-              <p className='text-sm font-medium mb-3'>Choose Color:</p>
-              <div className='flex flex-wrap gap-2'>
-                {getAvailableColors(productData).map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setCartColor(color)}
-                    className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium transition-all ${
-                      cartColor === color
-                        ? 'ring-2 ring-offset-2 ring-black scale-105'
-                        : 'hover:scale-105'
-                    }`}
-                    style={{
-                      border: '1px solid #ccc'
-                    }}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Size Selection */}
           {getAvailableSizes(productData).length > 0 && (
