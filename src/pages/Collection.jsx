@@ -6,6 +6,7 @@ const Collection = () => {
   const { products, productsLoading, search, showSearch } = useContext(ShopContext)
   const [filterProducts, setFilterProducts] = useState([])
   const [availabilityFilter, setAvailabilityFilter] = useState('all')
+  const [priceRange, setPriceRange] = useState('all')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [sortType, setSortType] = useState('featured')
@@ -77,17 +78,16 @@ const Collection = () => {
     <div className='min-h-screen bg-white'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
         <div className='flex flex-col gap-6 sm:gap-10'>
-          <div className='flex flex-col gap-3 text-sm text-gray-700'>
-            <div className='flex items-center gap-4 flex-wrap lg:flex-nowrap'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between text-sm text-gray-700'>
+            <div className='flex flex-wrap items-center gap-4'>
               <span className='font-semibold text-gray-900'>Filter:</span>
 
-              {/* Availability Filter */}
               <div className='flex items-center gap-2'>
                 <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Availability</span>
                 <select
                   value={availabilityFilter}
                   onChange={(e) => setAvailabilityFilter(e.target.value)}
-                  className='border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                  className='border border-gray-300 px-3 py-2 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 >
                   <option value='all'>All</option>
                   <option value='in-stock'>In stock</option>
@@ -95,66 +95,55 @@ const Collection = () => {
                 </select>
               </div>
 
-              {/* Price Filter */}
               <div className='flex items-center gap-2'>
                 <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Price</span>
-                <input
-                  type='number'
-                  placeholder='Min'
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className='w-28 border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
-                />
-                <span className='text-gray-400'>-</span>
-                <input
-                  type='number'
-                  placeholder='Max'
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className='w-28 border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
-                />
-                {(minPrice !== '' || maxPrice !== '') && (
-                  <button
-                    onClick={() => {
+                <select
+                  value={priceRange}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setPriceRange(value)
+                    if (value === 'all') {
                       setMinPrice('')
                       setMaxPrice('')
-                    }}
-                    className='text-xs text-gray-500 hover:text-gray-700'
-                    title='Clear price filter'
-                  >
-                    ✕
-                  </button>
-                )}
+                    } else if (value === 'under-500') {
+                      setMinPrice('')
+                      setMaxPrice('500')
+                    } else if (value === '500-1000') {
+                      setMinPrice('500')
+                      setMaxPrice('1000')
+                    } else if (value === '1000-plus') {
+                      setMinPrice('1000')
+                      setMaxPrice('')
+                    }
+                  }}
+                  className='border border-gray-300 px-3 py-2 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                >
+                  <option value='all'>All</option>
+                  <option value='under-500'>Under 500</option>
+                  <option value='500-1000'>500-1000</option>
+                  <option value='1000-plus'>1000+</option>
+                </select>
               </div>
+            </div>
 
-              {/* Sort Filter */}
+            <div className='flex flex-wrap items-center gap-4'>
               <div className='flex items-center gap-2'>
                 <span className='text-gray-600 text-xs sm:text-sm whitespace-nowrap'>Sort by:</span>
                 <select
                   onChange={(e) => setSortType(e.target.value)}
                   value={sortType}
-                  className='border border-gray-300 px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
+                  className='border border-gray-300 px-3 py-2 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm'
                 >
-                  <option value='featured'>Featured</option>
+                  <option value='featured'>Best selling</option>
                   <option value='price-asc'>Price: Low to High</option>
                   <option value='price-desc'>Price: High to Low</option>
                 </select>
               </div>
-            </div>
 
-            <div className='text-gray-600 text-sm'>
-              {filterProducts.length} product{filterProducts.length !== 1 ? 's' : ''}
+              <div className='text-gray-600 text-sm whitespace-nowrap'>
+                {filterProducts.length} product{filterProducts.length !== 1 ? 's' : ''}
+              </div>
             </div>
-
-            {activeCollection && (
-              <button
-                onClick={() => setActiveCollection('')}
-                className='inline-flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-xs text-gray-700 hover:bg-gray-50'
-              >
-                Showing: {activeCollection}
-                <span className='text-gray-400'>×</span>
-              </button>
-            )}
           </div>
 
           {isLoading ? (
