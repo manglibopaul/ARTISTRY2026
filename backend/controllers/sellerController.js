@@ -836,6 +836,20 @@ export const verifySellerByAdmin = async (req, res) => {
     const nextValue = typeof isVerified === 'boolean' ? isVerified : !seller.isVerified;
     await seller.update({ isVerified: nextValue });
 
+    if (nextValue && seller.email) {
+      const displayName = seller.storeName || seller.name || 'Artist';
+      try {
+        await sendEmail({
+          to: seller.email,
+          subject: 'Your Artistry seller account is verified',
+          text: `Hi ${displayName},\n\nYour seller account has been verified by Artistry admin. You can now upload products and manage your shop.\n\nThank you,\nArtistry Team`,
+          html: `<p>Hi ${displayName},</p><p>Your seller account has been verified by the Artistry admin team.</p><p>You can now upload products and manage your shop.</p><p>Thank you,<br/>Artistry Team</p>`,
+        });
+      } catch (emailErr) {
+        console.warn('verifySellerByAdmin: failed to send verification email', emailErr && emailErr.message ? emailErr.message : emailErr);
+      }
+    }
+
     res.json({
       id: seller.id,
       isVerified: seller.isVerified,
