@@ -22,6 +22,10 @@ a.active hr{
     font-family: 'Poppins', sans-serif;
 }
 
+h1, h2, h3, h4, h5, h6, .font-heading, .font-brand {
+    font-family: 'Prata', serif;
+}
+
 html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
