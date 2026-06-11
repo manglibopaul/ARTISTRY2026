@@ -3,7 +3,7 @@ import { ShopContext } from '../context/ShopContext'
 import ProductItem from '../components/ProductItem'
 
 const Collection = () => {
-  const { products, search, showSearch } = useContext(ShopContext)
+  const { products, productsLoading, search, showSearch } = useContext(ShopContext)
   const [filterProducts, setFilterProducts] = useState([])
   const [availabilityFilter, setAvailabilityFilter] = useState('all')
   const [minPrice, setMinPrice] = useState('')
@@ -11,7 +11,7 @@ const Collection = () => {
   const [sortType, setSortType] = useState('featured')
   const [activeCollection, setActiveCollection] = useState('')
 
-  const isLoading = !products
+  const isLoading = productsLoading
 
   const applyFilter = useCallback(() => {
     let productsCopy = products.slice()

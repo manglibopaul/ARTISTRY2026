@@ -12,6 +12,7 @@ const ShopContextProvider = (props) => {
   const [showSearch,setShowSearch] = useState (false);
   const [cartsItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   // Remove useNavigate from top level to avoid hook error
   // Use inside functions only if needed
@@ -154,6 +155,8 @@ const ShopContextProvider = (props) => {
   // Fetch products from backend with pagination
   const fetchProducts = useCallback(async () => {
     try {
+      setProductsLoading(true);
+
       // Fetch first page quickly for initial render
       const res = await axios.get(`${apiUrl}/api/products`, {
         params: { page: 1, limit: 48 }
@@ -193,6 +196,8 @@ const ShopContextProvider = (props) => {
     } catch (error) {
       console.error('Error fetching products for context:', error);
       toast.error('Failed to load products');
+    } finally {
+      setProductsLoading(false);
     }
   }, [apiUrl])
 
@@ -227,6 +232,7 @@ const ShopContextProvider = (props) => {
 
   const value = {
     products,
+    productsLoading,
     refreshProducts: fetchProducts,
     currency,
     delivery_fee,

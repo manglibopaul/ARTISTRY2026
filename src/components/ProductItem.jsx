@@ -80,7 +80,7 @@ const ProductItem = ({id, image, name, price, sellerId, sellerName, artisanType,
             )}
           </div>
           <div className='pt-3 pb-4 flex flex-col gap-0.5 text-center'>
-            <p className='text-sm font-medium text-gray-800 line-clamp-1 capitalize'>{name}</p>
+            <p className='text-sm text-gray-800 line-clamp-1 capitalize product-name-font'>{name}</p>
             <p className='text-base font-bold text-gray-900'>{currency}{price}</p>
           </div>
         </div>

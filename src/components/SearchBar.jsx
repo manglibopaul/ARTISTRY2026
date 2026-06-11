@@ -108,7 +108,7 @@ const SearchBar = () => {
                                             onError={(e) => { e.target.src = '/path/to/placeholder.jpg'; }}
                                         />
                                         <div className='flex-1 min-w-0'>
-                                            <p className='font-medium text-sm text-gray-800 truncate'>{product.name}</p>
+                                            <p className='text-sm text-gray-800 truncate product-name-font'>{product.name}</p>
                                             <p className='text-sm font-semibold text-gray-900'>₱{product.price}</p>
                                         </div>
                                     </button>

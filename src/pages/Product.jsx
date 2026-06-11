@@ -599,87 +599,88 @@ const Product = () => {
       }
     };
 
-    // load the module first
-    ensureModelViewer().catch(() => {});
-
-    setArLoading(true);
-    setArError('');
-    // Clear previous content
-    modelViewerRef.current.innerHTML = '';
-
-    // Create model-viewer element
-    const viewer = document.createElement('model-viewer');
-    viewer.setAttribute('src', resolvedModelUrl);
-    viewer.setAttribute('ar', '');
-    viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
-    viewer.setAttribute('ar-scale', 'fixed');
-    viewer.setAttribute('disable-zoom', '');
-    viewer.setAttribute('camera-controls', '');
-    // Enable rotation in preview mode, but zoom is disabled
-    viewer.setAttribute('loading', 'eager');
-    if (image) {
-      viewer.setAttribute('poster', image);
-    }
-    // Allow the model to load immediately so the preview appears
-    viewer.setAttribute('reveal', 'auto');
-    viewer.setAttribute('interaction-prompt', 'auto');
-    viewer.setAttribute('exposure', '1');
-    viewer.setAttribute('shadow-intensity', '1');
-    viewer.setAttribute('environment-image', 'neutral');
-    viewer.setAttribute('scale-to-fit', 'true');
-    viewer.style.width = '100%';
-    viewer.style.height = '100%';
-    viewer.style.touchAction = 'none';
-    viewer.style.userSelect = 'none';
-    viewer.style.webkitUserSelect = 'none';
-    viewer.style.webkitTouchCallout = 'none';
-
-    if (resolvedIosModelUrl) {
-      viewer.setAttribute('ios-src', resolvedIosModelUrl);
-    }
-
-    // Handle model loaded event
-    const handleLoad = () => {
-      setArLoading(false);
-      modelViewerElementRef.current = viewer;
-      
-      // Camera controls enabled for rotation, zoom prevention handles restrictions
-      
-      // Get initial camera position for true scale locking
-      let trueScaleRadius = null;
-      try {
-        const orbit = viewer.getCameraOrbit();
-        trueScaleRadius = orbit.radius;
-        
-        // Lock RADIUS only - allow full rotation but NO ZOOM
-        // Format: min-camera-orbit="<phi>rad <theta>rad <radius>m"
-        // phi: 0 to 6.28 (full circle), theta: 0 to 3.14 (full hemisphere)
-        // radius: locked to exact value - PREVENTS ALL ZOOM
-        viewer.setAttribute('min-camera-orbit', `0rad 0rad ${orbit.radius}m`);
-        viewer.setAttribute('max-camera-orbit', `6.28rad 3.14rad ${orbit.radius}m`);
-      } catch (e) {
-        console.log('Failed to lock camera orbit:', e);
-      }
-      
-      // detect model parts for debugging / selective recolor
-      try {
-        detectModelParts(viewer);
-      } catch (e) {
-        // ignore detection errors
-      }
-    };
-    const handleError = () => {
-      setArLoading(false);
-      setArError('Failed to load 3D model. Check the model URL and network access.');
-    };
-    
-    // When entering AR/VR (WebXR) - disable all camera controls for true 1:1 scale
+    let viewer = null;
     let cameraResetInterval = null;
     let webxrGesturePreventionInterval = null;
     let webxrRAF = null;
     let lockedCameraTransform = null;
-    
-    const handleEnterXR = () => {
+
+    const initializeModelViewer = async () => {
+      await ensureModelViewer().catch(() => {});
+
+      setArLoading(true);
+      setArError('');
+      // Clear previous content
+      modelViewerRef.current.innerHTML = '';
+
+      // Create model-viewer element
+      viewer = document.createElement('model-viewer');
+      viewer.setAttribute('src', resolvedModelUrl);
+      viewer.setAttribute('ar', '');
+      viewer.setAttribute('ar-modes', 'scene-viewer quick-look webxr');
+      viewer.setAttribute('ar-scale', 'fixed');
+      viewer.setAttribute('disable-zoom', '');
+      viewer.setAttribute('camera-controls', '');
+      // Enable rotation in preview mode, but zoom is disabled
+      viewer.setAttribute('loading', 'eager');
+      if (image) {
+        viewer.setAttribute('poster', image);
+      }
+      // Allow the model to load immediately so the preview appears
+      viewer.setAttribute('reveal', 'auto');
+      viewer.setAttribute('interaction-prompt', 'auto');
+      viewer.setAttribute('exposure', '1');
+      viewer.setAttribute('shadow-intensity', '1');
+      viewer.setAttribute('environment-image', 'neutral');
+      viewer.setAttribute('scale-to-fit', 'true');
+      viewer.style.width = '100%';
+      viewer.style.height = '100%';
+      viewer.style.touchAction = 'none';
+      viewer.style.userSelect = 'none';
+      viewer.style.webkitUserSelect = 'none';
+      viewer.style.webkitTouchCallout = 'none';
+
+      if (resolvedIosModelUrl) {
+        viewer.setAttribute('ios-src', resolvedIosModelUrl);
+      }
+
+      // Handle model loaded event
+      const handleLoad = () => {
+        setArLoading(false);
+        modelViewerElementRef.current = viewer;
+        
+        // Camera controls enabled for rotation, zoom prevention handles restrictions
+        
+        // Get initial camera position for true scale locking
+        let trueScaleRadius = null;
+        try {
+          const orbit = viewer.getCameraOrbit();
+          trueScaleRadius = orbit.radius;
+          
+          // Lock RADIUS only - allow full rotation but NO ZOOM
+          // Format: min-camera-orbit="<phi>rad <theta>rad <radius>m"
+          // phi: 0 to 6.28 (full circle), theta: 0 to 3.14 (full hemisphere)
+          // radius: locked to exact value - PREVENTS ALL ZOOM
+          viewer.setAttribute('min-camera-orbit', `0rad 0rad ${orbit.radius}m`);
+          viewer.setAttribute('max-camera-orbit', `6.28rad 3.14rad ${orbit.radius}m`);
+        } catch (e) {
+          console.log('Failed to lock camera orbit:', e);
+        }
+        
+        // detect model parts for debugging / selective recolor
+        try {
+          detectModelParts(viewer);
+        } catch (e) {
+          // ignore detection errors
+        }
+      };
+      const handleError = () => {
+        setArLoading(false);
+        setArError('Failed to load 3D model. Check the model URL and network access.');
+      };
+      
+      // When entering AR/VR (WebXR) - disable all camera controls for true 1:1 scale
+      const handleEnterXR = () => {
       try {
         setArInSession(true);
         
@@ -821,10 +822,7 @@ const Product = () => {
       zoomResetRAF = requestAnimationFrame(runRAF);
     };
 
-    // Start prevention immediately after model loads
-    handleLoad();
-    
-    // Start continuous zoom prevention
+    // Start continuous zoom prevention shortly after initialization
     setTimeout(() => {
       startContinuousZoomPrevention();
     }, 100);
@@ -988,7 +986,10 @@ const Product = () => {
     viewer.addEventListener('exit-vr', stopARZoomPrevention);
 
     modelViewerRef.current.appendChild(viewer);
-    
+    };
+
+    initializeModelViewer().catch(() => {});
+
     return () => {
       try { if (cameraResetInterval) clearInterval(cameraResetInterval); } catch (e) {}
       try { if (webxrGesturePreventionInterval) clearInterval(webxrGesturePreventionInterval); } catch (e) {}

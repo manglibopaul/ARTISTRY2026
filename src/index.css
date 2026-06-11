@@ -67,6 +67,13 @@ body {
   font-style: normal;
 }
 
+.product-name-font {
+  font-family: "Prata", serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
 /* Custom scrollbar styling */
 ::-webkit-scrollbar {
     width: 10px;

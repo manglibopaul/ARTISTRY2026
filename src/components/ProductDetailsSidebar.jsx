@@ -21,7 +21,7 @@ export default function ProductDetailsSidebar({
     <div className="flex flex-col space-y-6 p-6">
       {/* Product Title */}
       <div>
-        <h1 className="text-4xl font-light tracking-wide text-gray-900">
+        <h1 className="text-4xl font-normal tracking-wide text-gray-900 product-name-font">
           {product.name}
         </h1>
       </div>
