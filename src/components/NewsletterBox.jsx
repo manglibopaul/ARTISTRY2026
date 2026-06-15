@@ -123,7 +123,7 @@ const NewsletterBox = () => {
                 type="submit"
                 className="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 active:bg-gray-900 transition-all font-medium shadow-md hover:shadow-lg"
               >
-                Submit
+                Go to Sign Up
               </button>
 
               <p className="text-xs text-center text-gray-500 leading-relaxed">
