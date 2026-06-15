@@ -1746,13 +1746,16 @@ const SellerDashboard = () => {
                               <button
                                 onClick={() => {
                                   if (order.orderStatus === 'completed') return toast.info('Completed orders cannot be changed')
+                                  if (order.orderStatus === 'shipped') return toast.info('Order is already shipped')
                                   const isPickup = order.paymentMethod === 'pickup' || order.method === 'pickup'
                                   const newStatus = isPickup ? (order.orderStatus === 'ready_for_pickup' ? 'completed' : 'ready_for_pickup') : (order.orderStatus === 'processing' ? 'shipped' : 'processing')
                                   setStatusChangeConfirm({ open: true, order, newStatus })
                                 }}
-                                disabled={order.orderStatus === 'completed'}
-                                className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
-                                {order.orderStatus === 'completed' ? 'Completed' : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (order.orderStatus === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (order.orderStatus === 'processing' ? 'Ship' : 'Process'))}
+                                disabled={order.orderStatus === 'completed' || order.orderStatus === 'shipped'}
+                                className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' || order.orderStatus === 'shipped' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
+                                {order.orderStatus === 'completed' ? 'Completed'
+                                  : order.orderStatus === 'shipped' ? 'Shipped'
+                                  : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (order.orderStatus === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (order.orderStatus === 'processing' ? 'Ship' : 'Process'))}
                               </button>
                               {order.orderStatus !== 'completed' && (
                                 <button
