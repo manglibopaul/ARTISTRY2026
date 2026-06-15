@@ -274,22 +274,28 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
 
-    // Always run schema-ensure operations to keep database schema up-to-date
-    // This ensures new columns are added even on production deployments
-    await sequelize.sync({ force: false });
-    await ensureUsersDeletedAtColumn();
-    await ensureReviewsImageUrlColumn();
-    await ensureReviewsOrderIdColumn();
-    await ensureProductsSizesColumn();
-    await ensureProductsColorColumns();
-    await ensureOrdersCompletedAtColumn();
-    await ensureOrdersGcashReceiptColumn();
-    await ensureSellersPaymentSettingsColumn();
-    await ensureProductsDimensionsColumns();
-    await ensureProductsArMetadataColumns();
-    await ensureProductsMaterialsAndSizeChartColumns();
-    // pickupMaps support removed; no runtime schema-ensure needed
-    console.log('✅ Database synchronized successfully');
+    const runtimeSchemaEnabled = !isProduction || process.env.ENABLE_RUNTIME_SCHEMA_CHECKS === 'true';
+    if (runtimeSchemaEnabled) {
+      // Runtime schema checks are useful for development, but they can consume
+      // Neon compute in production. Use migrations or explicit schema updates
+      // for production deployments whenever possible.
+      await sequelize.sync({ force: false });
+      await ensureUsersDeletedAtColumn();
+      await ensureReviewsImageUrlColumn();
+      await ensureReviewsOrderIdColumn();
+      await ensureProductsSizesColumn();
+      await ensureProductsColorColumns();
+      await ensureOrdersCompletedAtColumn();
+      await ensureOrdersGcashReceiptColumn();
+      await ensureSellersPaymentSettingsColumn();
+      await ensureProductsDimensionsColumns();
+      await ensureProductsArMetadataColumns();
+      await ensureProductsMaterialsAndSizeChartColumns();
+      // pickupMaps support removed; no runtime schema-ensure needed
+      console.log('✅ Database synchronized successfully');
+    } else {
+      console.log('ℹ️ Runtime schema checks disabled for production. Ensure migrations are applied before deployment.');
+    }
 
     dbConnected = true;
     const dialect = sequelize.getDialect();

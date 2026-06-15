@@ -155,8 +155,14 @@ app.listen(PORT, HOST, async () => {
     }
   })();
 
-  // Keep-alive pings every 4 minutes to maintain connection pool
-  setInterval(() => {
-    keepAlive();
-  }, 4 * 60 * 1000);
+  const enableKeepAlive = process.env.ENABLE_DB_KEEPALIVE === 'true' || process.env.NODE_ENV !== 'production';
+  if (enableKeepAlive) {
+    const intervalMinutes = Number(process.env.DB_KEEPALIVE_INTERVAL_MINUTES) || 15;
+    setInterval(() => {
+      keepAlive();
+    }, intervalMinutes * 60 * 1000);
+    console.log(`⏱️ Database keep-alive enabled (every ${intervalMinutes} minutes)`);
+  } else {
+    console.log('⏱️ Database keep-alive disabled in production');
+  }
 });
