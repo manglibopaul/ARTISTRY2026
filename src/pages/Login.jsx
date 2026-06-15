@@ -136,11 +136,10 @@ const Login = () => {
     }
   }
 
-
-
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
+
     if (mode === 'Sign Up' && !acceptedTerms) {
       setError('You must accept the Terms and Conditions to sign up.');
       return;
@@ -149,10 +148,14 @@ const Login = () => {
       setError('OTP is required to complete sign up.');
       return;
     }
+
     setLoading(true);
     try {
       const endpoint = mode === 'Sign In' ? `${apiUrl}/api/users/login` : `${apiUrl}/api/users/register`;
-      const body = mode === 'Sign In' ? { email, password } : { name, email, password, street, city, state, zipcode, country, phone, otp: signupOtp };
+      const body = mode === 'Sign In'
+        ? { email, password }
+        : { name, email, password, street, city, state, zipcode, country, phone, otp: signupOtp };
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +164,6 @@ const Login = () => {
 
       if (!res.ok) {
         const message = await readErrorMessage(res);
-        // If backend says user not found, switch to sign up mode
         if (message && message.toLowerCase().includes('user not found')) {
           setMode('Sign Up');
           setError('User not found. Please sign up.');
@@ -172,14 +174,10 @@ const Login = () => {
       }
 
       const data = await res.json();
-      // Save token and user info
       if (data.token) localStorage.setItem('token', data.token);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Redirect after login/register — go to home page
       navigate('/');
     } catch (err) {
-      // Show a user-friendly message for invalid credentials
       if (err.message && err.message.toLowerCase().includes('invalid credentials')) {
         setError('Wrong email or password');
       } else {

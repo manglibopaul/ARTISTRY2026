@@ -171,7 +171,7 @@ export const sendUserSignupPhoneOtp = async (req, res) => {
 // Register user
 export const register = async (req, res) => {
   try {
-    const { name, email, password, street, city, state, zipcode, country, phone, otp, phoneOtp } = req.body;
+    const { name, email, password, street, city, state, zipcode, country, phone, otp } = req.body;
     const normalized = normalizeEmail(email);
     const normalizedPhone = normalizePhoneNumber(phone);
 
@@ -181,10 +181,6 @@ export const register = async (req, res) => {
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required for sign up.' });
-    }
-
-    if (!phoneOtp) {
-      return res.status(400).json({ message: 'Phone OTP is required for sign up.' });
     }
 
     let user = await User.findOne({ where: { email: normalized }, paranoid: false });
@@ -197,11 +193,6 @@ export const register = async (req, res) => {
     const otpValidation = validateSignupOtp(normalized, otp);
     if (!otpValidation.valid) {
       return res.status(400).json({ message: otpValidation.message });
-    }
-
-    const phoneOtpValidation = validatePhoneSignupOtp(normalizedPhone, phoneOtp);
-    if (!phoneOtpValidation.valid) {
-      return res.status(400).json({ message: phoneOtpValidation.message });
     }
 
     if (user && user.deletedAt) {
