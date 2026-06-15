@@ -1279,7 +1279,8 @@ const Product = () => {
 
           {sellerData && (
             <div className='mt-6 p-4 border rounded-lg bg-white'>
-              <h3 className='font-semibold mb-3'>Upload engraving design</h3>
+              <h3 className='font-semibold mb-2'>Add Your Engraving Design</h3>
+              <p className='text-sm text-gray-500 mb-4'>Upload your logo, artwork, or design file. You can also leave notes for our artist to customize it for you.</p>
               <div className='space-y-3'>
                 <div className='flex flex-wrap gap-2 items-center'>
                   <input
