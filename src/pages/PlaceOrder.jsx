@@ -750,40 +750,42 @@ const PlaceOrder = () => {
                   {paymentOption === 'gcash' && availablePaymentMethods.gcash && Object.values(sellerPaymentInfo).length > 0 && (
                     <div className='mt-3 space-y-3'>
                       <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s GCash account. Use the details below:</p>
-                      {Object.values(sellerPaymentInfo).map((info) => {
-                        const identity = sellerIdentityById[String(info.sellerId)] || {}
-                        const qrUrl = info.gcashQr
-                          ? (info.gcashQr.startsWith('http')
-                            ? info.gcashQr
-                            : `${apiUrl}${info.gcashQr.startsWith('/') ? info.gcashQr : `/${info.gcashQr}`}`)
-                          : ''
-                        return (
-                          <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
-                            <p className='text-sm font-medium text-gray-800 mb-1'>{info.storeName}</p>
-                            {identity.sellerName && <p className='text-xs text-gray-700'>Seller: {identity.sellerName}</p>}
-                            <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
-                            <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
-                            {qrUrl ? (
-                              <>
-                                <img
-                                  src={qrUrl}
-                                  alt={`${info.storeName} GCash QR`}
-                                  className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer'
-                                  onClick={() => openPhotoModal(qrUrl, info.storeName)}
-                                />
-                                <QRModal
-                                  open={modalState.open && modalState.message === qrUrl}
-                                  onClose={() => setModalState({ open: false, title: '', message: '' })}
-                                  qrUrl={qrUrl}
-                                  storeName={info.storeName}
-                                />
-                              </>
-                            ) : (
-                              <p className='text-xs text-amber-700 mt-2'>QR code not uploaded yet. Contact the seller in chat for payment instructions.</p>
-                            )}
-                          </div>
-                        )
-                      })}
+                      {Object.values(sellerPaymentInfo)
+                        .filter((info) => deliveryModeBySeller[String(info.sellerId)] !== 'pickup')
+                        .map((info) => {
+                          const identity = sellerIdentityById[String(info.sellerId)] || {}
+                          const qrUrl = info.gcashQr
+                            ? (info.gcashQr.startsWith('http')
+                              ? info.gcashQr
+                              : `${apiUrl}${info.gcashQr.startsWith('/') ? info.gcashQr : `/${info.gcashQr}`}`)
+                            : ''
+                          return (
+                            <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
+                              <p className='text-sm font-medium text-gray-800 mb-1'>{info.storeName}</p>
+                              {identity.sellerName && <p className='text-xs text-gray-700'>Seller: {identity.sellerName}</p>}
+                              <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
+                              <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
+                              {qrUrl ? (
+                                <>
+                                  <img
+                                    src={qrUrl}
+                                    alt={`${info.storeName} GCash QR`}
+                                    className='mt-2 w-56 h-56 object-contain border-2 border-blue-400 rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer'
+                                    onClick={() => openPhotoModal(qrUrl, info.storeName)}
+                                  />
+                                  <QRModal
+                                    open={modalState.open && modalState.message === qrUrl}
+                                    onClose={() => setModalState({ open: false, title: '', message: '' })}
+                                    qrUrl={qrUrl}
+                                    storeName={info.storeName}
+                                  />
+                                </>
+                              ) : (
+                                <p className='text-xs text-amber-700 mt-2'>QR code not uploaded yet. Contact the seller in chat for payment instructions.</p>
+                              )}
+                            </div>
+                          )
+                        })}
 
                       {/* GCash Receipt Upload */}
                       <div className='mt-4'>
