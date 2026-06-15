@@ -1278,44 +1278,50 @@ const Product = () => {
           )}
 
           {sellerData && (
-            <div className='mt-6 p-4 border rounded-lg bg-white'>
-              <h3 className='font-semibold mb-2'>Add Your Engraving Design</h3>
-              <p className='text-sm text-gray-500 mb-4'>Upload your logo, artwork, or design file. You can also leave notes for our artist to customize it for you.</p>
-              <div className='space-y-3'>
-                <div className='flex flex-wrap gap-2 items-center'>
-                  <input
-                    ref={engravingInputRef}
-                    type='file'
-                    accept='image/*,.svg,.pdf'
-                    className='hidden'
-                    onChange={(e) => setSelectedEngraving(e.target.files?.[0] || null)}
-                  />
-                  <button
-                    type='button'
-                    onClick={() => engravingInputRef.current?.click()}
-                    className='px-4 py-2 border rounded text-sm bg-gray-50 hover:bg-gray-100'
-                  >
-                    Choose file
-                  </button>
-                  <span className='text-sm text-gray-500 truncate'>{selectedEngraving ? selectedEngraving.name : 'No design selected'}</span>
+            <div className='mt-6 p-5 rounded-3xl bg-slate-50 border border-slate-200 shadow-sm'>
+              <div className='mb-4'>
+                <h3 className='font-semibold text-lg text-slate-900'>Customize Your Engraving</h3>
+                <p className='text-sm text-slate-600 mt-1'>Upload your logo, artwork, or design file. You can also leave notes for our artist to customize it for you.</p>
+              </div>
+              <div className='space-y-4'>
+                <div className='rounded-3xl border border-dashed border-slate-300 bg-white p-4'>
+                  <div className='flex flex-col sm:flex-row sm:items-center gap-3'>
+                    <input
+                      ref={engravingInputRef}
+                      type='file'
+                      accept='image/*,.svg,.pdf'
+                      className='hidden'
+                      onChange={(e) => setSelectedEngraving(e.target.files?.[0] || null)}
+                    />
+                    <button
+                      type='button'
+                      onClick={() => engravingInputRef.current?.click()}
+                      className='inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50'
+                    >
+                      Choose design file
+                    </button>
+                    <span className='text-sm text-slate-500 truncate'>{selectedEngraving ? selectedEngraving.name : 'No design selected'}</span>
+                  </div>
                 </div>
+
                 <textarea
                   value={engravingInstructions}
                   onChange={(e) => setEngravingInstructions(e.target.value)}
-                  className='w-full min-h-[96px] px-3 py-2 border rounded text-sm resize-none'
+                  className='w-full min-h-[110px] rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 resize-none focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100'
                   placeholder='Optional engraving notes for the artist'
                 />
-                <div className='flex flex-wrap gap-2 items-center'>
+
+                <div className='flex flex-wrap gap-3 items-center'>
                   <button
                     type='button'
                     onClick={sendEngravingDesign}
                     disabled={engravingSending || !selectedEngraving}
-                    className='px-4 py-2 rounded text-sm text-white bg-black disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60'
                   >
                     {engravingSending ? 'Sending…' : 'Send design to artist'}
                   </button>
                   {engravingStatus && (
-                    <span className='text-sm text-gray-600'>{engravingStatus}</span>
+                    <span className='text-sm text-slate-600'>{engravingStatus}</span>
                   )}
                 </div>
               </div>
