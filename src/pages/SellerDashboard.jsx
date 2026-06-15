@@ -1633,11 +1633,16 @@ const SellerDashboard = () => {
                       <div className='mb-3'>
                         <select
                             value={order.orderStatus}
-                            disabled={order.orderStatus === 'completed'}
+                            disabled={['completed', 'shipped'].includes(String(order.orderStatus || '').toLowerCase())}
                             onChange={async (e) => {
+                              const status = String(order.orderStatus || '').toLowerCase()
                               const newStatus = e.target.value
-                              if (order.orderStatus === 'completed') {
+                              if (status === 'completed') {
                                 toast.info('Completed orders cannot be changed')
+                                return
+                              }
+                              if (status === 'shipped') {
+                                toast.info('Order is already shipped')
                                 return
                               }
                               try {
@@ -1745,17 +1750,18 @@ const SellerDashboard = () => {
                               {/* Quick action adapts for pickup vs shipping */}
                               <button
                                 onClick={() => {
-                                  if (order.orderStatus === 'completed') return toast.info('Completed orders cannot be changed')
-                                  if (order.orderStatus === 'shipped') return toast.info('Order is already shipped')
+                                  const status = String(order.orderStatus || '').toLowerCase()
+                                  if (status === 'completed') return toast.info('Completed orders cannot be changed')
+                                  if (status === 'shipped') return toast.info('Order is already shipped')
                                   const isPickup = order.paymentMethod === 'pickup' || order.method === 'pickup'
-                                  const newStatus = isPickup ? (order.orderStatus === 'ready_for_pickup' ? 'completed' : 'ready_for_pickup') : (order.orderStatus === 'processing' ? 'shipped' : 'processing')
+                                  const newStatus = isPickup ? (status === 'ready_for_pickup' ? 'completed' : 'ready_for_pickup') : (status === 'processing' ? 'shipped' : 'processing')
                                   setStatusChangeConfirm({ open: true, order, newStatus })
                                 }}
-                                disabled={order.orderStatus === 'completed' || order.orderStatus === 'shipped'}
-                                className={`px-3 py-1 rounded text-sm ${order.orderStatus === 'completed' || order.orderStatus === 'shipped' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
-                                {order.orderStatus === 'completed' ? 'Completed'
-                                  : order.orderStatus === 'shipped' ? 'Shipped'
-                                  : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (order.orderStatus === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (order.orderStatus === 'processing' ? 'Ship' : 'Process'))}
+                                disabled={['completed', 'shipped'].includes(String(order.orderStatus || '').toLowerCase())}
+                                className={`px-3 py-1 rounded text-sm ${['completed', 'shipped'].includes(String(order.orderStatus || '').toLowerCase()) ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}>
+                                {String(order.orderStatus || '').toLowerCase() === 'completed' ? 'Completed'
+                                  : String(order.orderStatus || '').toLowerCase() === 'shipped' ? 'Shipped'
+                                  : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (String(order.orderStatus || '').toLowerCase() === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (String(order.orderStatus || '').toLowerCase() === 'processing' ? 'Ship' : 'Process'))}
                               </button>
                               {order.orderStatus !== 'completed' && (
                                 <button
