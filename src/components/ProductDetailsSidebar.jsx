@@ -3,6 +3,10 @@ import React, { useState } from 'react';
 export default function ProductDetailsSidebar({
   product,
   availableColors = [],
+  availableSizes = [],
+  selectedSize,
+  setSelectedSize,
+  selectedDimensions,
   cartColor,
   setCartColor,
   onARClick,
@@ -84,6 +88,30 @@ export default function ProductDetailsSidebar({
           </button>
         </div>
       </div>
+
+      {/* Size Selection */}
+      {availableSizes.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-medium mb-3">Available Sizes:</p>
+          <div className="flex flex-wrap gap-2">
+            {availableSizes.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(size)}
+                className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+          {selectedDimensions && (
+            <p className="text-xs text-gray-600 mt-2">
+              Dimensions {selectedSize ? `for ${selectedSize}` : ''}: {selectedDimensions.width.toFixed(1)} x {selectedDimensions.height.toFixed(1)} x {selectedDimensions.depth.toFixed(1)} cm
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Button Stack */}
       <div className="flex flex-col gap-3 w-full">

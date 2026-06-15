@@ -1124,6 +1124,10 @@ const Product = () => {
             <ProductDetailsSidebar
               product={productData}
               availableColors={availableColors}
+              availableSizes={getAvailableSizes(productData)}
+              selectedSize={selectedSize}
+              setSelectedSize={setSelectedSize}
+              selectedDimensions={selectedDimensions}
               cartColor={cartColor}
               setCartColor={setCartColor}
               onARClick={() => setShowAR(true)}
@@ -1156,30 +1160,6 @@ const Product = () => {
           </React.Suspense>
 
           <hr className='mt-6 sm:mt-8' />
-
-          {/* Size Selection */}
-          {getAvailableSizes(productData).length > 0 && (
-            <div className='mt-6'>
-              <p className='text-sm font-medium mb-3'>Available Sizes:</p>
-              <div className='flex flex-wrap gap-2'>
-                {getAvailableSizes(productData).map((size) => (
-                  <button
-                    key={size}
-                    type='button'
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2.5 sm:px-3 sm:py-2 rounded text-sm sm:text-xs font-medium border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-              {selectedDimensions && (
-                <p className='text-xs text-gray-600 mt-2'>
-                  Dimensions {selectedSize ? `for ${selectedSize}` : ''}: {selectedDimensions.width.toFixed(1)} x {selectedDimensions.height.toFixed(1)} x {selectedDimensions.depth.toFixed(1)} cm
-                </p>
-              )}
-            </div>
-          )}
 
           {/* -------- Artist Info -------- */}
           {sellerData && (
