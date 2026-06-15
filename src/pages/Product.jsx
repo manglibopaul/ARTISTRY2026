@@ -20,6 +20,7 @@ const Product = () => {
   // Use localhost fallback only in development; production must use configured API URL.
   const apiUrl = import.meta.env.VITE_API_URL
     || (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:5000` : '')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('userToken') : null
   const [productData,setProductData] = useState(location.state?.product || false);
   const [loadingProduct, setLoadingProduct] = useState(!hasRouteProduct)
   const [productError, setProductError] = useState('')
@@ -40,6 +41,11 @@ const Product = () => {
   const [selectedColor, setSelectedColor] = useState('#FF69B4');
   const [cartColor, setCartColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedEngraving, setSelectedEngraving] = useState(null)
+  const [engravingInstructions, setEngravingInstructions] = useState('')
+  const [engravingSending, setEngravingSending] = useState(false)
+  const [engravingStatus, setEngravingStatus] = useState('')
+  const engravingInputRef = useRef(null)
   const modelViewerElementRef = useRef(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showAdded, setShowAdded] = useState(false);
@@ -261,6 +267,72 @@ const Product = () => {
     }
     return [];
   }, []);
+
+  const getGuestId = () => {
+    let gid = typeof window !== 'undefined' ? localStorage.getItem('guestChatId') : null;
+    if (!gid && typeof window !== 'undefined') {
+      gid = `g_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem('guestChatId', gid);
+    }
+    return gid;
+  };
+
+  const sendEngravingDesign = async () => {
+    if (!selectedEngraving) {
+      setEngravingStatus('Please choose a design file first.');
+      return;
+    }
+
+    setEngravingSending(true);
+    setEngravingStatus('');
+
+    const sellerId = productData?.sellerId || productData?.seller?.id || sellerData?.id;
+    const chatProductId = productData?.id || productData?._id || productRef;
+    const guestId = getGuestId();
+
+    if (!sellerId) {
+      setEngravingStatus('Unable to determine seller.');
+      setEngravingSending(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('guestId', guestId);
+      if (chatProductId) formData.append('productId', chatProductId);
+      formData.append('text', engravingInstructions.trim() || 'Please see my engraving design attached.');
+      formData.append('image', selectedEngraving);
+
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      let res = await fetch(`${apiUrl}/api/chat/user/${sellerId}/message`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (res.status === 401 && token) {
+        res = await fetch(`${apiUrl}/api/chat/user/${sellerId}/message`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(errorBody?.message || 'Failed to send engraving design.');
+      }
+
+      setEngravingStatus('Engraving design sent to the seller.');
+      setSelectedEngraving(null);
+      setEngravingInstructions('');
+      if (engravingInputRef.current) engravingInputRef.current.value = '';
+    } catch (error) {
+      console.error('sendEngravingDesign', error);
+      setEngravingStatus(error.message || 'Upload failed.');
+    } finally {
+      setEngravingSending(false);
+    }
+  };
 
   const getSizeDimensionsMap = useCallback((product) => {
     if (!product) return {};
@@ -1201,6 +1273,50 @@ const Product = () => {
                 <button onClick={() => navigate(getArtisanPath(sellerData))} className='text-sm font-medium text-black border border-gray-300 hover:bg-black hover:text-white px-3 py-2 rounded-full transition shadow-sm'>
                   View Shop →
                 </button>
+              </div>
+            </div>
+          )}
+
+          {sellerData && (
+            <div className='mt-6 p-4 border rounded-lg bg-white'>
+              <h3 className='font-semibold mb-3'>Upload engraving design</h3>
+              <div className='space-y-3'>
+                <div className='flex flex-wrap gap-2 items-center'>
+                  <input
+                    ref={engravingInputRef}
+                    type='file'
+                    accept='image/*,.svg,.pdf'
+                    className='hidden'
+                    onChange={(e) => setSelectedEngraving(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => engravingInputRef.current?.click()}
+                    className='px-4 py-2 border rounded text-sm bg-gray-50 hover:bg-gray-100'
+                  >
+                    Choose file
+                  </button>
+                  <span className='text-sm text-gray-500 truncate'>{selectedEngraving ? selectedEngraving.name : 'No design selected'}</span>
+                </div>
+                <textarea
+                  value={engravingInstructions}
+                  onChange={(e) => setEngravingInstructions(e.target.value)}
+                  className='w-full min-h-[96px] px-3 py-2 border rounded text-sm resize-none'
+                  placeholder='Optional engraving notes for the seller'
+                />
+                <div className='flex flex-wrap gap-2 items-center'>
+                  <button
+                    type='button'
+                    onClick={sendEngravingDesign}
+                    disabled={engravingSending || !selectedEngraving}
+                    className='px-4 py-2 rounded text-sm text-white bg-black disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    {engravingSending ? 'Sending…' : 'Send design to seller'}
+                  </button>
+                  {engravingStatus && (
+                    <span className='text-sm text-gray-600'>{engravingStatus}</span>
+                  )}
+                </div>
               </div>
             </div>
           )}

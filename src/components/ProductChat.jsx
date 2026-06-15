@@ -140,8 +140,8 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
           className='hidden'
           onChange={(e) => setSelectedDesign(e.target.files?.[0] || null)}
         />
-        <button onClick={() => designInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0 bg-gray-50 hover:bg-gray-100'>Upload engraving design</button>
-        <input value={text} onChange={(e) => setText(e.target.value)} className='flex-1 min-w-0 px-3 py-2 border rounded text-sm' placeholder='Add engraving instructions or ask a question...' />
+        <button onClick={() => designInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0 bg-gray-50 hover:bg-gray-100'>Attach file</button>
+        <input value={text} onChange={(e) => setText(e.target.value)} className='flex-1 min-w-0 px-3 py-2 border rounded text-sm' placeholder='Write a message...' />
         <button onClick={sendMessage} className='bg-black text-white px-4 py-2 rounded-md text-sm whitespace-nowrap shrink-0'>Send</button>
       </div>
       {selectedDesign && <div className='mt-2 text-xs text-gray-600 truncate'>Attached design: {selectedDesign.name}</div>}
