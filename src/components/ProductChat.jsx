@@ -112,14 +112,14 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
     <div className='bg-white border rounded p-3 overflow-hidden'>
       <div className='flex items-center justify-between mb-3'>
         <div>
-          <div className='font-medium'>{sellerName || 'Seller'}</div>
+          <div className='font-medium'>{sellerName || 'Artist'}</div>
           <div className='text-xs text-gray-500'>Conversation</div>
         </div>
       </div>
 
       <div ref={scrollRef} className='max-h-64 overflow-y-auto space-y-3 mb-3'>
         {messages.length === 0 ? (
-          <div className='text-sm text-gray-500'>No messages yet. Ask the seller a question.</div>
+          <div className='text-sm text-gray-500'>No messages yet. Ask the artist a question.</div>
         ) : (
           messages.map(m => (
             <div key={m.id || Math.random()} className={`p-2 rounded-lg ${m.sender === 'user' ? 'bg-blue-50 self-end ml-auto text-right' : 'bg-gray-100 self-start text-left'}`}>

@@ -291,7 +291,7 @@ const Product = () => {
     const guestId = getGuestId();
 
     if (!sellerId) {
-      setEngravingStatus('Unable to determine seller.');
+      setEngravingStatus('Unable to determine artist.');
       setEngravingSending(false);
       return;
     }
@@ -322,7 +322,7 @@ const Product = () => {
         throw new Error(errorBody?.message || 'Failed to send engraving design.');
       }
 
-      setEngravingStatus('Engraving design sent to the seller.');
+      setEngravingStatus('Engraving design sent to the artist.');
       setSelectedEngraving(null);
       setEngravingInstructions('');
       if (engravingInputRef.current) engravingInputRef.current.value = '';
@@ -1243,12 +1243,12 @@ const Product = () => {
             </div>
           )}
 
-          {/* -------- Seller Info -------- */}
+          {/* -------- Artist Info -------- */}
           {sellerData && (
             <div className='mt-6 p-4 border border-gray-100 rounded-lg bg-gray-50 flex items-center gap-4 product-seller-card'>
               <div className='w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-base font-semibold text-gray-700 overflow-hidden shadow'>
                 {sellerImageSrc ? (
-                  <img loading='lazy' decoding='async' src={sellerImageSrc} alt={sellerData.storeName || 'Seller'} className='w-full h-full object-cover' width={64} height={64} />
+                  <img loading='lazy' decoding='async' src={sellerImageSrc} alt={sellerData.storeName || 'Artist'} className='w-full h-full object-cover' width={64} height={64} />
                 ) : (
                   <span className='text-base font-semibold text-gray-700'>{sellerData.storeName ? sellerData.storeName[0] : 'S'}</span>
                 )}
@@ -1302,7 +1302,7 @@ const Product = () => {
                   value={engravingInstructions}
                   onChange={(e) => setEngravingInstructions(e.target.value)}
                   className='w-full min-h-[96px] px-3 py-2 border rounded text-sm resize-none'
-                  placeholder='Optional engraving notes for the seller'
+                  placeholder='Optional engraving notes for the artist'
                 />
                 <div className='flex flex-wrap gap-2 items-center'>
                   <button
@@ -1311,7 +1311,7 @@ const Product = () => {
                     disabled={engravingSending || !selectedEngraving}
                     className='px-4 py-2 rounded text-sm text-white bg-black disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    {engravingSending ? 'Sending…' : 'Send design to seller'}
+                    {engravingSending ? 'Sending…' : 'Send design to artist'}
                   </button>
                   {engravingStatus && (
                     <span className='text-sm text-gray-600'>{engravingStatus}</span>
@@ -1321,15 +1321,15 @@ const Product = () => {
             </div>
           )}
 
-          {/* Inline product chat - scoped to this product's seller */}
+          {/* Inline product chat - scoped to this product's artist */}
           <div className='mt-6'>
-            <h3 className='font-semibold mb-2'>Chat with seller</h3>
+            <h3 className='font-semibold mb-2'>Chat with artist</h3>
             <div className='border rounded p-3'>
               <React.Suspense fallback={<div className='text-sm text-gray-500'>Loading chat…</div>}>
                 <ProductChat
                   productId={productData?.id || productData?._id || productRef}
                   sellerId={productData.sellerId || productData.seller?.id || sellerData?.id || null}
-                  sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Seller'}
+                  sellerName={productData.sellerName || productData.seller?.storeName || productData.seller?.name || sellerData?.storeName || 'Artist'}
                 />
               </React.Suspense>
             </div>
@@ -1375,7 +1375,7 @@ const Product = () => {
                 )}
                 {r.sellerReply && (
                   <div className='mt-2 p-2 bg-white border rounded'>
-                    <div className='text-sm sm:text-xs text-gray-600 font-medium'>Seller reply</div>
+                    <div className='text-sm sm:text-xs text-gray-600 font-medium'>Artist reply</div>
                     <div className='text-sm text-gray-700 mt-1'>{r.sellerReply}</div>
                     {r.sellerReplyAt && <div className='text-sm sm:text-xs text-gray-400 mt-1'>{new Date(r.sellerReplyAt).toLocaleString()}</div>}
                   </div>
