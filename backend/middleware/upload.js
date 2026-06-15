@@ -32,12 +32,20 @@ const storage = multer.diskStorage({
 // File filter
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === 'image' || file.fieldname === 'images' || file.fieldname === 'proofOfArtisan') {
-    // Accept image files for both 'image' and 'proofOfArtisan' fields
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
+    // Accept image, SVG, and PDF files for chat attachments and artisan proofs
+    const allowedMimes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/jpg',
+      'image/svg+xml',
+      'application/pdf',
+    ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed for images and proof of artisan'), false);
+      cb(new Error('Only image, SVG, or PDF files are allowed for images and proof of artisan'), false);
     }
   } else if (file.fieldname === 'gcashReceipt') {
     // Accept images and PDF for GCash receipt uploads

@@ -5,9 +5,9 @@ import { toast } from 'react-toastify'
 const ProductChat = ({ productId, sellerId, sellerName }) => {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedDesign, setSelectedDesign] = useState(null)
   const scrollRef = useRef(null)
-  const imageInputRef = useRef(null)
+  const designInputRef = useRef(null)
   const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '')
   const token = localStorage.getItem('token') || localStorage.getItem('userToken')
 
@@ -69,15 +69,15 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
       toast.info('This product is missing seller info. Please refresh and try again.')
       return
     }
-    if (!text.trim() && !selectedImage) {
-      toast.info('Type a message or attach an image first.')
+    if (!text.trim() && !selectedDesign) {
+      toast.info('Type a message or attach a design file first.')
       return
     }
     try {
       const guestId = getGuestId()
       const formData = new FormData()
       if (text.trim()) formData.append('text', text.trim())
-      if (selectedImage) formData.append('image', selectedImage)
+      if (selectedDesign) formData.append('image', selectedDesign)
       // Always include guestId so stale tokens can gracefully fall back to guest mode.
       formData.append('guestId', guestId)
       if (productId) formData.append('productId', productId)
@@ -93,8 +93,8 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
         }
       }
       setText('')
-      setSelectedImage(null)
-      if (imageInputRef.current) imageInputRef.current.value = ''
+      setSelectedDesign(null)
+      if (designInputRef.current) designInputRef.current.value = ''
       setMessages(prev => [...prev, res.data])
       setTimeout(() => scrollToBottom(), 50)
     } catch (err) {
@@ -134,17 +134,17 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
       </div>
       <div className='flex gap-2 items-center'>
         <input
-          ref={imageInputRef}
+          ref={designInputRef}
           type='file'
-          accept='image/*'
+          accept='image/*,.svg,.pdf'
           className='hidden'
-          onChange={(e) => setSelectedImage(e.target.files?.[0] || null)}
+          onChange={(e) => setSelectedDesign(e.target.files?.[0] || null)}
         />
-        <button onClick={() => imageInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0 bg-gray-50 hover:bg-gray-100'>Image</button>
-        <input value={text} onChange={(e) => setText(e.target.value)} className='flex-1 min-w-0 px-3 py-2 border rounded text-sm' placeholder='Write a message...' />
+        <button onClick={() => designInputRef.current?.click()} className='px-3 py-2 border rounded text-sm whitespace-nowrap shrink-0 bg-gray-50 hover:bg-gray-100'>Upload engraving design</button>
+        <input value={text} onChange={(e) => setText(e.target.value)} className='flex-1 min-w-0 px-3 py-2 border rounded text-sm' placeholder='Add engraving instructions or ask a question...' />
         <button onClick={sendMessage} className='bg-black text-white px-4 py-2 rounded-md text-sm whitespace-nowrap shrink-0'>Send</button>
       </div>
-      {selectedImage && <div className='mt-2 text-xs text-gray-600 truncate'>Attached: {selectedImage.name}</div>}
+      {selectedDesign && <div className='mt-2 text-xs text-gray-600 truncate'>Attached design: {selectedDesign.name}</div>}
     </div>
   )
 }
