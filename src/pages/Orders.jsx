@@ -142,20 +142,13 @@ const Orders = () => {
 
   return (
     <div className='border-t pt-8 sm:pt-16 px-2 sm:px-0'>
-      <div className='flex items-center gap-2 mb-4 max-w-md'>
+      <div className='mb-4 max-w-md'>
         <button
           type='button'
           onClick={handleCustomerProfileClick}
-          className='px-4 py-2 bg-black text-white rounded text-sm sm:text-base'
-        >
-          My Profile
-        </button>
-        <button
-          type='button'
-          onClick={() => navigate('/orders')}
           className='px-4 py-2 bg-gray-700 text-white rounded text-sm sm:text-base'
         >
-          View My Orders
+          My Profile
         </button>
       </div>
 
