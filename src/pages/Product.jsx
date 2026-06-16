@@ -1288,7 +1288,7 @@ const Product = () => {
               </div>
             ) : (
               <>
-                <div className="relative overflow-hidden" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
+                <div className="relative overflow-hidden rounded-xl" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
                   <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'none', overflow: 'hidden', overscrollBehavior: 'none' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                   </div>
                   
@@ -1312,7 +1312,7 @@ const Product = () => {
                   </button>
 
                   {showDimensions && selectedDimensions && (
-                    <div className="absolute z-20 left-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm">
+                    <div className="absolute z-20 left-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm max-w-[calc(100%-1.5rem)]">
                       <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions {selectedSize ? `(${selectedSize})` : ''}</div>
                       <div className="text-gray-700">
                         W {selectedDimensions.width.toFixed(1)} cm
