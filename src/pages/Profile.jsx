@@ -191,28 +191,21 @@ const Profile = () => {
   }
 
   return (
-    <div className='pt-8 sm:pt-16 px-2 sm:px-0 pb-8'>
-      <div className='mb-4 max-w-md'>
-        <button
-          type='button'
-          onClick={scrollToOrders}
-          className='px-4 py-2 bg-gray-700 text-white rounded text-sm sm:text-base'
-        >
-          View My Orders
-        </button>
-      </div>
-      <form onSubmit={onSave} className='space-y-3 max-w-md'>
-        <div>
-          <label className='block text-sm mb-1'>Name</label>
-          <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.name || ''} onChange={e => setProfile({...profile, name: e.target.value})} />
-        </div>
-        <div>
-          <label className='block text-sm mb-1'>Email</label>
-          <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.email || ''} onChange={e => setProfile({...profile, email: e.target.value})} />
-        </div>
-        <div>
-          <label className='block text-sm mb-1'>Phone</label>
-          <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.phone || ''} onChange={e => setProfile({...profile, phone: e.target.value})} />
+    <div className='pt-8 sm:pt-16 px-2 sm:px-0 pb-8 max-w-5xl mx-auto'>
+      <form onSubmit={onSave} className='space-y-3 max-w-3xl mx-auto'>
+        <div className='grid gap-3 sm:grid-cols-3'>
+          <div>
+            <label className='block text-sm mb-1'>Name</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.name || ''} onChange={e => setProfile({...profile, name: e.target.value})} />
+          </div>
+          <div>
+            <label className='block text-sm mb-1'>Email</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.email || ''} onChange={e => setProfile({...profile, email: e.target.value})} />
+          </div>
+          <div>
+            <label className='block text-sm mb-1'>Phone</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.phone || ''} onChange={e => setProfile({...profile, phone: e.target.value})} />
+          </div>
         </div>
         <div>
           <label className='block text-sm mb-1'>Street</label>
