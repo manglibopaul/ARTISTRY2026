@@ -183,17 +183,10 @@ const Profile = () => {
   }
   if (!profile) return <div className='pt-16'><p>Please sign in to view your profile.</p></div>
 
-  const scrollToOrders = () => {
-    const section = document.getElementById('my-orders')
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   return (
-    <div className='pt-8 sm:pt-16 px-2 sm:px-0 pb-8 max-w-5xl mx-auto'>
-      <form onSubmit={onSave} className='space-y-3 max-w-3xl mx-auto'>
-        <div className='grid gap-3 sm:grid-cols-3'>
+    <div className='pt-8 sm:pt-16 px-4 sm:px-6 pb-8'>
+      <form onSubmit={onSave} className='space-y-6 w-full max-w-5xl mx-auto'>
+        <div className='grid gap-4 grid-cols-1 lg:grid-cols-3'>
           <div>
             <label className='block text-sm mb-1'>Name</label>
             <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.name || ''} onChange={e => setProfile({...profile, name: e.target.value})} />
@@ -211,16 +204,28 @@ const Profile = () => {
           <label className='block text-sm mb-1'>Street</label>
           <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.street || ''} onChange={e => setProfile({...profile, street: e.target.value})} />
         </div>
-        <div className='flex gap-2'>
-          <input className='w-1/2 border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.city || ''} onChange={e => setProfile({...profile, city: e.target.value})} placeholder='City' />
-          <input className='w-1/2 border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.state || ''} onChange={e => setProfile({...profile, state: e.target.value})} placeholder='Province' />
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div>
+            <label className='block text-sm mb-1'>City</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.city || ''} onChange={e => setProfile({...profile, city: e.target.value})} placeholder='City' />
+          </div>
+          <div>
+            <label className='block text-sm mb-1'>Province</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.state || ''} onChange={e => setProfile({...profile, state: e.target.value})} placeholder='Province' />
+          </div>
         </div>
-        <div className='flex gap-2'>
-          <input className='w-1/2 border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.zipcode || ''} onChange={e => setProfile({...profile, zipcode: e.target.value})} placeholder='Zipcode' />
-          <input className='w-1/2 border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.country || ''} onChange={e => setProfile({...profile, country: e.target.value})} placeholder='Country' />
+        <div className='grid gap-4 md:grid-cols-2'>
+          <div>
+            <label className='block text-sm mb-1'>Zipcode</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.zipcode || ''} onChange={e => setProfile({...profile, zipcode: e.target.value})} placeholder='Zipcode' />
+          </div>
+          <div>
+            <label className='block text-sm mb-1'>Country</label>
+            <input className='w-full border px-3 py-2.5 rounded text-sm sm:text-base' value={profile.country || ''} onChange={e => setProfile({...profile, country: e.target.value})} placeholder='Country' />
+          </div>
         </div>
-        <div className='flex gap-3 pt-2'>
-          <button className='px-5 py-2.5 bg-black text-white rounded text-sm sm:text-base'>Save</button>
+        <div className='flex flex-col sm:flex-row gap-3 pt-2'>
+          <button className='w-full sm:w-auto px-5 py-2.5 bg-black text-white rounded text-sm sm:text-base'>Save</button>
           <button type='button' onClick={() => {
             // logout user
             localStorage.removeItem('token')
@@ -232,11 +237,11 @@ const Profile = () => {
             localStorage.removeItem('adminToken')
             navigate('/')
             window.location.reload()
-          }} className='px-5 py-2.5 bg-red-600 text-white rounded text-sm sm:text-base'>Logout</button>
+          }} className='w-full sm:w-auto px-5 py-2.5 bg-red-600 text-white rounded text-sm sm:text-base'>Logout</button>
         </div>
       </form>
 
-      <div id='my-orders' className='border-t pt-8 mt-8'>
+      <div id='my-orders' className='border-t pt-10 mt-10 max-w-6xl mx-auto'>
         <div className='text-xl sm:text-2xl'>
           <Title text1={'MY'} text2={'ORDERS'} />
         </div>
