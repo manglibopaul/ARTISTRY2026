@@ -1289,43 +1289,45 @@ const Product = () => {
             ) : (
               <>
                 <div className="relative overflow-hidden rounded-xl" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
-                  <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'none', overflow: 'hidden', overscrollBehavior: 'none' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
-                  </div>
-                  
-                  {/* Zoom prevention message */}
-                  {showZoomMessage && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded pointer-events-none z-40 animate-pulse">
-                      <div className="bg-white px-6 py-4 rounded-lg shadow-lg text-center">
-                        <p className="text-gray-800 font-medium">Object can only be viewed in true scale</p>
-                      </div>
+                  <div className="relative">
+                    <div ref={modelViewerRef} style={{ width: "100%", background: "#f5f5f5", touchAction: 'none', overflow: 'hidden', overscrollBehavior: 'none' }} className="h-[50vh] sm:h-[60vh] md:h-[70vh]">
                     </div>
-                  )}
-                  
-                  {/* Dimension toggle - small top-right toggle to avoid overlap */}
-                  <button
-                    onClick={() => setShowDimensions(v => !v)}
-                    aria-pressed={showDimensions}
-                    className="absolute z-30 right-3 top-3 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs shadow-sm"
-                    title="Toggle dimensions"
-                  >
-                    {showDimensions ? 'Hide' : 'Show'}
-                  </button>
+                    
+                    {/* Zoom prevention message */}
+                    {showZoomMessage && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded pointer-events-none z-40 animate-pulse">
+                        <div className="bg-white px-6 py-4 rounded-lg shadow-lg text-center">
+                          <p className="text-gray-800 font-medium">Object can only be viewed in true scale</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Dimension toggle - small top-right toggle to avoid overlap */}
+                    <button
+                      onClick={() => setShowDimensions(v => !v)}
+                      aria-pressed={showDimensions}
+                      className="absolute z-30 right-3 top-3 bg-white border border-gray-200 rounded-full px-3 py-1 text-xs shadow-sm"
+                      title="Toggle dimensions"
+                    >
+                      {showDimensions ? 'Hide' : 'Show'}
+                    </button>
 
-                  {showDimensions && selectedDimensions && (
-                    <div className="absolute z-20 inset-x-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm max-w-[calc(100%-1.5rem)]">
-                      <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions {selectedSize ? `(${selectedSize})` : ''}</div>
-                      <div className="text-gray-700">
-                        W {selectedDimensions.width.toFixed(1)} cm
+                    {showDimensions && selectedDimensions && (
+                      <div className="absolute z-20 inset-x-3 bottom-3 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-sm max-w-[calc(100%-1.5rem)]">
+                        <div className="font-semibold text-gray-800 mb-1">Overlay Dimensions {selectedSize ? `(${selectedSize})` : ''}</div>
+                        <div className="text-gray-700">
+                          W {selectedDimensions.width.toFixed(1)} cm
+                        </div>
+                        <div className="text-gray-700">
+                          H {selectedDimensions.height.toFixed(1)} cm
+                        </div>
+                        <div className="text-gray-700">
+                          D {selectedDimensions.depth.toFixed(1)} cm
+                        </div>
                       </div>
-                      <div className="text-gray-700">
-                        H {selectedDimensions.height.toFixed(1)} cm
-                      </div>
-                      <div className="text-gray-700">
-                        D {selectedDimensions.depth.toFixed(1)} cm
-                      </div>
-                    </div>
-                  )}
-                  
+                    )}
+                  </div>
+
                   {/* Color picker controls - only show when product supports color change */}
                   {(productData?.colorChangeable || availableColors.length > 0) && (
                     <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
