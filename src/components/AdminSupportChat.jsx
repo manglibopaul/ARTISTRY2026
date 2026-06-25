@@ -165,14 +165,14 @@ const AdminSupportChat = () => {
 
   useEffect(() => {
     fetchConversations()
-    const id = setInterval(fetchConversations, 8000)
+    const id = setInterval(fetchConversations, 30000)
     return () => clearInterval(id)
   }, [fetchConversations])
 
   useEffect(() => {
     if (!selected?.threadKey) return
     fetchMessages(selected.threadKey)
-    const id = setInterval(() => fetchMessages(selected.threadKey), 5000)
+    const id = setInterval(() => fetchMessages(selected.threadKey), 15000)
     return () => clearInterval(id)
   }, [selected?.threadKey, fetchMessages])
 

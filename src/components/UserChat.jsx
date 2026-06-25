@@ -87,9 +87,9 @@ const UserChat = ({ defaultSellerId = null, defaultSellerName = null }) => {
     if (!selectedSeller) return
     fetchMessages(selectedSeller.sellerId)
 
-    // start polling for new messages every 5s
+    // Poll less frequently to reduce database traffic while preserving updates.
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
-    const id = setInterval(() => fetchMessages(selectedSeller.sellerId, false), 5000)
+    const id = setInterval(() => fetchMessages(selectedSeller.sellerId, false), 15000)
     pollIntervalRef.current = id
     return () => clearInterval(id)
   }, [selectedSeller, fetchMessages])

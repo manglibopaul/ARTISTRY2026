@@ -60,7 +60,7 @@ const ProductChat = ({ productId, sellerId, sellerName }) => {
   useEffect(() => {
     if (!sellerId) return
     fetchMessages()
-    const id = setInterval(fetchMessages, 5000)
+    const id = setInterval(fetchMessages, 15000)
     return () => clearInterval(id)
   }, [sellerId, fetchMessages])
 

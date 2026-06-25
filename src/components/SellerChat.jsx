@@ -117,7 +117,7 @@ const SellerChat = () => {
     if (!selectedConv) return
     fetchMessages()
     if (pollIdRef.current) clearInterval(pollIdRef.current)
-    const id = setInterval(fetchMessages, 5000)
+    const id = setInterval(fetchMessages, 15000)
     pollIdRef.current = id
     return () => clearInterval(id)
   }, [selectedConv, fetchMessages])

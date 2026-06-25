@@ -158,7 +158,7 @@ const Navbar = () => {
     }
 
     fetchUnreadNotifications()
-    const id = setInterval(fetchUnreadNotifications, 10000)
+    const id = setInterval(fetchUnreadNotifications, 30000)
     return () => clearInterval(id)
   }, [userToken])
 
