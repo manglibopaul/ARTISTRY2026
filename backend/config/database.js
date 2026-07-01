@@ -10,21 +10,30 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required. SQLite fallback has been removed.');
 }
 
+const isNeonConnection = (url = '') => /neon\.tech|neon\.postgres\.azure\.com/i.test(url);
+const shouldUseSsl = (url = '') => {
+  if (!url) return false;
+  if (isNeonConnection(url)) return true;
+  if (url.includes('sslmode=')) return true;
+  return process.env.DB_SSL === 'true';
+};
+
 const baseConfig = {
   logging: false,
   pool: {
-    max: 5,
-    min: 2,
+    // Keep idle footprint low so managed Postgres (e.g., Neon) can scale to zero.
+    max: Number(process.env.DB_POOL_MAX) || 5,
+    min: Number(process.env.DB_POOL_MIN ?? 0),
     acquire: 30000,
-    idle: 60000,
-    evict: 30000
+    idle: Number(process.env.DB_POOL_IDLE_MS) || 10000,
+    evict: Number(process.env.DB_POOL_EVICT_MS) || 10000
   }
 };
 
 const sequelize = new Sequelize(databaseUrl, {
   ...baseConfig,
   dialect: 'postgres',
-  dialectOptions: isProduction
+  dialectOptions: shouldUseSsl(databaseUrl)
     ? {
         ssl: {
           require: true,

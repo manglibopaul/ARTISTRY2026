@@ -143,21 +143,24 @@ app.listen(PORT, HOST, async () => {
   // cold starts. This avoids blocking the listen callback and improves
   // perceived startup time for the first visitor. Errors are logged but do
   // not block startup.
-  console.log('⚙️ Scheduling database warm-up (non-blocking)...');
-  (async () => {
-    try {
-      for (let i = 0; i < 2; i++) {
+  const enableDbWarmup = process.env.ENABLE_DB_WARMUP === 'true';
+  if (enableDbWarmup) {
+    console.log('⚙️ Scheduling database warm-up (non-blocking)...');
+    (async () => {
+      try {
         await keepAlive();
+        console.log('✅ Database connection warmed up');
+      } catch (err) {
+        console.error('Failed to warm up database:', err.message);
       }
-      console.log('✅ Database connections warmed up');
-    } catch (err) {
-      console.error('Failed to warm up database:', err.message);
-    }
-  })();
+    })();
+  } else {
+    console.log('⚙️ Database warm-up disabled');
+  }
 
-  const enableKeepAlive = process.env.ENABLE_DB_KEEPALIVE === 'true' || process.env.NODE_ENV !== 'production';
+  const enableKeepAlive = process.env.ENABLE_DB_KEEPALIVE === 'true';
   if (enableKeepAlive) {
-    const intervalMinutes = Number(process.env.DB_KEEPALIVE_INTERVAL_MINUTES) || 15;
+    const intervalMinutes = Number(process.env.DB_KEEPALIVE_INTERVAL_MINUTES) || 30;
     setInterval(() => {
       keepAlive();
     }, intervalMinutes * 60 * 1000);
