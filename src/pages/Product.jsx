@@ -53,6 +53,7 @@ const Product = () => {
   const [reviewsInView, setReviewsInView] = useState(true);
   const [showZoomMessage, setShowZoomMessage] = useState(false);
   const zoomMessageTimeoutRef = useRef(null);
+  const arModalContentRef = useRef(null);
 
   const normalizeToHex = useCallback((color) => {
     if (!color || typeof window === 'undefined') return null;
@@ -1035,6 +1036,11 @@ const Product = () => {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+
+        // Route wheel movement to the modal container so mouse-wheel scrolling still works.
+        if (arModalContentRef.current && Number.isFinite(e.deltaY)) {
+          arModalContentRef.current.scrollBy({ top: e.deltaY, left: 0, behavior: 'auto' });
+        }
         
         // Only show message during WebXR
         if (arInSession) {
@@ -1271,7 +1277,7 @@ const Product = () => {
       {/* ---------- AR POPUP MODAL ---------- */}
       {showAR && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4" style={{ touchAction: 'manipulation' }}>
-          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto" style={{ touchAction: 'auto' }}>
+          <div ref={arModalContentRef} className="bg-white p-3 sm:p-4 rounded-lg shadow-lg text-center relative max-w-[900px] w-full max-h-[90vh] overflow-y-auto" style={{ touchAction: 'auto' }}>
 
             <button 
               className="absolute top-1 right-2 sm:top-2 sm:right-3 text-xl hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center z-10"
