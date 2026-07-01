@@ -1030,16 +1030,26 @@ const Product = () => {
   useEffect(() => {
     if (!showAR) return;
 
+    const isWheelFromModelViewer = (event) => {
+      const viewerEl = modelViewerRef.current?.firstChild;
+      if (!viewerEl) return false;
+
+      const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+      if (Array.isArray(path) && path.includes(viewerEl)) return true;
+
+      return viewerEl.contains(event.target);
+    };
+
     const preventARModalZoom = (e) => {
       // Only prevent zoom on the model-viewer element itself, allow scrolling elsewhere
-      if (modelViewerRef.current?.firstChild && modelViewerRef.current.firstChild.contains(e.target)) {
+      if (isWheelFromModelViewer(e)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
         // Route wheel movement to the modal container so mouse-wheel scrolling still works.
-        if (arModalContentRef.current && Number.isFinite(e.deltaY)) {
-          arModalContentRef.current.scrollBy({ top: e.deltaY, left: 0, behavior: 'auto' });
+        if (arModalContentRef.current) {
+          arModalContentRef.current.scrollTop += Number(e.deltaY) || 0;
         }
         
         // Only show message during WebXR
