@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "seed": "node seeds/seedDatabase.js",
     "setup:ar-dimensions": "node scripts/setupArDimensions.js",
-    "migrate": "sequelize-cli db:migrate"
+    "migrate": "sequelize-cli db:migrate",
+    "blob:cleanup-models": "node scripts/cleanupOrphanedModelBlobs.js"
   },
   "keywords": [],
   "author": "",

@@ -1,8 +1,7 @@
 import Product from '../models/Product.js';
 import Seller from '../models/Seller.js';
 import { Op } from 'sequelize';
-import { uploadImage, uploadModel } from '../utils/media.js';
-import fs from 'fs';
+import { uploadImage, uploadModel, deleteBlobByUrl } from '../utils/media.js';
 
 
 // Removed file size validation for GLB and USDZ model uploads
@@ -484,6 +483,9 @@ export const updateProduct = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this product' });
     }
 
+    const previousModelUrl = product.modelUrl;
+    const previousIosModelUrl = product.iosModel;
+
     const updateData = { ...req.body };
     delete updateData.sizeDimensions;
 
@@ -628,8 +630,11 @@ export const updateProduct = async (req, res) => {
       if (modelFile) {
         console.log('Uploading GLB model file (update):', modelFile.originalname);
         const uploadedModel = await uploadModel(modelFile, 'artistry/models');
+        if (!uploadedModel?.url) {
+          return res.status(400).json({ message: 'Failed to upload 3D model. Please check file format.' });
+        }
         console.log('Uploaded model result (update):', uploadedModel);
-        updateData.modelUrl = uploadedModel?.url || null;
+        updateData.modelUrl = uploadedModel.url;
         console.log('Set updateData.modelUrl:', updateData.modelUrl);
       } else {
         // No new model file, preserve existing
@@ -639,7 +644,10 @@ export const updateProduct = async (req, res) => {
       // Handle iOS model file (USDZ)
       if (iosModelFile) {
         const uploadedIosModel = await uploadModel(iosModelFile, 'artistry/models');
-        updateData.iosModel = uploadedIosModel?.url || null;
+        if (!uploadedIosModel?.url) {
+          return res.status(400).json({ message: 'Failed to upload iOS model. Please check file format.' });
+        }
+        updateData.iosModel = uploadedIosModel.url;
       } else {
         // No new iOS model file, preserve existing
         updateData.iosModel = product.iosModel;
@@ -652,6 +660,18 @@ export const updateProduct = async (req, res) => {
     }
 
     await product.update(updateData);
+
+    const cleanupTasks = [];
+    if (req.files?.some((f) => f.fieldname === 'model') && previousModelUrl && updateData.modelUrl !== previousModelUrl) {
+      cleanupTasks.push(deleteBlobByUrl(previousModelUrl));
+    }
+    if (req.files?.some((f) => f.fieldname === 'iosModel') && previousIosModelUrl && updateData.iosModel !== previousIosModelUrl) {
+      cleanupTasks.push(deleteBlobByUrl(previousIosModelUrl));
+    }
+    if (cleanupTasks.length > 0) {
+      await Promise.allSettled(cleanupTasks);
+    }
+
     res.json(normalizeProductPayload(product));
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -671,7 +691,14 @@ export const deleteProduct = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this product' });
     }
 
+    const modelUrlsToDelete = [product.modelUrl, product.iosModel].filter(Boolean);
+
     await product.destroy();
+
+    if (modelUrlsToDelete.length > 0) {
+      await Promise.allSettled(modelUrlsToDelete.map((url) => deleteBlobByUrl(url)));
+    }
+
     res.json({ message: 'Product deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,6 +1,8 @@
 import cloudinary from 'cloudinary';
 import fs from 'fs';
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
+
+const VERCEL_BLOB_HOST_FRAGMENT = 'blob.vercel-storage.com';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -51,5 +53,27 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
   } catch (err) {
     console.error('Vercel Blob upload error:', err);
     return null;
+  }
+};
+
+export const isVercelBlobUrl = (value) => {
+  if (!value || typeof value !== 'string') return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname.includes(VERCEL_BLOB_HOST_FRAGMENT);
+  } catch {
+    return false;
+  }
+};
+
+export const deleteBlobByUrl = async (url) => {
+  if (!isVercelBlobUrl(url)) return false;
+
+  try {
+    await del(url);
+    return true;
+  } catch (err) {
+    console.error('Vercel Blob delete error:', err);
+    return false;
   }
 };
