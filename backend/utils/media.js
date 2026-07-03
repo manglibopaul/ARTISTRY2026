@@ -35,16 +35,32 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
     console.error('uploadModel: No file provided');
     return null;
   }
-  try {
-    const result = await cloudinary.v2.uploader.upload(file.path, {
-      folder,
-      resource_type: 'raw',
-      use_filename: true,
-      unique_filename: true,
-    });
 
-    if (file.path && fs.existsSync(file.path)) {
-      fs.unlinkSync(file.path);
+  const baseOptions = {
+    folder,
+    use_filename: true,
+    unique_filename: true,
+  };
+
+  try {
+    let result;
+    let rawError;
+
+    try {
+      result = await cloudinary.v2.uploader.upload(file.path, {
+        ...baseOptions,
+        resource_type: 'raw',
+      });
+    } catch (err) {
+      rawError = err;
+      // Some accounts/configs reject specific raw uploads. Retry with auto.
+      result = await cloudinary.v2.uploader.upload(file.path, {
+        ...baseOptions,
+        resource_type: 'auto',
+      });
+      if (rawError?.message) {
+        console.warn('Cloudinary raw upload failed, used auto fallback:', rawError.message);
+      }
     }
 
     return {
@@ -53,8 +69,13 @@ export const uploadModel = async (file, folder = 'artistry/models') => {
       filename: file.originalname,
     };
   } catch (err) {
-    console.error('Model upload error:', err);
-    return null;
+    const detail = err?.message || err?.error?.message || 'Unknown upload error';
+    console.error('Model upload error:', detail);
+    throw new Error(`Cloudinary model upload failed: ${detail}`);
+  } finally {
+    if (file.path && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
   }
 };
 
