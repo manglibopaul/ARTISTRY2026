@@ -37,6 +37,10 @@ import SearchBar from './components/SearchBar'
 
 const App = () => {
   const location = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
   
   // Hide navbar and footer on seller pages; hide navbar and footer on admin pages
   const isSellerPage = location.pathname.startsWith('/seller/');
