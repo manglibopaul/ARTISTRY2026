@@ -31,6 +31,16 @@ const resolveSellerProofUrls = (rawValue, uploadBaseUrl) => {
     })
 }
 
+const isImageProof = (value) => {
+  const lower = String(value || '').toLowerCase()
+  return /\.(png|jpe?g|webp|gif|bmp|svg)(\?.*)?$/.test(lower)
+}
+
+const isPdfProof = (value) => {
+  const lower = String(value || '').toLowerCase()
+  return /\.pdf(\?.*)?$/.test(lower)
+}
+
 // Modal to view and verify seller
 function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }) {
   if (!open || !seller) return null;
@@ -48,7 +58,29 @@ function ViewSellerModal({ open, onClose, seller, onVerifyClick, uploadBaseUrl }
         {proofUrls.length ? (
           <div className="grid gap-3 mb-4">
             {proofUrls.map((src, index) => (
-              <img key={index} src={src} alt={`Proof ${index + 1}`} className="rounded border max-h-48" style={{ background: '#eee', objectFit: 'contain' }} />
+              isImageProof(src) ? (
+                <img key={index} src={src} alt={`Proof ${index + 1}`} className="rounded border max-h-48" style={{ background: '#eee', objectFit: 'contain' }} />
+              ) : isPdfProof(src) ? (
+                <a
+                  key={index}
+                  href={src}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded border bg-gray-50 p-3 text-blue-600 underline break-all"
+                >
+                  Open proof document {index + 1}
+                </a>
+              ) : (
+                <a
+                  key={index}
+                  href={src}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded border bg-gray-50 p-3 text-blue-600 underline break-all"
+                >
+                  Open proof file {index + 1}
+                </a>
+              )
             ))}
           </div>
         ) : (
