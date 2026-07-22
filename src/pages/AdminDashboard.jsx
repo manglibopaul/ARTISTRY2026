@@ -2,12 +2,25 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminSupportChat from '../components/AdminSupportChat';
 
+const normalizeProofUrlValue = (raw) => {
+  let value = String(raw || '').trim()
+
+  while (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim()
+  }
+
+  return value.replace(/\\/g, '/')
+}
+
 const resolveSellerProofUrls = (rawValue, uploadBaseUrl) => {
   if (!rawValue) return []
   // Handle both array (new format) and string (backward compat)
   const values = Array.isArray(rawValue) ? rawValue : (typeof rawValue === 'string' ? [rawValue] : [])
   return values
-    .map((raw) => String(raw || '').trim())
+    .map((raw) => normalizeProofUrlValue(raw))
     .filter(Boolean)
     .map((value) => {
       if (value.startsWith('http://') || value.startsWith('https://')) return value
