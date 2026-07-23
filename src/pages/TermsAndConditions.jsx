@@ -43,7 +43,10 @@ const TermsAndConditions = () => {
           <h2 className='text-lg font-semibold mb-2'>5. Payments, Returns, and Disputes</h2>
           <p>
             Transactions, return handling, and dispute outcomes are subject to platform policies,
-            applicable law, and documented order records.
+            applicable law, and documented order records. Unless a seller explicitly offers a return
+            or refund for a specific item, all sales are final — customers may not return purchased
+            items. Exceptions will be made where required by applicable consumer protection laws or
+            where the seller agrees to a return in writing.
           </p>
         </section>
 
