@@ -55,8 +55,7 @@ const SellerDashboard = () => {
     conditions: 'Item must be unused and in original packaging.',
     refundMethod: 'Original payment method',
   })
-  const [returnRequests, setReturnRequests] = useState([])
-  const [returnReplyDrafts, setReturnReplyDrafts] = useState({})
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -456,33 +455,7 @@ const SellerDashboard = () => {
     }
   }
 
-  // Return requests
-  const fetchReturnRequests = async () => {
-    try {
-      setLoading(true)
-      const res = await axios.get(`${apiUrl}/api/returns/seller`, { headers: { Authorization: `Bearer ${token}` } })
-      const list = Array.isArray(res.data) ? res.data : [];
-      setReturnRequests(list)
-    } catch (err) {
-      console.error('fetchReturnRequests', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const updateReturnStatus = async (returnId, status, sellerNote) => {
-    try {
-      setLoading(true)
-      const res = await axios.put(`${apiUrl}/api/returns/seller/${returnId}`, { status, sellerNote }, { headers: { Authorization: `Bearer ${token}` } })
-      setReturnRequests(prev => (Array.isArray(prev) ? prev.map(r => r.id === res.data.id ? res.data : r) : prev))
-      toast.success(`Return request ${status}`)
-    } catch (err) {
-      console.error('updateReturnStatus', err)
-      toast.error('Failed to update return request')
-    } finally {
-      setLoading(false)
-    }
-  }
+  
 
   // Intentional tab-driven lazy loads for seller dashboard sections.
   useEffect(() => {
@@ -494,10 +467,7 @@ const SellerDashboard = () => {
     if (selectedTab === 'shipping') {
       fetchShippingSettings()
       fetchPaymentSettings()
-    }
-    if (selectedTab === 'returns') {
       fetchReturnPolicy()
-      fetchReturnRequests()
     }
   }, [selectedTab])
 
@@ -1075,11 +1045,7 @@ const SellerDashboard = () => {
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'shipping' ? 'bg-black text-white' : 'bg-gray-200'}`}>
                 Payment & Shipping
             </button>
-            <button
-              onClick={() => setSelectedTab('returns')}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'returns' ? 'bg-black text-white' : 'bg-gray-200'}`}>
-              Returns {returnRequests.filter(r => r.status === 'pending').length > 0 && <span className='inline-block ml-1 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full'>{returnRequests.filter(r => r.status === 'pending').length}</span>}
-            </button>
+            
           </div>
 
           <button
@@ -1492,7 +1458,7 @@ const SellerDashboard = () => {
               <div className='flex gap-3 flex-wrap'>
                 <button onClick={() => { if (!isSellerVerified) return; resetForm(); setShowForm(true); setSelectedTab('products'); }} className='px-4 py-2 bg-emerald-600 text-white rounded'>Create Product</button>
                 <button onClick={() => setSelectedTab('shipping')} className='px-4 py-2 bg-blue-600 text-white rounded'>Payment & Shipping</button>
-                <button onClick={() => setSelectedTab('returns')} className='px-4 py-2 bg-yellow-500 text-white rounded'>Manage Returns</button>
+                
               </div>
             </div>
           </div>
@@ -2305,182 +2271,7 @@ const SellerDashboard = () => {
           </div>
         )}
 
-        {/* ===== RETURNS & REFUNDS TAB ===== */}
-        {selectedTab === 'returns' && (
-          <div className='space-y-6'>
-            {/* Return Policy Settings */}
-            <div className='bg-white rounded-lg shadow-lg p-6'>
-              <h2 className='text-2xl font-bold mb-4'>Return & Refund Policy</h2>
-
-              <div className='space-y-4'>
-                <div className='flex items-center gap-3'>
-                  <label className='text-sm font-medium text-gray-700'>Accept Returns</label>
-                  <button
-                    onClick={() => setReturnPolicy(prev => ({ ...prev, acceptsReturns: !prev.acceptsReturns }))}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${returnPolicy.acceptsReturns ? 'bg-green-500' : 'bg-gray-300'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${returnPolicy.acceptsReturns ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                  <span className='text-sm text-gray-500'>{returnPolicy.acceptsReturns ? 'Yes' : 'No'}</span>
-                </div>
-
-                {returnPolicy.acceptsReturns && (
-                  <>
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-1'>Return Window (days)</label>
-                      <select
-                        value={returnPolicy.returnWindow || 7}
-                        onChange={(e) => setReturnPolicy(prev => ({ ...prev, returnWindow: Number(e.target.value) }))}
-                        className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      >
-                        <option value={3}>3 days</option>
-                        <option value={7}>7 days</option>
-                        <option value={14}>14 days</option>
-                        <option value={30}>30 days</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-1'>Return Conditions</label>
-                      <textarea
-                        value={returnPolicy.conditions || ''}
-                        onChange={(e) => setReturnPolicy(prev => ({ ...prev, conditions: e.target.value }))}
-                        className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                        rows={3}
-                        placeholder='Describe the conditions for accepting returns...'
-                      />
-                    </div>
-
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-1'>Refund Method</label>
-                      <select
-                        value={returnPolicy.refundMethod || 'Original payment method'}
-                        onChange={(e) => setReturnPolicy(prev => ({ ...prev, refundMethod: e.target.value }))}
-                        className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      >
-                        <option value='Original payment method'>Original payment method</option>
-                        <option value='Store credit'>Store credit</option>
-                        <option value='Exchange only'>Exchange only</option>
-                        <option value='Cash refund'>Cash refund</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                <div className='pt-4 border-t'>
-                  <button onClick={saveReturnPolicy} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
-                    Save Return Policy
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Return Requests List */}
-            <div className='bg-white rounded-lg shadow-lg p-6'>
-              <div className='flex items-center justify-between mb-4'>
-                <h2 className='text-2xl font-bold'>Return Requests</h2>
-                <button onClick={fetchReturnRequests} className='text-sm text-gray-500 hover:text-black'>Refresh</button>
-              </div>
-
-              {!(Array.isArray(returnRequests) && returnRequests.length) ? (
-                <div className='text-center py-8 text-gray-500'>
-                  <svg className='w-12 h-12 mx-auto mb-3 text-gray-300' fill='none' stroke='currentColor' strokeWidth='1.5' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' d='M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z' />
-                  </svg>
-                  <p>No return requests yet</p>
-                </div>
-              ) : (
-                <div className='space-y-4'>
-                  {(Array.isArray(returnRequests) ? returnRequests : []).map((ret) => {
-                    const statusColors = {
-                      pending: 'bg-yellow-100 text-yellow-800',
-                      approved: 'bg-green-100 text-green-800',
-                      rejected: 'bg-red-100 text-red-800',
-                      refunded: 'bg-blue-100 text-blue-800',
-                      completed: 'bg-gray-100 text-gray-800',
-                    }
-                    return (
-                      <div key={ret.id} className='border rounded-lg p-4'>
-                        <div className='flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3'>
-                          <div>
-                            <div className='flex items-center gap-2 mb-1'>
-                              <span className='font-semibold'>Return #{ret.id}</span>
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[ret.status] || 'bg-gray-100 text-gray-800'}`}>
-                                {ret.status}
-                              </span>
-                            </div>
-                            <div className='text-sm text-gray-600'>Order #{ret.orderId}</div>
-                            <div className='text-sm text-gray-600'>{ret.buyerName || 'Customer'} — {ret.buyerEmail || ''}</div>
-                            <div className='text-xs text-gray-400 mt-1'>{new Date(ret.createdAt).toLocaleString()}</div>
-                          </div>
-                          <div className='text-right'>
-                            <div className='text-sm font-medium'>Refund: ₱{(ret.refundAmount || 0).toFixed(2)}</div>
-                          </div>
-                        </div>
-
-                        {/* Reason */}
-                        <div className='mb-3'>
-                          <div className='text-sm font-medium text-gray-700'>Reason: <span className='font-normal'>{ret.reason}</span></div>
-                          {ret.description && <div className='text-sm text-gray-600 mt-1'>{ret.description}</div>}
-                        </div>
-
-                        {/* Items */}
-                        <div className='mb-3'>
-                          <div className='text-sm font-medium text-gray-700 mb-1'>Items:</div>
-                          <div className='space-y-1'>
-                            {(Array.isArray(ret.items) ? ret.items : []).map((it, idx) => (
-                              <div key={idx} className='text-sm text-gray-600 flex justify-between'>
-                                <span>{it.name || `Product ${it.productId || ''}`} x{it.quantity || 1}</span>
-                                <span>₱{((it.price || 0) * (it.quantity || 1)).toFixed(2)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Seller note if already responded */}
-                        {ret.sellerNote && (
-                          <div className='mb-3 p-3 bg-gray-50 rounded'>
-                            <div className='text-sm font-medium'>Your response:</div>
-                            <div className='text-sm text-gray-700'>{ret.sellerNote}</div>
-                          </div>
-                        )}
-
-                        {/* Actions for pending requests */}
-                        {ret.status === 'pending' && (
-                          <div className='border-t pt-3 mt-3'>
-                            <div className='mb-2'>
-                              <textarea
-                                value={returnReplyDrafts[ret.id] || ''}
-                                onChange={(e) => setReturnReplyDrafts(prev => ({ ...prev, [ret.id]: e.target.value }))}
-                                className='w-full border rounded p-2 text-sm'
-                                rows={2}
-                                placeholder='Add a note to the customer (optional)...'
-                              />
-                            </div>
-                            <div className='flex gap-2'>
-                              <button
-                                onClick={() => updateReturnStatus(ret.id, 'approved', returnReplyDrafts[ret.id] || '')}
-                                className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium'
-                              >
-                                Approve & Refund
-                              </button>
-                              <button
-                                onClick={() => updateReturnStatus(ret.id, 'rejected', returnReplyDrafts[ret.id] || '')}
-                                className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm font-medium'
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        
 
         {/* Order details modal */}
         {viewOrder && (
