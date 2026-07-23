@@ -606,7 +606,7 @@ const AdminDashboard = () => {
       const res = await authFetch('/orders');
       if (!res.ok) throw new Error(await readErrorMessage(res));
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      setOrders(Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []));
     } catch (err) {
       setOrderError(err.message || 'Failed to load orders');
       setOrders([]);
