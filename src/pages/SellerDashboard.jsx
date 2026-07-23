@@ -16,7 +16,7 @@ const SellerDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 8
-  const [selectedTab, setSelectedTab] = useState('products')
+  const [selectedTab, setSelectedTab] = useState('landing')
   const [sellerReviews, setSellerReviews] = useState([])
   const [sellerUnreadChats, setSellerUnreadChats] = useState(0)
   const [replyDrafts, setReplyDrafts] = useState({})
@@ -1041,6 +1041,11 @@ const SellerDashboard = () => {
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6'>
           <div className='flex overflow-x-auto gap-2 pb-2 sm:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative'>
             <button
+              onClick={() => setSelectedTab('landing')}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'landing' ? 'bg-black text-white' : 'bg-gray-200'}`}>
+              Home
+            </button>
+            <button
               onClick={() => setSelectedTab('products')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base whitespace-nowrap ${selectedTab === 'products' ? 'bg-black text-white' : 'bg-gray-200'}`}>
               Products ({products.length})
@@ -1457,6 +1462,41 @@ const SellerDashboard = () => {
         )}
 
         {/* Tab panels */}
+        {selectedTab === 'landing' && (
+          <div className='bg-white rounded-lg shadow-lg overflow-hidden'>
+            <div className='p-6 border-b border-gray-200'>
+              <h2 className='text-2xl font-bold'>Welcome to your Artist Dashboard</h2>
+              <p className='text-sm text-gray-600 mt-1'>Quick overview and shortcuts to manage your shop.</p>
+            </div>
+
+            <div className='p-6 grid grid-cols-1 sm:grid-cols-3 gap-4'>
+              <div className='p-4 border rounded-lg'>
+                <p className='text-sm text-gray-500'>Products</p>
+                <p className='text-2xl font-semibold'>{Array.isArray(products) ? products.length : 0}</p>
+                <button onClick={() => { setSelectedTab('products'); resetForm(); setShowForm(false); }} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>Manage Products</button>
+              </div>
+              <div className='p-4 border rounded-lg'>
+                <p className='text-sm text-gray-500'>Orders</p>
+                <p className='text-2xl font-semibold'>{Array.isArray(sellerOrders) ? sellerOrders.length : 0}</p>
+                <button onClick={() => setSelectedTab('orders')} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>View Orders</button>
+              </div>
+              <div className='p-4 border rounded-lg'>
+                <p className='text-sm text-gray-500'>Messages</p>
+                <p className='text-2xl font-semibold'>{sellerUnreadChats || 0}</p>
+                <button onClick={() => setSelectedTab('chat')} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>Open Chat</button>
+              </div>
+            </div>
+
+            <div className='p-6 border-t border-gray-100'>
+              <h3 className='text-lg font-medium mb-3'>Quick Actions</h3>
+              <div className='flex gap-3 flex-wrap'>
+                <button onClick={() => { if (!isSellerVerified) return; resetForm(); setShowForm(true); setSelectedTab('products'); }} className='px-4 py-2 bg-emerald-600 text-white rounded'>Create Product</button>
+                <button onClick={() => setSelectedTab('shipping')} className='px-4 py-2 bg-blue-600 text-white rounded'>Payment & Shipping</button>
+                <button onClick={() => setSelectedTab('returns')} className='px-4 py-2 bg-yellow-500 text-white rounded'>Manage Returns</button>
+              </div>
+            </div>
+          </div>
+        )}
         {selectedTab === 'products' && (
           <div className='bg-white rounded-lg shadow-lg overflow-hidden'>
             <div className='p-4 sm:p-6 border-b border-gray-200'>
