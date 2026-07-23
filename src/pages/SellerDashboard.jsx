@@ -31,6 +31,7 @@ const SellerDashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [orderDeleteConfirm, setOrderDeleteConfirm] = useState(null)
+  const [orderDeleteNote, setOrderDeleteNote] = useState('')
   // Confirmation modal for status change
   const [statusChangeConfirm, setStatusChangeConfirm] = useState({ open: false, order: null, newStatus: '' });
   // Shipping settings state
@@ -892,11 +893,12 @@ const SellerDashboard = () => {
     }
   }
 
-  const handleDeleteOrder = async (orderId) => {
+  const handleDeleteOrder = async (orderId, note) => {
     if (!orderId) return
     try {
       setLoading(true)
       await axios.delete(`${apiUrl}/api/orders/seller/${orderId}`, {
+        data: { note },
         headers: { Authorization: `Bearer ${token}` },
       })
       toast.success('Order deleted')
@@ -907,6 +909,7 @@ const SellerDashboard = () => {
     } finally {
       setLoading(false)
       setOrderDeleteConfirm(null)
+      setOrderDeleteNote('')
     }
   }
 
@@ -2683,6 +2686,15 @@ const SellerDashboard = () => {
             <div className='bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4'>
               <h3 className='text-lg font-bold text-gray-900 mb-2'>Delete Order</h3>
               <p className='text-sm text-gray-600 mb-6'>Delete this order? This will remove the order if it belongs only to you.</p>
+              <div className='mb-4'>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Reason (optional)</label>
+                <textarea
+                  value={orderDeleteNote}
+                  onChange={(e) => setOrderDeleteNote(e.target.value)}
+                  placeholder='Explain why you are deleting this order (e.g., duplicate, invalid address, fraudulent)'
+                  className='w-full border rounded-md p-2 text-sm h-24'
+                />
+              </div>
               <div className='flex justify-end gap-3'>
                 <button
                   onClick={() => setOrderDeleteConfirm(null)}
@@ -2691,7 +2703,7 @@ const SellerDashboard = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteOrder(orderDeleteConfirm.id)}
+                  onClick={() => handleDeleteOrder(orderDeleteConfirm.id, orderDeleteNote)}
                   className='px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700'
                 >
                   Delete

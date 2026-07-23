@@ -989,8 +989,51 @@ export const deleteOrderBySeller = async (req, res) => {
     const onlySellerItems = items.every(item => Number(item.sellerId) === Number(sellerId));
     if (!onlySellerItems) return res.status(403).json({ message: 'Order contains items from multiple sellers; cannot delete' });
 
+    // Allow seller to include a short note explaining why the order is being deleted
+    const note = (req.body && (req.body.note || req.body.deletionNote)) ? String(req.body.note || req.body.deletionNote).trim() : null;
+
+    // Create a notification for the customer recording that the seller deleted the order and the reason
+    try {
+      const sellerName = req.seller && (req.seller.storeName || req.seller.name) ? (req.seller.storeName || req.seller.name) : `Seller #${sellerId}`;
+      await createNotificationSafe({
+        userId: order.userId,
+        orderId: order.id,
+        type: 'order-deleted-by-seller',
+        title: 'Order Deleted by Seller',
+        message: `Your order #${order.id} was deleted by ${sellerName}.${note ? ` Reason: ${note}` : ''}`,
+        meta: {
+          deletedBySeller: true,
+          sellerId,
+          sellerName,
+          note: note || null,
+        },
+      });
+    } catch (notifErr) {
+      // swallow notification errors but log for diagnostics
+      console.warn('Failed to create seller-deletion notification:', notifErr.message || notifErr);
+    }
+
+    // Destroy the order record
     await order.destroy();
-    res.json({ message: 'Order deleted' });
+
+    // Also create a local confirmation notification for the seller (optional)
+    try {
+      await createNotificationSafe({
+        userId: req.seller.userId || req.seller.id,
+        orderId: order.id,
+        type: 'order-deleted-confirmation',
+        title: 'Order Deleted',
+        message: `You deleted order #${order.id}.${note ? ` Note: ${note}` : ''}`,
+        meta: {
+          orderId: order.id,
+          note: note || null,
+        },
+      });
+    } catch (sellerNotifErr) {
+      // ignore seller notification errors
+    }
+
+    res.json({ message: 'Order deleted', note: note || null });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
