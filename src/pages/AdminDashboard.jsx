@@ -924,7 +924,7 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td className="p-3">{new Date(o.createdAt).toLocaleString()}</td>
-                          <td className="p-3">{o.completedAt ? new Date(o.completedAt).toLocaleString() : '-'}</td>
+                          <td className="p-3">{o.orderStatus === 'completed' ? 'Completed' : (o.completedAt ? new Date(o.completedAt).toLocaleString() : '-')}</td>
                         </tr>
                       );
                     })}
