@@ -25,7 +25,7 @@ router.get('/my-orders', verifyUser, getUserOrders);
 // Seller routes (place before '/:id' to avoid route shadowing)
 router.get('/seller/my-orders', verifySeller, getSellerOrders);
 router.put('/:id/status-seller', verifySeller, updateOrderStatusBySeller);
-router.delete('/seller/:id', verifySeller, deleteOrderBySeller);
+router.delete('/seller/:id', verifySeller, deleteOrderBySeller,);
 
 router.get('/:id', verifyUser, getOrder);
 router.put('/:id/cancel', verifyUser, cancelOrder);

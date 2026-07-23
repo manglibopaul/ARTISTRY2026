@@ -27,6 +27,7 @@ import {
   getReturnPolicy,
   updateReturnPolicy,
   uploadSellerImages,
+  deleteOrderBySeller,
 } from '../controllers/sellerController.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
 import { verifyAdmin } from '../middleware/auth.js';
@@ -112,7 +113,7 @@ router.get('/', async (req, res) => {
 });
 router.get('/bin', verifyAdmin, getDeletedSellers);
 router.put('/bin/:id/restore', verifyAdmin, restoreDeletedSeller);
-router.delete('/:id', verifyAdmin, deleteSeller); // soft delete
+router.delete('/:id', verifyAdmin, deleteSeller, deleteOrderBySeller); // soft delete
 router.delete('/bin/:id', verifyAdmin, hardDeleteSeller); // hard delete
 router.patch('/:id/verify', verifyAdmin, verifySellerByAdmin);
 
