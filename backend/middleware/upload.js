@@ -31,8 +31,14 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'image' || file.fieldname === 'images' || file.fieldname === 'proofOfArtisan') {
-    // Accept image, SVG, and PDF files for chat attachments and artisan proofs
+  if (
+    file.fieldname === 'image' ||
+    file.fieldname === 'images' ||
+    file.fieldname === 'proofOfArtisan' ||
+    file.fieldname === 'pickupLocationPhotos' ||
+    /^pickupLocationPhotos\[\d+\]$/.test(file.fieldname)
+  ) {
+    // Accept image, SVG, and PDF files for chat attachments, artisan proofs, and pickup location photos
     const allowedMimes = [
       'image/jpeg',
       'image/png',

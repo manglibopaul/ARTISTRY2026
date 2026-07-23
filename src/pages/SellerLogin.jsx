@@ -191,7 +191,7 @@ const SellerLogin = () => {
             files.forEach(file => dataToSend.append(`pickupLocationPhotos[${locIdx}]`, file))
           }
         })
-        config.headers = { 'Content-Type': 'multipart/form-data' }
+        // Let the browser set the multipart Content-Type boundary automatically
       }
 
       const response = await axios.post(endpoint, dataToSend, config)
