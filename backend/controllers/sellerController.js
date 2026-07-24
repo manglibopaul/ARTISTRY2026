@@ -218,6 +218,16 @@ const normalizeSellerPayload = (seller) => {
   } catch (err) {
     plain.pickupLocationPhotos = {};
   }
+  // Normalize and expose paymentSettings in a consistent shape for frontend consumers
+  try {
+    plain.paymentSettings = normalizePaymentSettings(plain.paymentSettings || {});
+  } catch (err) {
+    try {
+      plain.paymentSettings = normalizePaymentSettings({});
+    } catch (e) {
+      plain.paymentSettings = {};
+    }
+  }
   return plain;
 };
 
