@@ -16,8 +16,8 @@ function QRModal({ open, onClose, qrUrl, storeName }) {
         >
           ×
         </button>
-        <img src={qrUrl} alt={`${storeName} GCash QR`} className="w-64 h-64 object-contain border-2 border-blue-400 rounded bg-white p-2 mb-2" />
-        <p className="text-xs text-gray-700 text-center">Scan this QR code to pay <span className="font-semibold">{storeName}</span> via GCash.</p>
+        <img src={qrUrl} alt={`${storeName} QR`} className="w-64 h-64 object-contain border-2 border-blue-400 rounded bg-white p-2 mb-2" />
+        <p className="text-xs text-gray-700 text-center">Scan this QR code to pay <span className="font-semibold">{storeName}</span>.</p>
       </div>
     </div>
   );
@@ -793,8 +793,6 @@ const PlaceOrder = () => {
                             <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
                               <p className='text-sm font-medium text-gray-800 mb-1'>{info.storeName}</p>
                               {identity.sellerName && <p className='text-xs text-gray-700'>Seller: {identity.sellerName}</p>}
-                              <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
-                              <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
                               {hasAnyQr ? (
                                 <>
                                   <p className='text-xs text-gray-600 mb-2'>Payment QR codes:</p>
