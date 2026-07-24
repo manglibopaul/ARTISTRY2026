@@ -1453,6 +1453,44 @@ const SellerDashboard = () => {
               </div>
             </div>
 
+            <div className='p-6 mt-4'>
+              <h3 className='text-lg font-medium mb-3'>Recent Orders</h3>
+              <div className='bg-white border rounded-md shadow-sm'>
+                {(!sellerOrders || sellerOrders.length === 0) ? (
+                  <div className='p-4 text-sm text-gray-500'>No recent orders.</div>
+                ) : (
+                  <div className='overflow-x-auto'>
+                    <table className='w-full text-sm'>
+                      <thead className='bg-gray-50'>
+                        <tr>
+                          <th className='px-4 py-3 text-left text-xs text-gray-500'>Order</th>
+                          <th className='px-4 py-3 text-left text-xs text-gray-500'>Item</th>
+                          <th className='px-4 py-3 text-left text-xs text-gray-500'>Status</th>
+                          <th className='px-4 py-3 text-left text-xs text-gray-500'>Total</th>
+                          <th className='px-4 py-3 text-left text-xs text-gray-500'>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sellerOrders.slice(0,8).map((o) => {
+                          const firstItem = (o.sellerItems && o.sellerItems[0]) || {};
+                          const total = (o.sellerItems || []).reduce((sum,it) => sum + (Number(it.lineTotal) || (Number(it.price||0) * Number(it.quantity||1))), 0)
+                          return (
+                            <tr key={o.id} className='border-t'>
+                              <td className='px-4 py-3'>{`#${o.id}`}</td>
+                              <td className='px-4 py-3'>{firstItem.name || '—'}</td>
+                              <td className='px-4 py-3'><span className='inline-block px-2 py-1 rounded text-xs bg-gray-100 text-gray-700'>{o.orderStatus || '—'}</span></td>
+                              <td className='px-4 py-3'>₱{total.toFixed(2)}</td>
+                              <td className='px-4 py-3 text-xs text-gray-500'>{new Date(o.createdAt).toLocaleString()}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className='p-6 border-t border-gray-100'>
               <h3 className='text-lg font-medium mb-3'>Quick Actions</h3>
               <div className='flex gap-3 flex-wrap'>
