@@ -2254,11 +2254,6 @@ const SellerDashboard = () => {
                         })}
                       </div>
                     )}
-                    <div className='mt-4'>
-                      <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
-                        Save Payment Settings
-                      </button>
-                    </div>
                   </div>
 
                   <div className='pt-2'>
