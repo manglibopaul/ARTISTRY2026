@@ -28,7 +28,6 @@ import {
   updateReturnPolicy,
   uploadSellerImages,
 } from '../controllers/sellerController.js';
-import { getSellerDashboardStats } from '../controllers/orderController.js';
 import { verifySeller } from '../middleware/sellerAuth.js';
 import { verifyAdmin } from '../middleware/auth.js';
 import { ARTISAN_TYPES_ARRAY, EXPERTISE_TAGS } from '../utils/artisanTypes.js';
@@ -61,9 +60,6 @@ router.put('/profile/portfolio', verifySeller, updateSellerProfile);
 // pickup maps route removed
 // Seller's orders (orders that include their products)
 router.get('/orders', verifySeller, getSellerOrders);
-
-// Seller dashboard stats (summary for landing/dashboard)
-router.get('/dashboard', verifySeller, getSellerDashboardStats);
 
 // Shipping settings
 router.get('/shipping-settings', verifySeller, getShippingSettings);

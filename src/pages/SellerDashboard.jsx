@@ -55,7 +55,6 @@ const SellerDashboard = () => {
     conditions: 'Item must be unused and in original packaging.',
     refundMethod: 'Original payment method',
   })
-  const [dashboardStats, setDashboardStats] = useState(null)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -465,7 +464,6 @@ const SellerDashboard = () => {
     if (selectedTab === 'chat') {
       fetchSellerConversations()
     }
-    if (selectedTab === 'landing') fetchDashboardStats()
     if (selectedTab === 'shipping') {
       fetchShippingSettings()
       fetchPaymentSettings()
@@ -511,42 +509,6 @@ const SellerDashboard = () => {
         }
       }
     }
-  }
-
-  const fetchDashboardStats = async () => {
-    try {
-      setLoading(true)
-      const res = await axios.get(`${apiUrl}/api/sellers/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
-      setDashboardStats(res.data)
-    } catch (err) {
-      console.error('fetchDashboardStats', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const buildTerminalText = (s) => {
-    if (!s) return ' Loading dashboard...'
-    const lines = []
-    lines.push(`\u001b[32m👋 Welcome back, ${seller?.storeName || seller?.name || 'Artist'}!\u001b[0m`)
-    lines.push('Manage your handcrafted products with ease.')
-    lines.push('')
-    lines.push(` Total Products : ${s.totalProducts || 0}    Total Orders : ${s.totalOrders || 0}    Total Revenue : ${formatCurrency(s.totalRevenue || 0)}`)
-    lines.push('')
-    lines.push(' Recent Orders:')
-    ;(s.recentOrders || []).slice(0,6).forEach(o => {
-      const firstItem = (o.sellerItems && o.sellerItems[0]) || {}
-      lines.push(`  #${o.id}  ${firstItem.name || 'Product'}  ${o.orderStatus || ''}  ${formatCurrency(firstItem.lineTotal || 0)}`)
-    })
-    lines.push('')
-    lines.push(' Best Selling Products:')
-    ;(s.bestSelling || []).slice(0,6).forEach(b => {
-      lines.push(`  ${b.name || b.productId}  Sold: ${b.qty}  `)
-    })
-    lines.push('')
-    lines.push(' Inventory Overview:')
-    lines.push(`  In Stock: ${s.inventoryOverview?.inStock || 0}   Low Stock: ${s.inventoryOverview?.lowStock || 0}   Out of Stock: ${s.inventoryOverview?.outOfStock || 0}`)
-    return lines.join('\n')
   }
 
   const handleChange = (e) => {
@@ -1497,22 +1459,6 @@ const SellerDashboard = () => {
                 <button onClick={() => { if (!isSellerVerified) return; resetForm(); setShowForm(true); setSelectedTab('products'); }} className='px-4 py-2 bg-emerald-600 text-white rounded'>Create Product</button>
                 <button onClick={() => setSelectedTab('shipping')} className='px-4 py-2 bg-blue-600 text-white rounded'>Payment & Shipping</button>
                 
-              </div>
-            </div>
-
-            <div className='p-6'>
-              <h3 className='text-lg font-medium mb-3'>Terminal View</h3>
-              <div className='bg-black text-green-200 font-mono text-sm rounded-lg p-4 overflow-auto'>
-                <div className='flex justify-between items-start mb-2'>
-                  <div className='text-xs text-green-300'>Live seller dashboard</div>
-                  <div className='flex items-center gap-2'>
-                    <button onClick={fetchDashboardStats} className='px-3 py-1 bg-green-700 text-white text-xs rounded'>Refresh</button>
-                    <button onClick={() => { setDashboardStats(null); fetchDashboardStats(); }} className='px-3 py-1 bg-stone-700 text-white text-xs rounded'>Reload</button>
-                  </div>
-                </div>
-                <pre className='whitespace-pre-wrap break-words'>
-{buildTerminalText(dashboardStats)}
-                </pre>
               </div>
             </div>
           </div>
