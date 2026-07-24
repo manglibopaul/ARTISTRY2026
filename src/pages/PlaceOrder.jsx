@@ -199,6 +199,7 @@ const PlaceOrder = () => {
   const [sellerShippingInfo, setSellerShippingInfo] = React.useState({})
   const [sellerPaymentInfo, setSellerPaymentInfo] = React.useState({})
   const [sellerIdentityById, setSellerIdentityById] = React.useState({})
+  const [selectedQrBySeller, setSelectedQrBySeller] = React.useState({})
   const [availablePaymentMethods, setAvailablePaymentMethods] = React.useState({ cod: true, gcash: true })
   const [modalState, setModalState] = React.useState({
     open: false,
@@ -370,6 +371,7 @@ const PlaceOrder = () => {
             }
 
             const paymentSettings = seller.paymentSettings || {}
+            const qrCodes = normalizeQrCodes(paymentSettings.qrCodes || (paymentSettings.gcashQr ? { gcash: paymentSettings.gcashQr } : {}))
             paymentInfo[sid] = {
               sellerId: Number(sid),
               storeName: seller.storeName || 'Seller',
@@ -377,7 +379,8 @@ const PlaceOrder = () => {
               acceptsGCash: paymentSettings.acceptsGCash !== false,
               gcashAccountName: String(paymentSettings.gcashAccountName || '').trim(),
               gcashNumber: String(paymentSettings.gcashNumber || '').trim(),
-              gcashQr: String(paymentSettings.gcashQr || '').trim(),
+              gcashQr: qrCodes.gcash || String(paymentSettings.gcashQr || '').trim(),
+              qrCodes,
             }
           }
         } catch (e) { console.error('Failed to fetch seller data', e) }
@@ -404,6 +407,17 @@ const PlaceOrder = () => {
       setSellerShippingInfo(shippingInfo)
       setSellerPaymentInfo(paymentInfo)
       setSellerIdentityById(identityById)
+
+      // Initialize per-seller selected QR type (prefer 'gcash' or first available)
+      const initialSelection = {}
+      for (const sid of Object.keys(paymentInfo)) {
+        const info = paymentInfo[sid] || {}
+        const qrCodes = info.qrCodes || {}
+        const keys = Object.keys(qrCodes || {})
+        if (keys.length === 0) continue
+        initialSelection[sid] = keys.includes('gcash') ? 'gcash' : keys[0]
+      }
+      setSelectedQrBySeller((prev) => ({ ...initialSelection, ...prev }))
 
       const paymentValues = Object.values(paymentInfo)
       const deliverySellerIds = Object.keys(deliveryModeBySeller).filter((sid) => deliveryModeBySeller[sid] !== 'pickup')
@@ -457,6 +471,17 @@ const PlaceOrder = () => {
     }
     setCartData(tempData)
   }, [cartsItems])
+
+  const normalizeQrCodes = (raw) => {
+    if (!raw || typeof raw !== 'object') return {}
+    return Object.entries(raw).reduce((acc, [key, value]) => {
+      if (!key || typeof value !== 'string') return acc
+      const type = key.trim().toLowerCase()
+      const url = String(value || '').trim()
+      if (!type || !url) return acc
+      return { ...acc, [type]: url }
+    }, {})
+  }
 
   const sellerIdsInCart = React.useMemo(() => {
     const ids = new Set()
@@ -749,15 +774,20 @@ const PlaceOrder = () => {
 
                   {paymentOption === 'gcash' && availablePaymentMethods.gcash && Object.values(sellerPaymentInfo).length > 0 && (
                     <div className='mt-3 space-y-3'>
-                      <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s GCash account. Use the details below:</p>
+                      <p className='text-xs text-gray-600'>Pay directly to each seller&apos;s payment account. Use the details below:</p>
                       {Object.values(sellerPaymentInfo)
                         .filter((info) => deliveryModeBySeller[String(info.sellerId)] !== 'pickup')
                         .map((info) => {
                           const identity = sellerIdentityById[String(info.sellerId)] || {}
-                          const qrUrl = info.gcashQr
-                            ? (info.gcashQr.startsWith('http')
-                              ? info.gcashQr
-                              : `${apiUrl}${info.gcashQr.startsWith('/') ? info.gcashQr : `/${info.gcashQr}`}`)
+                          const qrEntries = info.qrCodes || {}
+                          const qrList = Object.entries(qrEntries).map(([key, value]) => ({ type: String(key || '').trim().toLowerCase(), url: String(value || '').trim() })).filter((entry) => entry.url)
+                          const hasAnyQr = qrList.length > 0
+                          const selectedType = String(selectedQrBySeller[String(info.sellerId)] || (qrList.find(e => e.type === 'gcash') || qrList[0] || {}).type || '').trim().toLowerCase()
+                          const selectedEntry = qrList.find(e => e.type === selectedType) || qrList[0]
+                          const qrUrl = selectedEntry
+                            ? (selectedEntry.url.startsWith('http')
+                              ? selectedEntry.url
+                              : `${apiUrl}${selectedEntry.url.startsWith('/') ? selectedEntry.url : `/${selectedEntry.url}`}`)
                             : ''
                           return (
                             <div key={info.sellerId} className='border rounded p-3 bg-gray-50'>
@@ -765,7 +795,42 @@ const PlaceOrder = () => {
                               {identity.sellerName && <p className='text-xs text-gray-700'>Seller: {identity.sellerName}</p>}
                               <p className='text-xs text-gray-700'>Account Name: {info.gcashAccountName || 'Not provided yet'}</p>
                               <p className='text-xs text-gray-700'>GCash Number: {info.gcashNumber || 'Not provided yet'}</p>
-                              {qrUrl ? (
+                              {hasAnyQr ? (
+                                <>
+                                  <p className='text-xs text-gray-600 mb-2'>Payment QR codes:</p>
+                                  {qrList.length > 1 ? (
+                                    <div className='mb-2'>
+                                      <label className='text-xs text-gray-600 mr-2'>Choose QR:</label>
+                                      <select
+                                        value={selectedType}
+                                        onChange={(e) => setSelectedQrBySeller(prev => ({ ...prev, [String(info.sellerId)]: e.target.value }))}
+                                        className='text-sm px-2 py-1 border rounded'
+                                      >
+                                        {qrList.map((entry) => (
+                                          <option key={entry.type} value={entry.type}>{entry.type === 'gcash' ? 'GCash' : entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  ) : null}
+                                  <div className='grid gap-3 sm:grid-cols-1'>
+                                    <div className='rounded border p-2 bg-white'>
+                                      <p className='text-xs font-semibold text-gray-700 mb-1'>{selectedEntry ? (selectedEntry.type === 'gcash' ? 'GCash' : selectedEntry.type.charAt(0).toUpperCase() + selectedEntry.type.slice(1)) : 'QR'}</p>
+                                      <img
+                                        src={qrUrl}
+                                        alt={`${info.storeName} QR`}
+                                        className='w-full h-40 object-contain border rounded bg-white p-2 transition-transform hover:scale-105 cursor-pointer'
+                                        onClick={() => openPhotoModal(qrUrl, `${info.storeName} ${selectedEntry ? selectedEntry.type : ''}`)}
+                                      />
+                                    </div>
+                                  </div>
+                                  <QRModal
+                                    open={modalState.open}
+                                    onClose={() => setModalState({ open: false, title: '', message: '' })}
+                                    qrUrl={modalState.message}
+                                    storeName={info.storeName}
+                                  />
+                                </>
+                              ) : qrUrl ? (
                                 <>
                                   <img
                                     src={qrUrl}
