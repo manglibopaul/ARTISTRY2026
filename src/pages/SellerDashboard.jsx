@@ -1473,11 +1473,15 @@ const SellerDashboard = () => {
                       <tbody>
                         {sellerOrders.slice(0,8).map((o) => {
                           const firstItem = (o.sellerItems && o.sellerItems[0]) || {};
+                          const imgSrc = resolveImageUrl((firstItem.images && firstItem.images[0]) || firstItem.image || firstItem.thumbnail || firstItem.productImage)
                           const total = (o.sellerItems || []).reduce((sum,it) => sum + (Number(it.lineTotal) || (Number(it.price||0) * Number(it.quantity||1))), 0)
                           return (
                             <tr key={o.id} className='border-t'>
                               <td className='px-4 py-3'>{`#${o.id}`}</td>
-                              <td className='px-4 py-3'>{firstItem.name || '—'}</td>
+                              <td className='px-4 py-3 flex items-center gap-3'>
+                                <img src={imgSrc} alt={firstItem.name || 'item'} loading='lazy' onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = resolveImageUrl(null) }} className='w-12 h-12 object-cover rounded-md bg-gray-100 flex-shrink-0' />
+                                <div className='truncate'>{firstItem.name || '—'}</div>
+                              </td>
                               <td className='px-4 py-3'><span className='inline-block px-2 py-1 rounded text-xs bg-gray-100 text-gray-700'>{o.orderStatus || '—'}</span></td>
                               <td className='px-4 py-3'>₱{total.toFixed(2)}</td>
                               <td className='px-4 py-3 text-xs text-gray-500'>{new Date(o.createdAt).toLocaleString()}</td>
