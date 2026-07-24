@@ -108,8 +108,9 @@ const Seller = sequelize.define('Seller', {
       gcashAccountName: '',
       gcashNumber: '',
       gcashQr: '',
+      qrCodes: {},
     },
-    comment: 'Seller payment preferences and GCash information',
+    comment: 'Seller payment preferences and QR code information',
   },
   returnPolicy: {
     type: DataTypes.JSON,

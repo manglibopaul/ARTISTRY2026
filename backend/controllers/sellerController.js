@@ -984,7 +984,7 @@ export const updatePaymentSettings = async (req, res) => {
 export const uploadPaymentQr = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No image file uploaded' });
+      return res.status(400).json({ message: 'No QR image file uploaded' });
     }
 
     const seller = await Seller.findByPk(req.seller.id);
@@ -992,23 +992,29 @@ export const uploadPaymentQr = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found' });
     }
 
-    const uploaded = await uploadImage(req.file, 'artistry/seller-gcash-qr');
+    const uploadType = String(req.body.type || req.query.type || 'gcash').trim().toLowerCase() || 'gcash';
+    const uploaded = await uploadImage(req.file, `artistry/seller-${uploadType}-qr`);
     const qrUrl = uploaded?.url || '';
 
+    const currentSettings = normalizePaymentSettings(seller.paymentSettings || {});
+    const nextQrCodes = { ...(currentSettings.qrCodes || {}) }
+    nextQrCodes[uploadType] = qrUrl
+
     const nextPaymentSettings = normalizePaymentSettings({
-      ...(seller.paymentSettings || {}),
-      gcashQr: qrUrl,
+      ...currentSettings,
+      qrCodes: nextQrCodes,
+      gcashQr: uploadType === 'gcash' ? qrUrl : currentSettings.gcashQr,
     });
 
     await seller.update({ paymentSettings: nextPaymentSettings });
 
     return res.status(200).json({
-      message: 'GCash QR uploaded successfully',
+      message: `${uploadType.charAt(0).toUpperCase() + uploadType.slice(1)} QR uploaded successfully`,
       paymentSettings: nextPaymentSettings,
     });
   } catch (error) {
     console.error('uploadPaymentQr', error);
-    return res.status(500).json({ message: 'Failed to upload GCash QR' });
+    return res.status(500).json({ message: 'Failed to upload QR image' });
   }
 };
 

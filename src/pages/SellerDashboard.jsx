@@ -47,6 +47,7 @@ const SellerDashboard = () => {
     gcashAccountName: '',
     gcashNumber: '',
     gcashQr: '',
+    qrCodes: {},
   })
   // Return policy state
   const [returnPolicy, setReturnPolicy] = useState({
@@ -366,6 +367,15 @@ const SellerDashboard = () => {
   }
 
   // Payment settings
+  const [qrUploadType, setQrUploadType] = useState('gcash')
+  const [customQrType, setCustomQrType] = useState('')
+
+  const resolveQrUrl = (src) => {
+    if (!src) return ''
+    if (src.startsWith('http')) return src
+    return `${apiUrl}${src.startsWith('/') ? src : `/${src}`}`
+  }
+
   const fetchPaymentSettings = async () => {
     try {
       const res = await axios.get(`${apiUrl}/api/sellers/payment-settings`, { headers: { Authorization: `Bearer ${token}` } })
@@ -376,12 +386,53 @@ const SellerDashboard = () => {
           gcashAccountName: res.data.gcashAccountName || '',
           gcashNumber: res.data.gcashNumber || '',
           gcashQr: res.data.gcashQr || '',
+          qrCodes: typeof res.data.qrCodes === 'object' && res.data.qrCodes !== null ? res.data.qrCodes : {},
         })
       }
     } catch (err) {
       console.error('fetchPaymentSettings', err)
     }
   }
+
+  const uploadPaymentQr = async (file, type = 'gcash') => {
+    if (!file) return
+    if (!type || typeof type !== 'string') type = 'gcash'
+    type = type.trim().toLowerCase()
+    if (!type) type = 'gcash'
+    try {
+      setUploadError('')
+      setUploadProgress(0)
+      setLoading(true)
+      const form = new FormData()
+      form.append('image', file)
+      form.append('type', type)
+
+      const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
+        },
+      })
+
+      if (res.data?.paymentSettings) {
+        setPaymentSettings((prev) => ({
+          ...prev,
+          ...res.data.paymentSettings,
+          qrCodes: typeof res.data.paymentSettings.qrCodes === 'object' && res.data.paymentSettings.qrCodes !== null ? res.data.paymentSettings.qrCodes : (prev.qrCodes || {}),
+        }))
+      }
+      toast.success(`${type.toUpperCase()} QR uploaded`)
+    } catch (err) {
+      console.error('uploadPaymentQr', err)
+      setUploadError(err.response?.data?.message || 'Failed to upload QR image')
+      toast.error(err.response?.data?.message || 'Failed to upload QR image')
+    } finally {
+      setLoading(false)
+      setUploadProgress(0)
+    }
+  }
+
+  const currentQrType = customQrType.trim() || qrUploadType
 
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
   const savePaymentSettings = async () => {
@@ -2126,28 +2177,88 @@ const SellerDashboard = () => {
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-2'>GCash QR Code</label>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>Payment QR Codes</label>
+                    <div className='grid gap-3 sm:grid-cols-2 mb-3'>
+                      <div>
+                        <label className='block text-xs text-gray-500 mb-1'>QR type</label>
+                        <select
+                          value={qrUploadType}
+                          onChange={(e) => { setQrUploadType(e.target.value); setCustomQrType('') }}
+                          className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                        >
+                          <option value='gcash'>GCash</option>
+                          <option value='paymaya'>PayMaya</option>
+                          <option value='shopeepay'>ShopeePay</option>
+                          <option value='grabpay'>GrabPay</option>
+                          <option value='other'>Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className='block text-xs text-gray-500 mb-1'>Custom QR label</label>
+                        <input
+                          type='text'
+                          placeholder='e.g. Maya, Coins.ph'
+                          value={customQrType}
+                          onChange={(e) => setCustomQrType(e.target.value)}
+                          className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
+                        />
+                      </div>
+                    </div>
                     <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
                       <label className='inline-flex items-center px-4 py-2 bg-white border rounded-lg cursor-pointer text-sm hover:bg-gray-50'>
-                        <input type='file' accept='image/*' onChange={(e) => uploadGcashQr(e.target.files?.[0])} className='hidden' />
+                        <input type='file' accept='image/*' onChange={(e) => uploadPaymentQr(e.target.files?.[0], currentQrType)} className='hidden' />
                         Upload QR
                       </label>
                       <div className='text-xs text-gray-500'>Upload a clear QR image so buyers can scan during checkout.</div>
                     </div>
-                    {paymentSettings.gcashQr && (
-                      <div className='mt-3 flex items-start gap-3'>
-                        <img
-                          loading='lazy' decoding='async'
-                          src={paymentSettings.gcashQr.startsWith('http') ? paymentSettings.gcashQr : `${apiUrl}${paymentSettings.gcashQr.startsWith('/') ? paymentSettings.gcashQr : `/${paymentSettings.gcashQr}`}`}
-                          alt='GCash QR'
-                          className='w-36 h-36 object-contain border rounded bg-white p-1'
-                        />
-                        <div className='flex flex-col gap-2'>
-                          <button onClick={() => { setPaymentSettings(prev => ({ ...prev, gcashQr: '' })); toast.info('GCash QR removed'); }} className='text-sm px-3 py-2 bg-red-50 text-red-700 border rounded hover:bg-red-100'>Remove QR</button>
-                          <button onClick={() => savePaymentSettings()} className='text-sm px-3 py-2 bg-black text-white rounded hover:bg-gray-900'>Save Payment Settings</button>
-                        </div>
+                    {Object.keys(paymentSettings.qrCodes || {}).length > 0 && (
+                      <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                        {Object.entries(paymentSettings.qrCodes).map(([type, url]) => {
+                          const normalizedType = type.trim().toLowerCase()
+                          const displayLabel = normalizedType === 'gcash' ? 'GCash' : normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1)
+                          return (
+                            <div key={type} className='border rounded-lg p-3 bg-gray-50'>
+                              <div className='flex items-center justify-between gap-3 mb-2'>
+                                <div>
+                                  <div className='text-sm font-medium'>{displayLabel}</div>
+                                  <div className='text-xs text-gray-500'>{type}</div>
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() => {
+                                    setPaymentSettings((prev) => {
+                                      const qrCodes = { ...prev.qrCodes }
+                                      delete qrCodes[type]
+                                      return {
+                                        ...prev,
+                                        qrCodes,
+                                        gcashQr: type === 'gcash' ? '' : prev.gcashQr,
+                                      }
+                                    })
+                                    toast.info(`${displayLabel} QR removed`)
+                                  }}
+                                  className='text-xs px-2 py-1 bg-red-50 text-red-700 rounded border border-red-100 hover:bg-red-100'
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              <img
+                                loading='lazy'
+                                decoding='async'
+                                src={resolveQrUrl(url)}
+                                alt={`${displayLabel} QR`}
+                                className='w-full h-40 object-contain border rounded bg-white p-2'
+                              />
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
+                    <div className='mt-4'>
+                      <button onClick={savePaymentSettings} className='bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800'>
+                        Save Payment Settings
+                      </button>
+                    </div>
                   </div>
 
                   <div className='pt-2'>
