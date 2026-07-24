@@ -1429,36 +1429,73 @@ const SellerDashboard = () => {
 
         {/* Tab panels */}
         {selectedTab === 'landing' && (
-          <div className='bg-white rounded-lg shadow-lg overflow-hidden'>
-            <div className='p-6 border-b border-gray-200'>
-              <h2 className='text-2xl font-bold'>Welcome to your Artist Dashboard</h2>
-              <p className='text-sm text-gray-600 mt-1'>Quick overview and shortcuts to manage your shop.</p>
+          <div className='bg-black text-green-200 font-mono rounded-lg shadow-lg overflow-hidden'>
+            <div className='p-4 border-b border-green-800'>
+              <h2 className='text-lg font-semibold'>👋 Welcome back, {seller?.storeName || seller?.name || 'Artist'}!</h2>
+              <p className='text-xs text-green-300 mt-1'>Manage your handcrafted products with ease.</p>
             </div>
 
-            <div className='p-6 grid grid-cols-1 sm:grid-cols-3 gap-4'>
-              <div className='p-4 border rounded-lg'>
-                <p className='text-sm text-gray-500'>Products</p>
-                <p className='text-2xl font-semibold'>{Array.isArray(products) ? products.length : 0}</p>
-                <button onClick={() => { setSelectedTab('products'); resetForm(); setShowForm(false); }} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>Manage Products</button>
+            <div className='p-4 space-y-4'>
+              <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+                <div className='text-sm'>
+                  <button onClick={() => { resetForm(); setShowForm(true); setSelectedTab('products'); }} className='bg-green-700 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2'>+ Add New Product</button>
+                  <button onClick={() => navigate('/')} className='bg-transparent border border-green-700 text-green-200 px-3 py-1 rounded text-xs'>[ View Store ]</button>
+                </div>
+                <div className='text-sm text-green-300'>
+                  <span className='mr-4'>📦 Total Products: <strong className='text-green-100'>{Array.isArray(products) ? products.length : 0}</strong></span>
+                  <span className='mr-4'>🧾 Total Orders: <strong className='text-green-100'>{Array.isArray(sellerOrders) ? sellerOrders.length : 0}</strong></span>
+                  <span>💰 Total Revenue: <strong className='text-green-100'>₱{(sellerOrders || []).reduce((s,o) => s + (Number(o.total)||0), 0)}</strong></span>
+                </div>
               </div>
-              <div className='p-4 border rounded-lg'>
-                <p className='text-sm text-gray-500'>Orders</p>
-                <p className='text-2xl font-semibold'>{Array.isArray(sellerOrders) ? sellerOrders.length : 0}</p>
-                <button onClick={() => setSelectedTab('orders')} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>View Orders</button>
-              </div>
-              <div className='p-4 border rounded-lg'>
-                <p className='text-sm text-gray-500'>Messages</p>
-                <p className='text-2xl font-semibold'>{sellerUnreadChats || 0}</p>
-                <button onClick={() => setSelectedTab('chat')} className='mt-3 px-3 py-2 bg-gray-800 text-white rounded text-sm'>Open Chat</button>
-              </div>
-            </div>
 
-            <div className='p-6 border-t border-gray-100'>
-              <h3 className='text-lg font-medium mb-3'>Quick Actions</h3>
-              <div className='flex gap-3 flex-wrap'>
-                <button onClick={() => { if (!isSellerVerified) return; resetForm(); setShowForm(true); setSelectedTab('products'); }} className='px-4 py-2 bg-emerald-600 text-white rounded'>Create Product</button>
-                <button onClick={() => setSelectedTab('shipping')} className='px-4 py-2 bg-blue-600 text-white rounded'>Payment & Shipping</button>
-                
+              <div className='border border-green-800 rounded p-3'>
+                <div className='text-sm text-green-300 mb-2'>Recent Orders</div>
+                <div className='bg-black/80 p-2 rounded'>
+                  {(sellerOrders || []).slice(0,6).map((o) => (
+                    <div key={o.id} className='flex items-center justify-between py-1 border-b border-green-900 last:border-b-0'>
+                      <div className='text-xs text-green-200'>#{o.id} {((o.sellerItems && o.sellerItems[0]) ? (o.sellerItems[0].name || '') : '')}</div>
+                      <div className='text-xs text-green-300'>{o.orderStatus || '—'}</div>
+                      <div className='text-xs text-green-100'>₱{((o.sellerItems || []).reduce((a,it)=>a+((Number(it.lineTotal)|| (Number(it.quantity||1)*Number(it.price||0)))),0)).toFixed(2)}</div>
+                    </div>
+                  ))}
+                  {(!(sellerOrders || []).length) && <div className='text-xs text-green-400 py-2'>No recent orders.</div>}
+                </div>
+              </div>
+
+              <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
+                <div className='border border-green-800 rounded p-3'>
+                  <div className='text-xs text-green-300 mb-2'>Best Selling Products</div>
+                  <div className='grid grid-cols-1 gap-2'>
+                    {(() => {
+                      // build simple best-sellers from sellerOrders
+                      const sales = {};
+                      (sellerOrders || []).forEach(o => {
+                        (o.sellerItems || []).forEach(it => {
+                          const id = String(it.productId || it.id || it._id || it.name || Math.random())
+                          sales[id] = sales[id] || { name: it.name || 'Item', qty: 0 }
+                          sales[id].qty += Number(it.quantity || 1)
+                        })
+                      })
+                      const items = Object.keys(sales).map(k => ({ id: k, ...sales[k] })).sort((a,b)=>b.qty-a.qty).slice(0,3)
+                      if (!items.length) return <div className='text-xs text-green-400'>No sales yet.</div>
+                      return items.map(it => (
+                        <div key={it.id} className='text-xs text-green-100 p-2 border border-green-900 rounded bg-black/70'>
+                          <div className='font-semibold'>{it.name}</div>
+                          <div className='text-green-300 text-xs'>Sold: {it.qty}</div>
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                </div>
+
+                <div className='col-span-2 border border-green-800 rounded p-3'>
+                  <div className='text-xs text-green-300 mb-2'>Inventory Overview</div>
+                  <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                    <div className='text-xs text-green-100 p-2 border border-green-900 rounded'>In Stock: <strong>{(products || []).filter(p=>Number(p.stock)>0).length}</strong></div>
+                    <div className='text-xs text-green-100 p-2 border border-green-900 rounded'>Low Stock: <strong>{(products || []).filter(p=>Number(p.stock)>0 && Number(p.stock)<=5).length}</strong></div>
+                    <div className='text-xs text-green-100 p-2 border border-green-900 rounded'>Out of Stock: <strong>{(products || []).filter(p=>!p.stock || Number(p.stock)<=0).length}</strong></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
