@@ -746,7 +746,7 @@ const PlaceOrder = () => {
                           className='w-4 h-4'
                         />
                         <div>
-                          <span className='text-sm font-medium'>GCash</span>
+                          <span className='text-sm font-medium'>QR PH</span>
                           {!availablePaymentMethods.gcash && <span className='text-xs text-red-600 ml-2'>(Unavailable for one or more sellers)</span>}
                         </div>
                       </div>
@@ -852,7 +852,7 @@ const PlaceOrder = () => {
 
                       {/* GCash Receipt Upload */}
                       <div className='mt-4'>
-                        <label className='block text-xs font-medium mb-1 text-gray-700'>Upload GCash Receipt <span className='text-red-600'>*</span></label>
+                        <label className='block text-xs font-medium mb-1 text-gray-700'>Upload QR PH Receipt <span className='text-red-600'>*</span></label>
                         <input
                           type='file'
                           accept='image/*,application/pdf'
