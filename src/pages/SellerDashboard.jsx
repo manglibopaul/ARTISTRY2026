@@ -408,7 +408,7 @@ const SellerDashboard = () => {
       form.append('type', type)
 
       const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        headers: { Authorization: `Bearer ${token}` },
         onUploadProgress: (e) => {
           if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
         },
@@ -463,7 +463,7 @@ const SellerDashboard = () => {
       form.append('image', file)
 
       const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+        headers: { Authorization: `Bearer ${token}` },
         onUploadProgress: (e) => {
           if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
         },
