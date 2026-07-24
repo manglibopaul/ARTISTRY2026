@@ -221,14 +221,30 @@ const normalizeSellerPayload = (seller) => {
   return plain;
 };
 
+const normalizeQrCodes = (raw) => {
+  if (!raw || typeof raw !== 'object') return {};
+  const normalized = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!key || typeof value !== 'string') continue;
+    const type = key.trim().toLowerCase();
+    if (!type) continue;
+    const url = value.trim();
+    if (!url) continue;
+    normalized[type] = url;
+  }
+  return normalized;
+};
+
 const normalizePaymentSettings = (raw) => {
   const source = raw && typeof raw === 'object' ? raw : {};
+  const qrCodes = normalizeQrCodes(source.qrCodes || (source.gcashQr ? { gcash: source.gcashQr } : {}));
   return {
     acceptsCOD: source.acceptsCOD !== undefined ? Boolean(source.acceptsCOD) : true,
     acceptsGCash: source.acceptsGCash !== undefined ? Boolean(source.acceptsGCash) : true,
     gcashAccountName: String(source.gcashAccountName || '').trim(),
     gcashNumber: String(source.gcashNumber || '').trim(),
-    gcashQr: String(source.gcashQr || '').trim(),
+    gcashQr: String(source.gcashQr || '').trim() || qrCodes.gcash || '',
+    qrCodes,
   };
 };
 
