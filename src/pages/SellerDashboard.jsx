@@ -380,13 +380,17 @@ const SellerDashboard = () => {
     try {
       const res = await axios.get(`${apiUrl}/api/sellers/payment-settings`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.data) {
+        const qrCodes = typeof res.data.qrCodes === 'object' && res.data.qrCodes !== null ? res.data.qrCodes : {}
+        if (res.data.gcashQr && !qrCodes.gcash) {
+          qrCodes.gcash = res.data.gcashQr
+        }
         setPaymentSettings({
           acceptsCOD: res.data.acceptsCOD !== false,
           acceptsGCash: res.data.acceptsGCash !== false,
           gcashAccountName: res.data.gcashAccountName || '',
           gcashNumber: res.data.gcashNumber || '',
           gcashQr: res.data.gcashQr || '',
-          qrCodes: typeof res.data.qrCodes === 'object' && res.data.qrCodes !== null ? res.data.qrCodes : {},
+          qrCodes,
         })
       }
     } catch (err) {
@@ -452,36 +456,6 @@ const SellerDashboard = () => {
       setShowPaymentConfirm(false);
     }
   };
-
-  const uploadGcashQr = async (file) => {
-    if (!file) return
-    try {
-      setUploadError('')
-      setUploadProgress(0)
-      setLoading(true)
-      const form = new FormData()
-      form.append('image', file)
-
-      const res = await axios.put(`${apiUrl}/api/sellers/payment-settings/qr`, form, {
-        headers: { Authorization: `Bearer ${token}` },
-        onUploadProgress: (e) => {
-          if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100))
-        },
-      })
-
-      if (res.data?.paymentSettings) {
-        setPaymentSettings(res.data.paymentSettings)
-      }
-      toast.success('GCash QR uploaded')
-    } catch (err) {
-      console.error('uploadGcashQr', err)
-      setUploadError(err.response?.data?.message || 'Failed to upload GCash QR')
-      toast.error(err.response?.data?.message || 'Failed to upload GCash QR')
-    } finally {
-      setLoading(false)
-      setUploadProgress(0)
-    }
-  }
 
   // Return policy
   const fetchReturnPolicy = async () => {
@@ -2178,6 +2152,7 @@ const SellerDashboard = () => {
 
                   <div>
                     <label className='block text-sm font-medium text-gray-700 mb-2'>Payment QR Codes</label>
+                    <p className='text-xs text-gray-500 mb-3'>Upload one QR code at a time. All saved payment QR codes will appear below.</p>
                     <div className='grid gap-3 sm:grid-cols-2 mb-3'>
                       <div>
                         <label className='block text-xs text-gray-500 mb-1'>QR type</label>
