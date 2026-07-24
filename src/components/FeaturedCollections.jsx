@@ -1,4 +1,5 @@
 import React, { useContext, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
@@ -24,13 +25,24 @@ const FeaturedCollections = () => {
     };
 
     return (
-        <div className='py-12 sm:py-16 bg-white w-full max-w-full overflow-x-hidden'>
-            <div className='w-full max-w-6xl xl:max-w-[1400px] mx-auto px-4 sm:px-6'>
-                <div className='text-center py-6 sm:py-8'>
-                    <Title size='xl' text1={'FEATURED'} text2={'PRODUCTS'} />
-                    <p className='w-full sm:w-3/4 lg:w-2/3 m-auto sm:text-base md:text-lg text-gray-600 mt-3'>
-                        Explore our curated handmade products
-                    </p>
+        <div className='w-full max-w-full overflow-x-hidden bg-white py-12 sm:py-16'>
+            <div className='mx-auto w-full max-w-6xl px-4 sm:px-6 xl:max-w-[1400px]'>
+                <div className='mb-6 rounded-[1.5rem] border border-stone-200 bg-stone-50/80 p-5 sm:p-6'>
+                    <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+                        <div>
+                            <div className='mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-stone-500'>
+                                <span className='h-2.5 w-2.5 rounded-full bg-amber-500' />
+                                New favorites
+                            </div>
+                            <Title size='xl' text1={'FEATURED'} text2={'PRODUCTS'} />
+                            <p className='mt-3 max-w-2xl text-sm text-stone-600 sm:text-base'>
+                                Freshly curated handmade pieces that feel as special as the stories behind them.
+                            </p>
+                        </div>
+                        <Link to='/collection' className='inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50'>
+                            View all items
+                        </Link>
+                    </div>
                 </div>
 
                 <div className='flex items-center gap-1 sm:gap-3 w-full overflow-x-hidden'>
