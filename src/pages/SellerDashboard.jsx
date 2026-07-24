@@ -49,6 +49,7 @@ const SellerDashboard = () => {
     gcashQr: '',
     qrCodes: {},
   })
+  const qrInputRef = useRef(null)
   // Return policy state
   const [returnPolicy, setReturnPolicy] = useState({
     acceptsReturns: true,
@@ -2181,9 +2182,16 @@ const SellerDashboard = () => {
                     </div>
                     <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3'>
                       <label className='inline-flex items-center px-4 py-2 bg-white border rounded-lg cursor-pointer text-sm hover:bg-gray-50'>
-                        <input type='file' accept='image/*' onChange={(e) => uploadPaymentQr(e.target.files?.[0], currentQrType)} className='hidden' />
+                        <input ref={qrInputRef} type='file' accept='image/*' onChange={(e) => uploadPaymentQr(e.target.files?.[0], currentQrType)} className='hidden' />
                         Upload QR
                       </label>
+                      <button
+                        type='button'
+                        onClick={() => qrInputRef.current?.click()}
+                        className='inline-flex items-center px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-900'
+                      >
+                        Add another QR
+                      </button>
                       <div className='text-xs text-gray-500'>Upload a clear QR image so buyers can scan during checkout.</div>
                     </div>
                     {Object.keys(paymentSettings.qrCodes || {}).length > 0 && (
