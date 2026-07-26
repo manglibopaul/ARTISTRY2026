@@ -352,6 +352,10 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({ message: 'Account restricted' });
+    }
+
     let isMatch = false;
     if (isBcryptHash(user.password)) {
       isMatch = await user.comparePassword(password);
@@ -535,7 +539,7 @@ export const updateUserByAdmin = async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.isAdmin) return res.status(403).json({ message: 'Cannot update admin user via this endpoint' });
-    const allowed = ['name', 'email', 'phone', 'street', 'city', 'state', 'zipcode', 'country', 'isAdmin'];
+    const allowed = ['name', 'email', 'phone', 'street', 'city', 'state', 'zipcode', 'country', 'isAdmin', 'isBlocked'];
     const updateData = {};
     for (const key of allowed) {
       if (Object.prototype.hasOwnProperty.call(req.body, key)) updateData[key] = req.body[key];

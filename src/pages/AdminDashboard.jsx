@@ -270,6 +270,21 @@ const AdminDashboard = () => {
       setErrorModalOpen(true);
     };
 
+    // Restrict customer
+    const restrictCustomer = async (id) => {
+      try {
+        const res = await authFetch(`/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isBlocked: true }),
+        });
+        if (!res.ok) throw new Error(await readErrorMessage(res));
+        setCustomers((c) => c.map(u => u.id === id ? { ...u, isBlocked: true } : u));
+      } catch (err) {
+        openErrorModal('Restrict Failed', err.message || 'error');
+      }
+    };
+
     // Delete customer
     const deleteCustomer = async (id) => {
       try {
@@ -659,8 +674,17 @@ const AdminDashboard = () => {
                     <div className='mt-3 flex gap-2'>
                       <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
                       <button onClick={() => {
+                        setConfirmMessage('Restrict this customer? They will be blocked from logging in.');
+                        setConfirmAction(() => () => { restrictCustomer(u.id); setConfirmOpen(false); });
+                        setConfirmButtonLabel('Restrict');
+                        setConfirmButtonColor('bg-orange-600');
+                        setConfirmOpen(true);
+                      }} className='px-3 py-1 rounded bg-orange-600 text-white text-sm'>Restrict</button>
+                      <button onClick={() => {
                         setConfirmMessage('Delete this customer? This cannot be undone.');
                         setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
+                        setConfirmButtonLabel('Delete');
+                        setConfirmButtonColor('bg-red-600');
                         setConfirmOpen(true);
                       }} className='px-3 py-1 rounded bg-red-600 text-white text-sm'>Delete</button>
                     </div>
@@ -691,15 +715,27 @@ const AdminDashboard = () => {
                       <tr key={u.id} className="border-b hover:bg-gray-50">
                         <td className="p-3 flex items-center gap-3">
                           <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600 font-semibold'>{getInitials(u.name)}</div>
-                          <div>{u.name}</div>
+                          <div>
+                            <div>{u.name}</div>
+                            {u.isBlocked && <span className='inline-flex mt-1 px-2 py-1 text-xs rounded bg-orange-100 text-orange-800'>Restricted</span>}
+                          </div>
                         </td>
                         <td className="p-3 truncate max-w-xs">{u.email}</td>
                         <td className="p-3">{u.phone || '-'}</td>
                         <td className="p-3 flex gap-2">
                           <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
                           <button onClick={() => {
+                            setConfirmMessage('Restrict this customer? They will be blocked from logging in.');
+                            setConfirmAction(() => () => { restrictCustomer(u.id); setConfirmOpen(false); });
+                            setConfirmButtonLabel('Restrict');
+                            setConfirmButtonColor('bg-orange-600');
+                            setConfirmOpen(true);
+                          }} className="px-3 py-1 rounded bg-orange-600 text-white">Restrict</button>
+                          <button onClick={() => {
                             setConfirmMessage('Delete this customer? This cannot be undone.');
                             setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
+                            setConfirmButtonLabel('Delete');
+                            setConfirmButtonColor('bg-red-600');
                             setConfirmOpen(true);
                           }} className="px-3 py-1 rounded bg-red-600 text-white">Delete</button>
                         </td>
