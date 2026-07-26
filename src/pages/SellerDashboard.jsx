@@ -43,10 +43,7 @@ const SellerDashboard = () => {
   })
   const [paymentSettings, setPaymentSettings] = useState({
     acceptsCOD: true,
-    acceptsGCash: true,
-    gcashAccountName: '',
-    gcashNumber: '',
-    gcashQr: '',
+    acceptsQR: true,
     qrCodes: {},
   })
   const qrInputRef = useRef(null)
@@ -382,15 +379,9 @@ const SellerDashboard = () => {
       const res = await axios.get(`${apiUrl}/api/sellers/payment-settings`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.data) {
         const qrCodes = typeof res.data.qrCodes === 'object' && res.data.qrCodes !== null ? res.data.qrCodes : {}
-        if (res.data.gcashQr && !qrCodes.gcash) {
-          qrCodes.gcash = res.data.gcashQr
-        }
         setPaymentSettings({
           acceptsCOD: res.data.acceptsCOD !== false,
-          acceptsGCash: res.data.acceptsGCash !== false,
-          gcashAccountName: res.data.gcashAccountName || '',
-          gcashNumber: res.data.gcashNumber || '',
-          gcashQr: res.data.gcashQr || '',
+          acceptsQR: res.data.acceptsQR !== false,
           qrCodes,
         })
       }
@@ -450,7 +441,6 @@ const SellerDashboard = () => {
     const nextSettings = {
       ...paymentSettings,
       qrCodes: nextQrCodes,
-      gcashQr: normalizedType === 'gcash' ? '' : paymentSettings.gcashQr,
     }
 
     setPaymentSettings(nextSettings)
@@ -2157,37 +2147,16 @@ const SellerDashboard = () => {
                     </div>
 
                     <div className='flex items-center gap-3'>
-                      <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${paymentSettings.acceptsGCash ? 'bg-green-500' : 'bg-gray-300'}`}>
-                        <button aria-pressed={paymentSettings.acceptsGCash} onClick={() => setPaymentSettings(prev => ({ ...prev, acceptsGCash: !prev.acceptsGCash }))} className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${paymentSettings.acceptsGCash ? 'translate-x-6' : 'translate-x-1'}`} />
+                      <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${paymentSettings.acceptsQR ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        <button aria-pressed={paymentSettings.acceptsQR} onClick={() => setPaymentSettings(prev => ({ ...prev, acceptsQR: !prev.acceptsQR }))} className={`inline-block h-4 w-4 transform bg-white rounded-full transition-transform ${paymentSettings.acceptsQR ? 'translate-x-6' : 'translate-x-1'}`} />
                       </div>
                       <div>
-                        <div className='text-sm font-medium'>Accept GCash</div>
-                        <div className='text-xs text-gray-500'>Buyers can pay via GCash using your QR code.</div>
+                        <div className='text-sm font-medium'>Accept QR Codes</div>
+                        <div className='text-xs text-gray-500'>Buyers can pay via any uploaded QR code.</div>
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Account Name</label>
-                    <input
-                      type='text'
-                      value={paymentSettings.gcashAccountName || ''}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashAccountName: e.target.value }))}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      placeholder='e.g., Juan Dela Cruz'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>GCash Number</label>
-                    <input
-                      type='text'
-                      value={paymentSettings.gcashNumber || ''}
-                      onChange={(e) => setPaymentSettings(prev => ({ ...prev, gcashNumber: e.target.value }))}
-                      className='w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-black'
-                      placeholder='09XXXXXXXXX'
-                    />
-                  </div>
 
                   <div>
                     <label className='block text-sm font-medium text-gray-700 mb-2'>Payment QR Codes</label>
