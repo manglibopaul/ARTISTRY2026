@@ -2192,13 +2192,6 @@ const SellerDashboard = () => {
                         <input ref={qrInputRef} type='file' accept='image/*' onChange={(e) => uploadPaymentQr(e.target.files?.[0], currentQrType)} className='hidden' />
                         Upload QR
                       </label>
-                      <button
-                        type='button'
-                        onClick={() => qrInputRef.current?.click()}
-                        className='inline-flex items-center px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-900'
-                      >
-                        Add another QR
-                      </button>
                       <div className='text-xs text-gray-500'>Upload a clear QR image so buyers can scan during checkout.</div>
                     </div>
                     {Object.keys(paymentSettings.qrCodes || {}).length > 0 && (
