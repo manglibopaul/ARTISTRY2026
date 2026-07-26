@@ -99,6 +99,9 @@ export const sendUserSignupOtp = async (req, res) => {
     }
 
     const existing = await User.findOne({ where: { email: normalized }, paranoid: false });
+    if (existing?.isBlocked) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered.' });
+    }
     if (existing && !existing.deletedAt) {
       return res.status(400).json({ message: 'Email is already registered.' });
     }
@@ -139,6 +142,9 @@ export const sendUserSignupPhoneOtp = async (req, res) => {
     }
 
     const existing = await User.findOne({ where: { phone: normalizedPhone }, paranoid: false });
+    if (existing?.isBlocked) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered.' });
+    }
     if (existing && !existing.deletedAt) {
       return res.status(400).json({ message: 'Phone number is already registered.' });
     }
@@ -184,6 +190,9 @@ export const register = async (req, res) => {
     }
 
     let user = await User.findOne({ where: { email: normalized }, paranoid: false });
+    if (user?.isBlocked) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered.' });
+    }
     if (user) {
       if (!user.deletedAt) {
         return res.status(400).json({ message: 'User already exists' });
@@ -441,9 +450,10 @@ export const deleteUser = async (req, res) => {
     if (user.isAdmin) return res.status(403).json({ message: 'Cannot delete admin user' });
     if (user.deletedAt) return res.status(400).json({ message: 'User is already in bin' });
 
-    // Soft delete to bin
+    // Soft delete to bin and block future re-registration with the same credentials.
+    await user.update({ isBlocked: true, blockedAt: new Date() });
     await user.destroy();
-    res.json({ message: 'User moved to bin' });
+    res.json({ message: 'User moved to bin and blocked from re-registering' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -472,6 +482,7 @@ export const restoreUser = async (req, res) => {
     const user = await User.findByPk(req.params.id, { paranoid: false });
     if (!user || !user.deletedAt) return res.status(404).json({ message: 'User not found in bin' });
     if (user.isAdmin) return res.status(403).json({ message: 'Cannot restore admin user via bin' });
+    await user.update({ isBlocked: false, blockedAt: null });
     await user.restore();
     res.json({ message: 'User restored' });
   } catch (error) {

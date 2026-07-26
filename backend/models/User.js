@@ -55,6 +55,15 @@ const User = sequelize.define('User', {
     type: Sequelize.BOOLEAN,
     defaultValue: false,
   },
+  isBlocked: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  blockedAt: {
+    type: Sequelize.DATE,
+    allowNull: true,
+  },
 }, {
   paranoid: true,
   deletedAt: 'deletedAt',

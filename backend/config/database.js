@@ -81,6 +81,24 @@ const ensureUsersDeletedAtColumn = async () => {
   }
 };
 
+const ensureUsersBlockColumns = async () => {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('Users');
+  if (!table.isBlocked) {
+    await qi.addColumn('Users', 'isBlocked', {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    });
+  }
+  if (!table.blockedAt) {
+    await qi.addColumn('Users', 'blockedAt', {
+      type: Sequelize.DATE,
+      allowNull: true,
+    });
+  }
+};
+
 const ensureReviewsImageUrlColumn = async () => {
   const qi = sequelize.getQueryInterface();
   const table = await qi.describeTable('Reviews');
@@ -290,6 +308,7 @@ const connectDB = async () => {
       // for production deployments whenever possible.
       await sequelize.sync({ force: false });
       await ensureUsersDeletedAtColumn();
+      await ensureUsersBlockColumns();
       await ensureReviewsImageUrlColumn();
       await ensureReviewsOrderIdColumn();
       await ensureProductsSizesColumn();
