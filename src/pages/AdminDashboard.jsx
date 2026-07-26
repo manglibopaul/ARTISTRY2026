@@ -270,19 +270,33 @@ const AdminDashboard = () => {
       setErrorModalOpen(true);
     };
 
-    // Restrict customer
-    const restrictCustomer = async (id) => {
+    // Update customer restriction state
+    const updateCustomerRestriction = async (id, isBlocked) => {
       try {
         const res = await authFetch(`/users/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isBlocked: true }),
+          body: JSON.stringify({ isBlocked }),
         });
         if (!res.ok) throw new Error(await readErrorMessage(res));
-        setCustomers((c) => c.map(u => u.id === id ? { ...u, isBlocked: true } : u));
+        setCustomers((c) => c.map(u => u.id === id ? { ...u, isBlocked } : u));
       } catch (err) {
-        openErrorModal('Restrict Failed', err.message || 'error');
+        openErrorModal(isBlocked ? 'Restrict Failed' : 'Unrestrict Failed', err.message || 'error');
       }
+    };
+
+    const openCustomerRestrictionConfirm = (user) => {
+      const isBlocked = Boolean(user?.isBlocked);
+      setConfirmMessage(isBlocked
+        ? 'Unrestrict this customer? They will be able to log in again.'
+        : 'Restrict this customer? They will be blocked from logging in.');
+      setConfirmAction(() => () => {
+        updateCustomerRestriction(user.id, !isBlocked);
+        setConfirmOpen(false);
+      });
+      setConfirmButtonLabel(isBlocked ? 'Unrestrict' : 'Restrict');
+      setConfirmButtonColor(isBlocked ? 'bg-green-600' : 'bg-orange-600');
+      setConfirmOpen(true);
     };
 
     // Delete customer
@@ -673,13 +687,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className='mt-3 flex gap-2'>
                       <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className='px-3 py-1 rounded bg-blue-600 text-white text-sm'>View</button>
-                      <button onClick={() => {
-                        setConfirmMessage('Restrict this customer? They will be blocked from logging in.');
-                        setConfirmAction(() => () => { restrictCustomer(u.id); setConfirmOpen(false); });
-                        setConfirmButtonLabel('Restrict');
-                        setConfirmButtonColor('bg-orange-600');
-                        setConfirmOpen(true);
-                      }} className='px-3 py-1 rounded bg-orange-600 text-white text-sm'>Restrict</button>
+                      <button onClick={() => openCustomerRestrictionConfirm(u)} className={`px-3 py-1 rounded text-white text-sm ${u.isBlocked ? 'bg-green-600' : 'bg-orange-600'}`}>{u.isBlocked ? 'Unrestrict' : 'Restrict'}</button>
                       <button onClick={() => {
                         setConfirmMessage('Delete this customer? This cannot be undone.');
                         setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
@@ -724,13 +732,7 @@ const AdminDashboard = () => {
                         <td className="p-3">{u.phone || '-'}</td>
                         <td className="p-3 flex gap-2">
                           <button onClick={() => { setViewCustomer(u); setViewModalOpen(true); }} className="px-3 py-1 rounded bg-blue-600 text-white">View</button>
-                          <button onClick={() => {
-                            setConfirmMessage('Restrict this customer? They will be blocked from logging in.');
-                            setConfirmAction(() => () => { restrictCustomer(u.id); setConfirmOpen(false); });
-                            setConfirmButtonLabel('Restrict');
-                            setConfirmButtonColor('bg-orange-600');
-                            setConfirmOpen(true);
-                          }} className="px-3 py-1 rounded bg-orange-600 text-white">Restrict</button>
+                          <button onClick={() => openCustomerRestrictionConfirm(u)} className={`px-3 py-1 rounded text-white ${u.isBlocked ? 'bg-green-600' : 'bg-orange-600'}`}>{u.isBlocked ? 'Unrestrict' : 'Restrict'}</button>
                           <button onClick={() => {
                             setConfirmMessage('Delete this customer? This cannot be undone.');
                             setConfirmAction(() => () => { deleteCustomer(u.id); setConfirmOpen(false); });
