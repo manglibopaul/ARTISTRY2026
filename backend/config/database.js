@@ -301,14 +301,18 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
 
+    // Always ensure the user soft-delete and block columns exist.
+    // This is a lightweight and safe fix for deployed environments
+    // where migrations may not have been applied yet.
+    await ensureUsersDeletedAtColumn();
+    await ensureUsersBlockColumns();
+
     const runtimeSchemaEnabled = !isProduction || process.env.ENABLE_RUNTIME_SCHEMA_CHECKS === 'true';
     if (runtimeSchemaEnabled) {
       // Runtime schema checks are useful for development, but they can consume
       // Neon compute in production. Use migrations or explicit schema updates
       // for production deployments whenever possible.
       await sequelize.sync({ force: false });
-      await ensureUsersDeletedAtColumn();
-      await ensureUsersBlockColumns();
       await ensureReviewsImageUrlColumn();
       await ensureReviewsOrderIdColumn();
       await ensureProductsSizesColumn();
