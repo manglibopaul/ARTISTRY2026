@@ -426,6 +426,8 @@ const SellerDashboard = () => {
           qrCodes: typeof res.data.paymentSettings.qrCodes === 'object' && res.data.paymentSettings.qrCodes !== null ? res.data.paymentSettings.qrCodes : (prev.qrCodes || {}),
         }))
       }
+      // Refresh saved payment settings from the server to avoid stale QR URLs.
+      await fetchPaymentSettings()
       toast.success(`${type.toUpperCase()} QR uploaded`)
     } catch (err) {
       console.error('uploadPaymentQr', err)
@@ -434,6 +436,42 @@ const SellerDashboard = () => {
     } finally {
       setLoading(false)
       setUploadProgress(0)
+    }
+  }
+
+  const removeQrCode = async (type) => {
+    if (!type) return
+    const normalizedType = String(type).trim().toLowerCase()
+    const displayLabel = normalizedType === 'gcash' ? 'GCash' : normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1)
+    const prevSettings = paymentSettings
+    const nextQrCodes = { ...(paymentSettings.qrCodes || {}) }
+    delete nextQrCodes[normalizedType]
+
+    const nextSettings = {
+      ...paymentSettings,
+      qrCodes: nextQrCodes,
+      gcashQr: normalizedType === 'gcash' ? '' : paymentSettings.gcashQr,
+    }
+
+    setPaymentSettings(nextSettings)
+    try {
+      setLoading(true)
+      const res = await axios.put(`${apiUrl}/api/sellers/payment-settings`, nextSettings, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.data?.paymentSettings) {
+        const qrCodes = typeof res.data.paymentSettings.qrCodes === 'object' && res.data.paymentSettings.qrCodes !== null ? res.data.paymentSettings.qrCodes : {}
+        setPaymentSettings((prev) => ({
+          ...prev,
+          ...res.data.paymentSettings,
+          qrCodes,
+        }))
+      }
+      toast.success(`${displayLabel} payment QR removed`)
+    } catch (err) {
+      console.error('removeQrCode', err)
+      setPaymentSettings(prevSettings)
+      toast.error('Failed to remove payment QR')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -2156,7 +2194,7 @@ const SellerDashboard = () => {
                     <p className='text-xs text-gray-500 mb-3'>Upload one QR code at a time. All saved payment QR codes will appear below.</p>
                     <div className='grid gap-3 sm:grid-cols-2 mb-3'>
                       <div>
-                        <label className='block text-xs text-gray-500 mb-1'>QR type</label>
+                        <label className='block text-xs text-gray-500 mb-1'>Payment method</label>
                         <select
                           value={qrUploadType}
                           onChange={(e) => { setQrUploadType(e.target.value); setCustomQrType('') }}
@@ -2208,18 +2246,7 @@ const SellerDashboard = () => {
                                 </div>
                                 <button
                                   type='button'
-                                  onClick={() => {
-                                    setPaymentSettings((prev) => {
-                                      const qrCodes = { ...prev.qrCodes }
-                                      delete qrCodes[type]
-                                      return {
-                                        ...prev,
-                                        qrCodes,
-                                        gcashQr: type === 'gcash' ? '' : prev.gcashQr,
-                                      }
-                                    })
-                                    toast.info(`${displayLabel} QR removed`)
-                                  }}
+                                  onClick={() => removeQrCode(type)}
                                   className='text-xs px-2 py-1 bg-red-50 text-red-700 rounded border border-red-100 hover:bg-red-100'
                                 >
                                   Remove
