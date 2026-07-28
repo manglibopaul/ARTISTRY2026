@@ -919,6 +919,14 @@ const SellerDashboard = () => {
 
   const handleDeleteOrder = async (orderId, note) => {
     if (!orderId) return
+    const selectedOrder = Array.isArray(sellerOrders) ? sellerOrders.find((order) => Number(order.id) === Number(orderId)) : null
+    if (selectedOrder && String(selectedOrder.orderStatus || '').toLowerCase() === 'shipped') {
+      toast.error('Shipped orders cannot be deleted by sellers')
+      setOrderDeleteConfirm(null)
+      setOrderDeleteNote('')
+      return
+    }
+
     try {
       setLoading(true)
       await axios.delete(`${apiUrl}/api/orders/seller/${orderId}`, {
@@ -1779,7 +1787,7 @@ const SellerDashboard = () => {
                       </div>
                       <div className='flex gap-2'>
                         <button onClick={() => setViewOrder(order)} className='bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded text-sm flex-1'>View</button>
-                        {order.orderStatus !== 'completed' && (
+                        {order.orderStatus !== 'completed' && String(order.orderStatus || '').toLowerCase() !== 'shipped' && (
                           <button
                             onClick={() => setOrderDeleteConfirm(order)}
                             className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm flex-1'
@@ -1868,7 +1876,7 @@ const SellerDashboard = () => {
                                   : String(order.orderStatus || '').toLowerCase() === 'shipped' ? 'Shipped'
                                   : (order.paymentMethod === 'pickup' || order.method === 'pickup' ? (String(order.orderStatus || '').toLowerCase() === 'ready_for_pickup' ? 'Mark Picked Up' : 'Mark Ready') : (String(order.orderStatus || '').toLowerCase() === 'processing' ? 'Ship' : 'Process'))}
                               </button>
-                              {order.orderStatus !== 'completed' && (
+                              {order.orderStatus !== 'completed' && String(order.orderStatus || '').toLowerCase() !== 'shipped' && (
                                 <button
                                   onClick={() => setOrderDeleteConfirm(order)}
                                   className='px-3 py-1 rounded text-sm bg-red-500 hover:bg-red-600 text-white'

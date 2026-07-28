@@ -21,6 +21,25 @@ const SIGNUP_OTP_MAX_ATTEMPTS = 5;
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
+const findBlockedIdentityMatch = async (email, phone) => {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPhone = normalizePhoneNumber(phone);
+
+  const identityConditions = [];
+  if (normalizedEmail) identityConditions.push({ email: normalizedEmail });
+  if (normalizedPhone) identityConditions.push({ phone: normalizedPhone });
+
+  if (!identityConditions.length) return null;
+
+  return User.findOne({
+    where: {
+      [Op.or]: identityConditions,
+      isBlocked: true,
+    },
+    paranoid: false,
+  });
+};
+
 const buildSignupOtpHash = (email, otp) => {
   return crypto.createHash('sha256').update(`${normalizeEmail(email)}:${String(otp || '').trim()}`).digest('hex');
 };
@@ -85,7 +104,7 @@ const validatePhoneSignupOtp = (phone, otp) => {
 
 export const sendUserSignupOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, phone } = req.body;
     const normalized = normalizeEmail(email);
 
     if (!normalized) {
@@ -96,6 +115,11 @@ export const sendUserSignupOtp = async (req, res) => {
     const isGmail = normalized.endsWith('@gmail.com') || normalized.endsWith('@googlemail.com');
     if (!isGmail) {
       return res.status(400).json({ message: 'OTP can only be sent to Gmail addresses. Please provide a Gmail account.' });
+    }
+
+    const blockedIdentity = await findBlockedIdentityMatch(normalized, phone);
+    if (blockedIdentity) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered with the same email or phone number.' });
     }
 
     const existing = await User.findOne({ where: { email: normalized }, paranoid: false });
@@ -139,6 +163,11 @@ export const sendUserSignupPhoneOtp = async (req, res) => {
 
     if (!normalizedPhone) {
       return res.status(400).json({ message: 'Valid phone number is required.' });
+    }
+
+    const blockedIdentity = await findBlockedIdentityMatch(null, normalizedPhone);
+    if (blockedIdentity) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered with the same email or phone number.' });
     }
 
     const existing = await User.findOne({ where: { phone: normalizedPhone }, paranoid: false });
@@ -187,6 +216,11 @@ export const register = async (req, res) => {
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required for sign up.' });
+    }
+
+    const blockedIdentity = await findBlockedIdentityMatch(normalized, normalizedPhone);
+    if (blockedIdentity) {
+      return res.status(400).json({ message: 'This account was deleted by an administrator and cannot be re-registered with the same email or phone number.' });
     }
 
     let user = await User.findOne({ where: { email: normalized }, paranoid: false });

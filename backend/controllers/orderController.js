@@ -985,6 +985,9 @@ export const deleteOrderBySeller = async (req, res) => {
     const items = Array.isArray(order.items) ? order.items : JSON.parse(order.items || '[]');
     if (!items.length) return res.status(400).json({ message: 'Order has no items' });
 
+    const normalizedStatus = String(order.orderStatus || '').toLowerCase();
+    if (normalizedStatus === 'shipped') return res.status(400).json({ message: 'Shipped orders cannot be deleted by sellers' });
+
     // If any item is not owned by this seller, block deletion to avoid removing other's items
     const onlySellerItems = items.every(item => Number(item.sellerId) === Number(sellerId));
     if (!onlySellerItems) return res.status(403).json({ message: 'Order contains items from multiple sellers; cannot delete' });
